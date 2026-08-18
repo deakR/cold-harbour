@@ -1,0 +1,20 @@
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor Configs
+.idea/
+.vscode/
+*.iml
+
+# Environment & Secrets
+.env
+*.local
+*.log
+
+# Internal AI Configurations & Scratchpads
+.agents/
+AGENTS.md
+GEMINI.md
+context.md
