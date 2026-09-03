@@ -1,0 +1,17 @@
+﻿{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "compartmentId": "cpt_e2e_001_valid",
+  "ownerId": "usr_test_operator_01",
+  "context": "INNIE",
+  "taskType": "DATA_REDUCTION",
+  "finalState": "PURGED",
+  "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "durationMs": 1420,
+  "createdAt": "2026-09-03T10:00:00Z",
+  "completedAt": "2026-09-03T10:00:02Z",
+  "metadata": {
+    "worker": "worker-go-01",
+    "retries": 0,
+    "checkpoints": [25, 50, 75]
+  }
+}

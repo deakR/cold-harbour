@@ -1,0 +1,14 @@
+﻿{
+  "compartmentId": "cpt_e2e_001_valid",
+  "ownerId": "usr_test_operator_01",
+  "context": "INNIE",
+  "taskType": "DATA_REDUCTION",
+  "output": {
+    "processedCount": 500,
+    "reducedSum": 49201,
+    "status": "SUCCESS"
+  },
+  "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "archivedAt": "2026-09-03T10:00:10.000Z",
+  "ttlSeconds": 3600
+}

@@ -1,0 +1,10 @@
+﻿{
+  "eventId": "evt_e2e_1001",
+  "compartmentId": "cpt_e2e_001_valid",
+  "workerId": "worker-go-01",
+  "fromState": "RUNNING",
+  "toState": "CHECKPOINT",
+  "checkpointPct": 50,
+  "timestamp": "2026-09-03T10:00:05.120Z",
+  "details": "Checkpoint 50% written to scratchpad"
+}

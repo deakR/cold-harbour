@@ -1,0 +1,13 @@
+﻿{
+  "compartmentId": "cpt_e2e_001_valid",
+  "context": "INNIE",
+  "ownerId": "usr_test_operator_01",
+  "taskType": "DATA_REDUCTION",
+  "payload": {
+    "batchSize": 500,
+    "inputValues": [10, 25, 42, 99, 1337]
+  },
+  "maxRetries": 3,
+  "timeoutSeconds": 300,
+  "createdAt": "2026-09-03T10:00:00.000Z"
+}

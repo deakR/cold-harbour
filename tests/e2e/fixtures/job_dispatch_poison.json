@@ -1,0 +1,10 @@
+﻿{
+  "compartmentId": "cpt_e2e_002_poison",
+  "context": "OUTIE",
+  "ownerId": "usr_test_adversary",
+  "taskType": "INVALID_UNKNOWN_TASK",
+  "payload": "MALFORMED_NON_OBJECT_PAYLOAD",
+  "maxRetries": 3,
+  "timeoutSeconds": 10,
+  "createdAt": "2026-09-03T10:05:00.000Z"
+}
