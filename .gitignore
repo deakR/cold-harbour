@@ -6,6 +6,9 @@ web/dist/
 web/dist-ssr/
 node_modules/
 
+# Generated run artifacts
+scripts/benchmark_last.json
+
 # OS Files
 .DS_Store
 Thumbs.db
