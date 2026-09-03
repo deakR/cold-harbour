@@ -1,3 +1,11 @@
+# Build outputs
+target/
+*.class
+*.jar.original
+web/dist/
+web/dist-ssr/
+node_modules/
+
 # OS Files
 .DS_Store
 Thumbs.db
