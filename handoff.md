@@ -1,26 +1,30 @@
 # ColdHarbor — Handoff
 
-Date: 2026-09-03T17:30:00Z
-Branch: `main` (commits `7f5e53e`, `44b5acf`, `1d6449f`, `a9b5c01`, `5897594`, `a128301`, `73482f4`)
+Date: 2026-09-03T23:00:00Z
+Branch: `main` (through `f1d7fe1`)
 Constraint: local Git only. No `push`, no remote modifications. Remote `origin` exists (github.com/deakR/cold-harbour.git) — do not use.
 
 ## 1. State
 
-All milestones M1-M4 are implemented and committed locally. `git status --short` is clean. Working tree matches HEAD `73482f4`.
+All milestones M1-M4 implemented, committed locally, and proven against the live
+stack. Working tree clean.
 
-Committed this session:
-- `a9b5c01 feat(worker): complete Go engine M1` — `cmd/`, `config/`, `engine/` (consumer, fsm, scratchpad, checkpoint, recovery, archive, heartbeat, events, dlq, runner + tests), `state_test.go`, `job.go` extensions (`MaxRetries`, `TimeoutSeconds`, `PreviousState`/`CurrentState`, `Progress`, `ResultPayload`, `DurationMs`), `miniredis`/`gopher-lua` test deps
-- `5897594 feat(control): Spring Boot plane M2` — clearance, REST, stream producer, audit, websocket, wellness + tests
-- `a128301 feat(web,verify): React dashboard M3, E2E harness M4, docs and handoff` — `web/src/`, `scripts/verify_e2e.ps1`, `tests/e2e/`, `ORIGINAL_REQUEST.md`, `PROJECT.md`, `TEST_INFRA.md`, `TEST_READY.md`, `handoff.md`
-- `73482f4 chore(web): track nested gitignore`
-- `.gitignore` extended: `target/`, `*.class`, `*.jar.original`, `web/dist/`, `node_modules/` (prevents build artifact commits; `control-plane/target/` and `web/dist/` remain on disk, untracked)
+Live stack (running): Redis 7.2.16 `:6379`, Postgres 16 on host `:5433`
+(host 5432 occupied by a local postgres process), control plane `:8080`
+(`DB_PORT=5433`), Go worker with metrics `:9091`.
 
-## 2. Verification (this session, no rework)
+Live evidence: E2E 6/6 PASS, 50-job benchmark (avg 12.7ms, p50 11.2, p95 14.2,
+10/10 sealed), crash-recovery chaos (failed 1, recovered 1, sealed with correct
+`reducedSum`), exactly 1 audit row per compartment. Details in
+`docs/benchmarks.md`.
 
-- `go test ./...` in `services/worker-engine`: PASS (`config`, `engine`, `model`; `cmd/worker` has no tests). `go vet ./...` clean.
-- `scripts/verify_e2e.ps1 -MockMode`: 6/6 PASS (Scenarios 1-6, 100%). Self-contained PowerShell; no Python dependency.
-- `services/control-plane/target/` contains built jar + `surefire-reports/` (prior build succeeded)
-- `web/dist/` contains built bundle (prior build succeeded)
+## 2. Verification
+
+- `go test ./...`: PASS. `go vet` clean.
+- `mvn -B test`: 33/33 PASS.
+- `npm test` (vitest): 12/12 PASS. `npm run build` clean.
+- `verify_e2e.ps1 -MockMode`: 6/6 PASS. Live run 6/6 PASS (see `docs/benchmarks.md`).
+- No Python dependency. CI defined in `.github/workflows/verify.yml` (local file only, never pushed).
 
 Live infra verification blocked: Docker daemon down (`npipe:////./pipe/dockerDesktopLinuxEngine` unreachable). Mock mode only.
 
