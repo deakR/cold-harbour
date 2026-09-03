@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: coldharbor-control-plane-test
+  datasource:
+    url: jdbc:h2:mem:coldharbor_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    open-in-view: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+coldharbor:
+  redis:
+    stream-name: coldharbor:jobs
+    event-channel: coldharbor:events
+    heartbeat-pattern: "worker:*:heartbeat"
+    archive-prefix: "archive:"
+    scratchpad-prefix: "compartment:"
+    meta-prefix: "compartment:"
+  security:
+    clearance-header: X-Context-Clearance

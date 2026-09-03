@@ -1,0 +1,38 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: coldharbor-control-plane
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:coldharbor}}
+    username: ${SPRING_DATASOURCE_USERNAME:coldharbor}
+    password: ${SPRING_DATASOURCE_PASSWORD:coldharbor_secret}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 2000ms
+
+coldharbor:
+  redis:
+    stream-name: coldharbor:jobs
+    event-channel: coldharbor:events
+    heartbeat-pattern: "worker:*:heartbeat"
+    archive-prefix: "archive:"
+    scratchpad-prefix: "compartment:"
+    meta-prefix: "compartment:"
+  security:
+    clearance-header: X-Context-Clearance
+
+logging:
+  level:
+    root: INFO
+    com.coldharbor.controlplane: INFO
