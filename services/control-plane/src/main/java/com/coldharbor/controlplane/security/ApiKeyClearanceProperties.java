@@ -21,6 +21,11 @@ public class ApiKeyClearanceProperties {
 
     private Map<String, String> apiKeys = new HashMap<>();
     private boolean allowUnsafeHeader = true;
+    /**
+     * Max POST /api/v1/compartments dispatches per client IP per minute.
+     * Zero or negative disables limiting.
+     */
+    private int dispatchPerMinute;
 
     public Map<String, String> getApiKeys() {
         return apiKeys;
@@ -36,6 +41,14 @@ public class ApiKeyClearanceProperties {
 
     public void setAllowUnsafeHeader(boolean allowUnsafeHeader) {
         this.allowUnsafeHeader = allowUnsafeHeader;
+    }
+
+    public int getDispatchPerMinute() {
+        return dispatchPerMinute;
+    }
+
+    public void setDispatchPerMinute(int dispatchPerMinute) {
+        this.dispatchPerMinute = dispatchPerMinute;
     }
 
     public ContextClearance resolve(String apiKey) {

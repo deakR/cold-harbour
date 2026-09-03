@@ -10,17 +10,21 @@ import {
 
 const BASE_URL = '/api/v1';
 
-export function useApi(currentClearance: ContextClearance = 'INNIE') {
+export function useApi(currentClearance: ContextClearance = 'INNIE', apiKey: string = '') {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const getHeaders = useCallback(() => {
-    return {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-Context-Clearance': currentClearance,
       'X-ColdHarbor-Context': currentClearance,
     };
-  }, [currentClearance]);
+    if (apiKey.trim()) {
+      headers['X-API-Key'] = apiKey.trim();
+    }
+    return headers;
+  }, [currentClearance, apiKey]);
 
   const fetchWorkers = useCallback(async (): Promise<WorkerHeartbeat[]> => {
     setLoading(true);

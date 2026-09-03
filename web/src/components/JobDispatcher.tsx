@@ -26,6 +26,7 @@ export const JobDispatcher: React.FC<JobDispatcherProps> = ({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
+  const [simulateCrash, setSimulateCrash] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
@@ -46,6 +47,9 @@ export const JobDispatcher: React.FC<JobDispatcherProps> = ({
     } catch (err: any) {
       setError(`Invalid JSON payload: ${err.message}`);
       return;
+    }
+    if (simulateCrash) {
+      parsedPayload = { ...parsedPayload, simulateCrashAtStep: 2 };
     }
 
     setSubmitting(true);
@@ -166,6 +170,17 @@ export const JobDispatcher: React.FC<JobDispatcherProps> = ({
               required
             />
           </div>
+
+          {/* Chaos probe */}
+          <label className="flex items-center gap-2 text-gray-400 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={simulateCrash}
+              onChange={(e) => setSimulateCrash(e.target.checked)}
+              className="accent-rose-500 w-3.5 h-3.5"
+            />
+            <span>Simulate worker crash at step 2 (tests PEL checkpoint recovery)</span>
+          </label>
 
           {/* Buttons */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-800">

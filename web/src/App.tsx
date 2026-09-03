@@ -17,6 +17,7 @@ import { Activity, Layers, Terminal, PackageCheck, FileSpreadsheet, Cpu } from '
 
 export const App: React.FC = () => {
   const [clearance, setClearance] = useState<ContextClearance>('INNIE');
+  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('coldharbor_api_key') || '');
   const [workers, setWorkers] = useState<WorkerHeartbeat[]>([]);
   const [audits, setAudits] = useState<AuditRecord[]>([]);
   const [selectedCompartmentId, setSelectedCompartmentId] = useState<string>('cpt_sample_01');
@@ -29,7 +30,16 @@ export const App: React.FC = () => {
     fetchAudits,
     fetchDeadDrop,
     dispatchJob,
-  } = useApi(clearance);
+  } = useApi(clearance, apiKey);
+
+  const handleApiKeyChange = useCallback((key: string) => {
+    setApiKey(key);
+    if (key.trim()) {
+      localStorage.setItem('coldharbor_api_key', key.trim());
+    } else {
+      localStorage.removeItem('coldharbor_api_key');
+    }
+  }, []);
 
   const {
     events,
@@ -154,6 +164,8 @@ export const App: React.FC = () => {
         activeJobsCount={activeJobsCount}
         totalEventsCount={events.length}
         onRefreshAll={handleRefreshAll}
+        apiKey={apiKey}
+        onApiKeyChange={handleApiKeyChange}
       />
 
       {/* Navigation Sub-bar */}

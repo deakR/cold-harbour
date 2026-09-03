@@ -31,6 +31,9 @@ public class ContextClearanceFilter extends OncePerRequestFilter {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ApiKeyClearanceProperties apiKeys;
+    /** Fixed-window dispatch counters per client IP: [windowStartMillis, count]. */
+    private final java.util.concurrent.ConcurrentHashMap<String, long[]> dispatchWindows =
+            new java.util.concurrent.ConcurrentHashMap<>();
 
     public ContextClearanceFilter() {
         this(new ApiKeyClearanceProperties());
@@ -43,9 +46,11 @@ public class ContextClearanceFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        // Allow WebSocket handshake, error dispatches, static assets, and actuator
+        // Allow WebSocket handshake, error dispatches, static assets, actuator, and API docs
         return path.startsWith("/ws")
                 || path.startsWith("/actuator")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-ui")
                 || path.startsWith("/error")
                 || path.equals("/")
                 || path.equals("/favicon.ico");
@@ -92,9 +97,41 @@ public class ContextClearanceFilter extends OncePerRequestFilter {
         ClearanceContext.setClearance(clearance);
         request.setAttribute(CLEARANCE_ATTRIBUTE, clearance);
         try {
+            if (isDispatchRequest(request) && !allowDispatch(request)) {
+                sendErrorResponse(response, 429, "Too Many Requests",
+                        "Dispatch rate limit exceeded. Retry after 60 seconds.");
+                return;
+            }
             filterChain.doFilter(request, response);
         } finally {
             ClearanceContext.clear();
+        }
+    }
+
+    private boolean isDispatchRequest(HttpServletRequest request) {
+        return "POST".equalsIgnoreCase(request.getMethod())
+                && request.getRequestURI() != null
+                && request.getRequestURI().endsWith("/compartments");
+    }
+
+    private boolean allowDispatch(HttpServletRequest request) {
+        int limit = apiKeys.getDispatchPerMinute();
+        if (limit <= 0) {
+            return true;
+        }
+        String ip = request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown";
+        if (dispatchWindows.size() > 10000) {
+            dispatchWindows.clear();
+        }
+        long now = System.currentTimeMillis();
+        long[] window = dispatchWindows.computeIfAbsent(ip, k -> new long[]{now, 0});
+        synchronized (window) {
+            if (now - window[0] > 60_000) {
+                window[0] = now;
+                window[1] = 0;
+            }
+            window[1]++;
+            return window[1] <= limit;
         }
     }
 

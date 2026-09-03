@@ -75,8 +75,12 @@ export const DeadDropInspector: React.FC<DeadDropInspectorProps> = ({
       const matched = verifyChecksum(data.checksum, calculated);
       setIsVerified(matched);
 
-      // Initialize TTL
-      if (typeof data.ttlSeconds === 'number') {
+      // Initialize TTL from server-reported remaining time when available.
+      // remainingTtlSeconds === 0 means Redis TTL expired and the payload was
+      // served from the durable PostgreSQL audit record.
+      if (typeof data.remainingTtlSeconds === 'number') {
+        setRemainingTtl(data.remainingTtlSeconds);
+      } else if (typeof data.ttlSeconds === 'number') {
         setRemainingTtl(data.ttlSeconds);
       } else {
         setRemainingTtl(3600); // default
@@ -181,7 +185,9 @@ export const DeadDropInspector: React.FC<DeadDropInspectorProps> = ({
                 <div>
                   <span className="text-[10px] text-gray-400 block">TIME TO LIVE (TTL)</span>
                   <span className="font-bold text-sm text-cyan-400">
-                    {remainingTtl !== null ? `${remainingTtl}s remaining` : 'Persistent'}
+                    {remainingTtl !== null && remainingTtl > 0
+                      ? `${remainingTtl}s remaining`
+                      : 'EXPIRED — SERVED FROM DURABLE AUDIT'}
                   </span>
                 </div>
                 <Clock className="w-6 h-6 text-cyan-400" />

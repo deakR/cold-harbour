@@ -83,37 +83,110 @@ Completed task outputs are sealed with a cryptographic **SHA-256 checksum** and 
 ```text
 coldharbour/
 ├── docker/
-│   ├── docker-compose.yml     # Redis 7 + PostgreSQL 16 container definitions
+│   ├── docker-compose.yml     # Redis 7 + PostgreSQL 16 + full-stack services
 │   └── init-db.sql            # Audit table DDL and indices
 ├── docs/
-│   └── contracts.md           # Redis schemas, payloads, and state transitions
+│   ├── contracts.md           # Redis schemas, payloads, and state transitions
+│   ├── threat-model.md        # Trust boundaries and abuse-case mitigations
+│   └── benchmarks.md          # Measured live results (E2E, dispatch, chaos)
+├── scripts/
+│   ├── verify_e2e.ps1         # 6-scenario E2E harness (live + mock modes)
+│   └── benchmark.ps1          # Dispatch benchmark and completion probe
 ├── services/
-│   ├── control-plane/         # Spring Boot 3 Control Plane (Java 21)
-│   └── worker-engine/         # Go Worker Engine (Go 1.25+)
-├── web/                       # React Dashboard (Vite + TypeScript)
+│   ├── control-plane/         # Spring Boot 3 API (Java 21): clearance auth,
+│   │                          # stream producer, audit, WebSocket relay, wellness
+│   └── worker-engine/         # Go worker pool: FSM, checkpoints, XAUTOCLAIM
+│                              # recovery, Dead Drop sealing, Prometheus metrics
+├── web/                       # React telemetry dashboard (Vite + TypeScript)
+├── Makefile                   # build/up/stack/verify/bench shortcuts
 └── README.md
 ```
 
 ---
 
-## Quickstart (Infrastructure)
+## Quickstart
 
-### Prerequisites
-- [Docker & Docker Compose](https://www.docker.com/)
-- [Go 1.22+](https://go.dev/)
-- [Java 21+ & Maven/Gradle](https://adoptium.net/)
-- [Node.js 20+](https://nodejs.org/)
+### Option A: Full stack in Docker (recommended)
 
-### 1. Start Infrastructure Services
 ```bash
-docker compose -f docker/docker-compose.yml up -d
+make build   # Go + Spring jar + web bundle
+make stack   # Redis, Postgres, worker, control plane, dashboard
 ```
 
-### 2. Verify Services
-- **Redis**: Port `6379`
-- **PostgreSQL**: Port `5432` (Database: `coldharbor`, User: `coldharbor`)
+Open the dashboard at <http://localhost:3000>, API at
+<http://localhost:8080>, Swagger UI at
+<http://localhost:8080/swagger-ui/index.html>.
+
+### Option B: Infrastructure only, services from source
+
+```bash
+make up
+```
+
+| Service | Host port | Credentials / notes |
+|---|---|---|
+| Redis 7 | `6379` | No auth (dev) |
+| PostgreSQL 16 | `5433` | DB `coldharbor`, user `coldharbor`, password `coldharbor_secret`. Host port remapped because dev machines often run Postgres on `5432`; the container still listens on `5432`, so Docker-networked services use `DB_PORT=5432`. |
+| Control plane | `8080` | Start with `DB_PORT=5433` when running the jar locally |
+| Go worker metrics | `9091` | Prometheus text at `/metrics`, JSON at `/healthz` |
+| Dashboard (dev) | `3000` | `npm run dev` in `web/` (proxies `/api` and `/ws` to `:8080`) |
+
+### Prerequisites
+
+- [Docker & Docker Compose](https://www.docker.com/)
+- [Go 1.25+](https://go.dev/)
+- [Java 21+ & Maven](https://adoptium.net/) (Maven wrapper included)
+- [Node.js 22+](https://nodejs.org/)
+
+### Verify
+
+```bash
+make verify        # offline contract verification, no Docker needed
+make verify-live   # against the live stack (Postgres probe uses :5433)
+make bench         # 50-job dispatch benchmark + Dead Drop completion probe
+```
+
+---
+
+## API Overview
+
+All mutating reads require clearance: `X-API-Key` (preferred, mapped
+server-side via `coldharbor.security.api-keys`) or, when
+`allow-unsafe-header=true` (dev default), a self-asserted
+`X-Context-Clearance: INNIE|OUTIE|SYSTEM|ADMIN` header. Every response carries
+`X-Trace-Id`.
+
+| Method & Path | Description |
+|---|---|
+| `POST /api/v1/compartments` | Dispatch job to `coldharbor:jobs` (rate-limited when `COLDHARBOR_DISPATCH_PER_MINUTE>0`) |
+| `GET /api/v1/compartments/{id}` | Lifecycle state and progress (Redis live, Postgres fallback) |
+| `GET /api/v1/compartments/{id}/deaddrop` | Verified Dead Drop; falls back to durable audit after TTL expiry (`remainingTtlSeconds: 0`) |
+| `GET /api/v1/audits` | Filterable audit history (`compartmentId`, `ownerId`, `context`) |
+| `GET /api/v1/workers` | Worker liveness from heartbeat scan |
+| `GET /api/v1/workers/dlq` | Dead-letter queue depth + recent entries (`?limit=`) |
+| `GET /ws/events` | WebSocket fanout of `coldharbor:events` transitions |
+| `GET /actuator/health`, `/actuator/prometheus` | Liveness and metrics |
+
+Full interactive reference: `/swagger-ui/index.html`.
+
+---
+
+## Environment Reference
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `DB_HOST` / `DB_PORT` / `DB_NAME` | `localhost` / `5432` / `coldharbor` | Control-plane Postgres target |
+| `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` | `coldharbor` / `coldharbor_secret` | Postgres credentials |
+| `SPRING_DATA_REDIS_HOST` / `SPRING_DATA_REDIS_PORT` | `localhost` / `6379` | Control-plane Redis target |
+| `REDIS_ADDR` | `localhost:6379` | Worker Redis target |
+| `METRICS_ADDR` | `localhost:9091` | Worker metrics/health bind |
+| `COLDHARBOR_ALLOW_UNSAFE_HEADER` | `true` | Accept self-asserted clearance (set `false` in prod with API keys) |
+| `COLDHARBOR_DISPATCH_PER_MINUTE` | `0` (disabled) | Per-IP dispatch rate limit |
 
 ---
 
 ## Documentation
+
 - [System Contracts & Protocol Specification](docs/contracts.md)
+- [Threat Model](docs/threat-model.md)
+- [Benchmarks & Live Verification](docs/benchmarks.md)

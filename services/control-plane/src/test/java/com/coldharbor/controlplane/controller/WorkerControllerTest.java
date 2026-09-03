@@ -13,7 +13,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,5 +51,20 @@ class WorkerControllerTest {
                 .andExpect(jsonPath("$[0].workerId").value("worker-go-01"))
                 .andExpect(jsonPath("$[0].status").value("BUSY"))
                 .andExpect(jsonPath("$[0].healthy").value(true));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/workers/dlq returns stream size and entries")
+    void shouldReturnDlqSnapshot() throws Exception {
+        when(workerWellnessMonitor.getDlqSnapshot(anyInt())).thenReturn(Map.of(
+                "stream", "coldharbor:jobs:dlq",
+                "size", 2,
+                "entries", List.of(Map.of("_streamId", "1-0"))));
+
+        mockMvc.perform(get("/api/v1/workers/dlq")
+                        .header("X-Context-Clearance", "SYSTEM"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stream").value("coldharbor:jobs:dlq"))
+                .andExpect(jsonPath("$.size").value(2));
     }
 }

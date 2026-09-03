@@ -34,6 +34,65 @@ services:
       timeout: 3s
       retries: 5
 
+  worker:
+    build:
+      context: ../services/worker-engine
+      dockerfile: Dockerfile
+    image: coldharbor/worker-engine:latest
+    container_name: coldharbor-worker
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_ADDR: redis:6379
+      WORKER_ID: worker-docker-01
+      METRICS_ADDR: :9091
+    ports:
+      - "9091:9091"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9091/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  control-plane:
+    build:
+      context: ../services/control-plane
+      dockerfile: Dockerfile
+    image: coldharbor/control-plane:latest
+    container_name: coldharbor-control-plane
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      DB_HOST: postgres
+      DB_PORT: 5432
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    image: coldharbor/web:latest
+    container_name: coldharbor-web
+    restart: unless-stopped
+    depends_on:
+      control-plane:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+
 volumes:
   redis_data:
     name: coldharbor_redis_data

@@ -12,6 +12,8 @@ interface HeaderProps {
   activeJobsCount: number;
   totalEventsCount: number;
   onRefreshAll: () => void;
+  apiKey?: string;
+  onApiKeyChange?: (key: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,6 +25,8 @@ export const Header: React.FC<HeaderProps> = ({
   activeJobsCount,
   totalEventsCount,
   onRefreshAll,
+  apiKey = '',
+  onApiKeyChange,
 }) => {
   const getStatusColor = (status: ConnectionStatus) => {
     switch (status) {
@@ -138,6 +142,16 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <RefreshCw className="w-4 h-4" />
           </button>
+
+          {/* API Key (optional, persisted) */}
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => onApiKeyChange?.(e.target.value)}
+            placeholder="API key (optional)"
+            title="X-API-Key sent with every request when set"
+            className="w-32 bg-[#151c2c] text-xs font-mono text-gray-200 px-2.5 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-cyan-500 placeholder:text-gray-600"
+          />
 
           {/* Dispatch Job Button */}
           <button

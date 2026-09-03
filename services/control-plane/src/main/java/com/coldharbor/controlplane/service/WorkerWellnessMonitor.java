@@ -30,6 +30,9 @@ public class WorkerWellnessMonitor {
     @Value("${coldharbor.redis.heartbeat-pattern:worker:*:heartbeat}")
     private String heartbeatPattern;
 
+    @Value("${coldharbor.redis.dlq-stream-name:coldharbor:jobs:dlq}")
+    private String dlqStreamName;
+
     private final Map<String, WorkerStatusResponse> workerRegistry = new ConcurrentHashMap<>();
 
     public WorkerWellnessMonitor(StringRedisTemplate redisTemplate, ObjectMapper objectMapper) {
@@ -137,5 +140,40 @@ public class WorkerWellnessMonitor {
                 0L
         );
         workerRegistry.put(workerId, resp);
+    }
+
+    /**
+     * Reads dead-letter queue depth and most recent entries for operator inspection.
+     */
+    public Map<String, Object> getDlqSnapshot(int limit) {
+        int capped = Math.min(Math.max(limit, 1), 100);
+        long size = 0;
+        List<Map<String, String>> entries = new ArrayList<>();
+        try {
+            Long len = redisTemplate.opsForStream().size(dlqStreamName);
+            if (len != null) {
+                size = len;
+            }
+            var records = redisTemplate.opsForStream().range(
+                    dlqStreamName,
+                    org.springframework.data.domain.Range.closed("0-0", "+"),
+                    org.springframework.data.redis.connection.Limit.limit().count(capped));
+            if (records != null) {
+                for (var record : records) {
+                    Map<String, String> entry = new java.util.LinkedHashMap<>();
+                    entry.put("_streamId", record.getId().getValue());
+                    record.getValue().forEach((k, v) ->
+                            entry.put(String.valueOf(k), String.valueOf(v)));
+                    entries.add(entry);
+                }
+            }
+        } catch (Exception e) {
+            log.debug("DLQ snapshot unavailable for {}: {}", dlqStreamName, e.getMessage());
+        }
+        Map<String, Object> snapshot = new java.util.LinkedHashMap<>();
+        snapshot.put("stream", dlqStreamName);
+        snapshot.put("size", size);
+        snapshot.put("entries", entries);
+        return snapshot;
     }
 }

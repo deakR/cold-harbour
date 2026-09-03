@@ -39,6 +39,8 @@ coldharbor:
     # When true (dev/test default), the self-asserted clearance header is accepted
     # when no API key is presented. Set false in production with keys configured.
     allow-unsafe-header: ${COLDHARBOR_ALLOW_UNSAFE_HEADER:true}
+    # Max compartment dispatches per client IP per minute. Zero disables limiting.
+    dispatch-per-minute: ${COLDHARBOR_DISPATCH_PER_MINUTE:0}
 
 management:
   endpoints:

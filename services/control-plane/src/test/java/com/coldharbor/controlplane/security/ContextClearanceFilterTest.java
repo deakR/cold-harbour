@@ -131,4 +131,14 @@ class ContextClearanceFilterTest {
         assertThat(response.getStatus()).isEqualTo(200);
         verify(filterChain, times(1)).doFilter(any(), any());
     }
+
+    @Test
+    @DisplayName("Bypasses filter for Swagger and OpenAPI docs endpoints")
+    void shouldBypassDocsPaths() {
+        MockHttpServletRequest docs = new MockHttpServletRequest("GET", "/v3/api-docs");
+        assertThat(filter.shouldNotFilter(docs)).isTrue();
+
+        MockHttpServletRequest ui = new MockHttpServletRequest("GET", "/swagger-ui/index.html");
+        assertThat(filter.shouldNotFilter(ui)).isTrue();
+    }
 }

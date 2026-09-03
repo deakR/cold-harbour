@@ -77,6 +77,7 @@ export interface DeadDropResult {
   archivedAt?: string;
   completedAt?: string;
   ttlSeconds?: number;
+  remainingTtlSeconds?: number;
   durationMs?: number;
 }
 

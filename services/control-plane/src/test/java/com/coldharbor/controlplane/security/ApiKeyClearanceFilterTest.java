@@ -66,8 +66,7 @@ class ApiKeyClearanceFilterTest {
 
     @Test
     @DisplayName("Trace ID is propagated or generated per request")
-    void shouldPropagateTraceId() throws ServletException, IOException {
-        ContextClearanceFilter filter = filterWithKeys(true);
+    void shouldPropagateTraceId() throws ServletException, IOException {        ContextClearanceFilter filter = filterWithKeys(true);
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/workers");
         request.addHeader("X-Context-Clearance", "ADMIN");
         request.addHeader("X-Trace-Id", "trace-123");
@@ -77,5 +76,27 @@ class ApiKeyClearanceFilterTest {
 
         assertThat(request.getAttribute(ContextClearanceFilter.TRACE_ATTRIBUTE)).isEqualTo("trace-123");
         assertThat(response.getHeader("X-Trace-Id")).isEqualTo("trace-123");
+    }
+
+    @Test
+    @DisplayName("Dispatch rate limit rejects excess POSTs with 429")
+    void shouldRateLimitDispatches() throws ServletException, IOException {
+        ApiKeyClearanceProperties props = new ApiKeyClearanceProperties();
+        props.setDispatchPerMinute(2);
+        ContextClearanceFilter limited = new ContextClearanceFilter(props);
+
+        for (int i = 0; i < 2; i++) {
+            MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/compartments");
+            request.addHeader("X-Context-Clearance", "INNIE");
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            limited.doFilterInternal(request, response, mock(FilterChain.class));
+            assertThat(response.getStatus()).isEqualTo(200);
+        }
+
+        MockHttpServletRequest throttled = new MockHttpServletRequest("POST", "/api/v1/compartments");
+        throttled.addHeader("X-Context-Clearance", "INNIE");
+        MockHttpServletResponse rejected = new MockHttpServletResponse();
+        limited.doFilterInternal(throttled, rejected, mock(FilterChain.class));
+        assertThat(rejected.getStatus()).isEqualTo(429);
     }
 }
