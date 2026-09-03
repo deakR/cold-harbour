@@ -6,7 +6,6 @@ The ColdHarbor End-to-End (E2E) Test Suite and verification infrastructure are *
 
 - **Specification**: `TEST_INFRA.md` (748 lines, 255 test cases across 4 tiers)
 - **Automated Verification Harness**: `scripts/verify_e2e.ps1` (PowerShell 7/5 compatible)
-- **Contract Test Engine**: `tests/e2e/test_engine.py` (Python 3 standard library)
 - **Test Data Fixtures**: `tests/e2e/fixtures/*.json` (Valid payloads, poison pills, events, dead drops, audits)
 - **Execution Verification Status**: 100% PASS across all 6 mandatory integration scenarios
 
@@ -64,9 +63,9 @@ powershell -ExecutionPolicy Bypass -File scripts/verify_e2e.ps1 `
     -PostgresPort 5432
 ```
 
-### 4.4 Python Contract Engine Direct Invocation
+### 4.4 Go Unit Tests Direct Invocation
 ```bash
-python tests/e2e/test_engine.py
+cd services/worker-engine && go test ./...
 ```
 
 ---
@@ -93,7 +92,6 @@ if ($LASTEXITCODE -ne 0) {
 - `TEST_INFRA.md`: Full 4-Tier Test Framework Specification (255 test cases).
 - `TEST_READY.md`: Test suite readiness declaration and execution manual (this file).
 - `scripts/verify_e2e.ps1`: Automated PowerShell verification harness.
-- `tests/e2e/test_engine.py`: Python verification and contract validation engine.
 - `tests/e2e/fixtures/job_dispatch_valid.json`: Canonical valid job dispatch fixture.
 - `tests/e2e/fixtures/job_dispatch_poison.json`: Poison pill job dispatch fixture for DLQ testing.
 - `tests/e2e/fixtures/event_sample.json`: Canonical Pub/Sub event envelope fixture.

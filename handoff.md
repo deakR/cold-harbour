@@ -17,9 +17,8 @@ Committed this session:
 
 ## 2. Verification (this session, no rework)
 
-- `go test ./...` in `services/worker-engine`: PASS (`config`, `engine`, `model`; `cmd/worker` has no tests)
-- `python tests/e2e/test_engine.py`: 6/6 PASS
-- `scripts/verify_e2e.ps1 -MockMode`: 6/6 PASS (Scenarios 1-6, 100%)
+- `go test ./...` in `services/worker-engine`: PASS (`config`, `engine`, `model`; `cmd/worker` has no tests). `go vet ./...` clean.
+- `scripts/verify_e2e.ps1 -MockMode`: 6/6 PASS (Scenarios 1-6, 100%). Self-contained PowerShell; no Python dependency.
 - `services/control-plane/target/` contains built jar + `surefire-reports/` (prior build succeeded)
 - `web/dist/` contains built bundle (prior build succeeded)
 
@@ -42,7 +41,6 @@ Live infra verification blocked: Docker daemon down (`npipe:////./pipe/dockerDes
 ```powershell
 git status --short
 go test ./...  # from services/worker-engine
-python tests/e2e/test_engine.py  # from root
 powershell -ExecutionPolicy Bypass -File scripts/verify_e2e.ps1 -MockMode
 docker compose -f docker/docker-compose.yml up -d
 powershell -ExecutionPolicy Bypass -File scripts/verify_e2e.ps1

@@ -47,7 +47,7 @@ public class AuditRecord {
     @Column(name = "completed_at", nullable = false)
     private Instant completedAt;
 
-    @Column(name = "metadata", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "metadata", columnDefinition = "jsonb", nullable = false)
     private String metadata = "{}";
 
     public AuditRecord() {

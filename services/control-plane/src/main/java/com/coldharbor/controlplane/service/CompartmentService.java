@@ -95,14 +95,14 @@ public class CompartmentService {
 
     /**
      * Retrieves and verifies sealed Dead Drop archive.
+     * Falls back to the durable PostgreSQL audit record when the Redis TTL has expired,
+     * so results remain retrievable after the self-destruct window.
      */
     public DeadDropResponse getDeadDrop(String compartmentId, ContextClearance callerClearance) {
         String archiveKey = archivePrefix + compartmentId;
         String archiveJson = redisTemplate.opsForValue().get(archiveKey);
 
-        if (archiveJson == null || archiveJson.trim().isEmpty()) {
-            throw new NotFoundException("Dead drop not found or expired for compartment: " + compartmentId);
-        }
+        if (archiveJson != null && !archiveJson.trim().isEmpty()) {
 
         DeadDropPayload payload;
         try {
@@ -133,6 +133,39 @@ public class CompartmentService {
         response.setTtlSeconds(payload.getTtlSeconds());
         response.setRemainingTtlSeconds(remainingTtl != null && remainingTtl > 0 ? remainingTtl : 0L);
 
+        return response;
+        }
+
+        return getDeadDropFromAudit(compartmentId, callerClearance);
+    }
+
+    private DeadDropResponse getDeadDropFromAudit(String compartmentId, ContextClearance callerClearance) {
+        AuditRecord ar = auditRecordRepository.findFirstByCompartmentIdOrderByCompletedAtDesc(compartmentId)
+                .orElseThrow(() -> new NotFoundException("Dead drop not found or expired for compartment: " + compartmentId));
+        if (callerClearance != null && !callerClearance.canAccess(ar.getContext())) {
+            throw new ForbiddenException("Clearance " + callerClearance + " cannot access " +
+                    ar.getContext() + " dead drop for " + compartmentId);
+        }
+        Object output = null;
+        try {
+            var node = objectMapper.readTree(ar.getMetadata());
+            if (node != null && node.has("output")) {
+                output = objectMapper.convertValue(node.get("output"), Object.class);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to parse audit metadata output for {}: {}", compartmentId, e.getMessage());
+        }
+        DeadDropResponse response = new DeadDropResponse();
+        response.setCompartmentId(ar.getCompartmentId());
+        response.setOwnerId(ar.getOwnerId());
+        response.setContext(ar.getContext());
+        response.setTaskType(ar.getTaskType());
+        response.setOutput(output);
+        response.setChecksum(ar.getChecksum());
+        response.setDurationMs(ar.getDurationMs());
+        response.setArchivedAt(ar.getCompletedAt());
+        response.setCompletedAt(ar.getCompletedAt());
+        response.setRemainingTtlSeconds(0L);
         return response;
     }
 }

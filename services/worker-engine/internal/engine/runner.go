@@ -2,6 +2,8 @@ package engine
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -61,13 +63,27 @@ func (r *TaskRunner) Execute(
 		}
 	}
 
-	// Internal state accumulator
+	// Internal state accumulator (DATA_REDUCTION) plus per-type resume state.
+	// Each task type uses distinct CPU-bound work so the Go worker pool earns
+	// its place: numeric reduction vs. hash-chain stream vs. seal canonicalization.
+	taskType := job.TaskType
+	if taskType == "" {
+		taskType = "DATA_REDUCTION"
+	}
 	var accumulator int64 = 0
+	var streamDigest string
+	var sealedCount int64
 	if intermediateData != "" {
 		var state map[string]any
 		if err := json.Unmarshal([]byte(intermediateData), &state); err == nil {
 			if v, ok := state["accumulator"].(float64); ok {
 				accumulator = int64(v)
+			}
+			if v, ok := state["digest"].(string); ok {
+				streamDigest = v
+			}
+			if v, ok := state["sealed"].(float64); ok {
+				sealedCount = int64(v)
 			}
 		}
 	}
@@ -81,7 +97,7 @@ func (r *TaskRunner) Execute(
 			}
 		}
 	}
-
+	inputSeed := inputFingerprint(job.Payload)
 	// Step 1: 25% milestone
 	if currentStep < 1 {
 		select {
@@ -89,12 +105,19 @@ func (r *TaskRunner) Execute(
 			return nil, ctx.Err()
 		default:
 		}
-		accumulator += batchSize * 10
-		if err := recorder.Record(ctx, 1, 25, map[string]any{
-			"step":        1,
-			"accumulator": accumulator,
-			"milestone":   "first_quartile_reduced",
-		}); err != nil {
+		var state map[string]any
+		switch taskType {
+		case "CIPHER_STREAM":
+			streamDigest = chainDigest(streamDigest, inputSeed, 1)
+			state = map[string]any{"step": 1, "digest": streamDigest, "milestone": "stream_quartile_1"}
+		case "ARCHIVE_SEAL":
+			sealedCount += batchSize / 4
+			state = map[string]any{"step": 1, "sealed": sealedCount, "milestone": "seal_quartile_1"}
+		default:
+			accumulator += batchSize * 10
+			state = map[string]any{"step": 1, "accumulator": accumulator, "milestone": "first_quartile_reduced"}
+		}
+		if err := recorder.Record(ctx, 1, 25, state); err != nil {
 			return nil, fmt.Errorf("step 1 failed: %w", err)
 		}
 		if crashAtStep == 1 {
@@ -109,12 +132,19 @@ func (r *TaskRunner) Execute(
 			return nil, ctx.Err()
 		default:
 		}
-		accumulator += batchSize * 25
-		if err := recorder.Record(ctx, 2, 50, map[string]any{
-			"step":        2,
-			"accumulator": accumulator,
-			"milestone":   "half_quartile_reduced",
-		}); err != nil {
+		var state map[string]any
+		switch taskType {
+		case "CIPHER_STREAM":
+			streamDigest = chainDigest(streamDigest, inputSeed, 2)
+			state = map[string]any{"step": 2, "digest": streamDigest, "milestone": "stream_quartile_2"}
+		case "ARCHIVE_SEAL":
+			sealedCount += batchSize / 4
+			state = map[string]any{"step": 2, "sealed": sealedCount, "milestone": "seal_quartile_2"}
+		default:
+			accumulator += batchSize * 25
+			state = map[string]any{"step": 2, "accumulator": accumulator, "milestone": "half_quartile_reduced"}
+		}
+		if err := recorder.Record(ctx, 2, 50, state); err != nil {
 			return nil, fmt.Errorf("step 2 failed: %w", err)
 		}
 		if crashAtStep == 2 {
@@ -129,12 +159,19 @@ func (r *TaskRunner) Execute(
 			return nil, ctx.Err()
 		default:
 		}
-		accumulator += batchSize * 42
-		if err := recorder.Record(ctx, 3, 75, map[string]any{
-			"step":        3,
-			"accumulator": accumulator,
-			"milestone":   "third_quartile_reduced",
-		}); err != nil {
+		var state map[string]any
+		switch taskType {
+		case "CIPHER_STREAM":
+			streamDigest = chainDigest(streamDigest, inputSeed, 3)
+			state = map[string]any{"step": 3, "digest": streamDigest, "milestone": "stream_quartile_3"}
+		case "ARCHIVE_SEAL":
+			sealedCount += batchSize / 4
+			state = map[string]any{"step": 3, "sealed": sealedCount, "milestone": "seal_quartile_3"}
+		default:
+			accumulator += batchSize * 42
+			state = map[string]any{"step": 3, "accumulator": accumulator, "milestone": "third_quartile_reduced"}
+		}
+		if err := recorder.Record(ctx, 3, 75, state); err != nil {
 			return nil, fmt.Errorf("step 3 failed: %w", err)
 		}
 		if crashAtStep == 3 {
@@ -148,12 +185,19 @@ func (r *TaskRunner) Execute(
 		return nil, ctx.Err()
 	default:
 	}
-	accumulator += batchSize*21 + 201
-
-	output := map[string]any{
-		"processedCount": batchSize,
-		"reducedSum":     accumulator,
-		"status":         "SUCCESS",
+	output := map[string]any{"processedCount": batchSize, "status": "SUCCESS"}
+	switch taskType {
+	case "CIPHER_STREAM":
+		streamDigest = chainDigest(streamDigest, inputSeed, 4)
+		output["streamDigest"] = streamDigest
+	case "ARCHIVE_SEAL":
+		sealedCount += batchSize - 3*(batchSize/4)
+		sum := sha256.Sum256([]byte(inputSeed))
+		output["sealedCount"] = sealedCount
+		output["sealChecksum"] = hex.EncodeToString(sum[:])
+	default:
+		accumulator += batchSize*21 + 201
+		output["reducedSum"] = accumulator
 	}
 
 	duration := time.Since(start).Milliseconds()
@@ -165,4 +209,20 @@ func (r *TaskRunner) Execute(
 		Output:     output,
 		DurationMs: duration,
 	}, nil
+}
+
+func chainDigest(prev, seed string, step int) string {
+	sum := sha256.Sum256([]byte(fmt.Sprintf("%s|%s|%d", prev, seed, step)))
+	return hex.EncodeToString(sum[:])
+}
+
+func inputFingerprint(payload map[string]any) string {
+	if payload == nil {
+		return "empty"
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Sprintf("%v", payload)
+	}
+	return string(b)
 }
