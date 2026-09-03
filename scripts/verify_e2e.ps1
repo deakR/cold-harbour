@@ -136,7 +136,7 @@ try {
         $response = Invoke-RestMethod -Uri "http://${TargetHost}:${TargetPort}/api/v1/compartments" `
             -Method Post `
             -ContentType "application/json" `
-            -Headers @{ "X-Context" = "INNIE"; "X-Owner-Id" = "usr_e2e_runner" } `
+            -Headers @{ "X-Context-Clearance" = "INNIE"; "X-Owner-Id" = "usr_e2e_runner" } `
             -Body $body `
             -TimeoutSec 5
 

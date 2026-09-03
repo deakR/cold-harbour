@@ -31,6 +31,26 @@ coldharbor:
     meta-prefix: "compartment:"
   security:
     clearance-header: X-Context-Clearance
+    # Key -> clearance mapping, e.g.:
+    #   coldharbor.security.api-keys.ops-key-1: INNIE
+    #   coldharbor.security.api-keys.admin-key-1: ADMIN
+    # When keys are configured, presenting a valid X-API-Key takes precedence
+    # over the self-asserted clearance header.
+    # When true (dev/test default), the self-asserted clearance header is accepted
+    # when no API key is presented. Set false in production with keys configured.
+    allow-unsafe-header: ${COLDHARBOR_ALLOW_UNSAFE_HEADER:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: coldharbor-control-plane
 
 logging:
   level:

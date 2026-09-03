@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -64,6 +65,27 @@ func main() {
 	consumer.Start(ctx)
 	log.Printf("[Worker %s] Engine running. Listening for stream jobs...", cfg.WorkerID)
 
+	// Metrics + health endpoint (stdlib only, Prometheus text exposition)
+	metricsAddr := os.Getenv("METRICS_ADDR")
+	if metricsAddr == "" {
+		metricsAddr = "localhost:9091"
+	}
+	metricsSrv := &http.Server{Addr: metricsAddr}
+	http.HandleFunc("/metrics", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
+		consumer.MetricsSnapshot().WritePrometheus(w)
+	})
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"status":"UP","workerId":%q}`, cfg.WorkerID)
+	})
+	go func() {
+		if err := metricsSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("[Metrics] server error: %v", err)
+		}
+	}()
+	log.Printf("[Metrics] exposition on http://%s/metrics", metricsAddr)
+
 	// Trap termination signals for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -74,6 +96,9 @@ func main() {
 	// Trigger shutdown
 	cancel()
 	consumer.Stop()
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	_ = metricsSrv.Shutdown(shutdownCtx)
 
 	// Close Redis connection
 	if err := rdb.Close(); err != nil {

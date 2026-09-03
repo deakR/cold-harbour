@@ -30,6 +30,7 @@ type Consumer struct {
 	runner     *TaskRunner
 	stopChan   chan struct{}
 	wg         sync.WaitGroup
+	metrics    *Metrics
 }
 
 // NewConsumer initializes the consumer engine with all required subsystems
@@ -53,7 +54,16 @@ func NewConsumer(cfg *config.Config, client redis.UniversalClient) *Consumer {
 		heartbeat:  heartbeat,
 		runner:     runner,
 		stopChan:   make(chan struct{}),
+		metrics:    &Metrics{},
 	}
+}
+
+// MetricsSnapshot exposes the consumer counters for HTTP exposition.
+func (c *Consumer) MetricsSnapshot() *Metrics {
+	if c.metrics == nil {
+		return &Metrics{}
+	}
+	return c.metrics
 }
 
 // InitConsumerGroup initializes the Redis Stream and consumer group if not already present
@@ -157,9 +167,12 @@ func ParseStreamMessage(xmsg redis.XMessage) (*model.JobMessage, error) {
 
 // ProcessJob executes the complete lifecycle of a single claimed job
 func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
+	c.metrics.IncClaimed()
 	job, err := ParseStreamMessage(xmsg)
 	if err != nil {
 		log.Printf("[worker %s] failed to parse message %s: %v", c.cfg.WorkerID, xmsg.ID, err)
+		c.metrics.IncFailed()
+		c.metrics.IncDLQRouted()
 		// Poison pill: route to DLQ immediately
 		return c.dlq.RouteToDLQ(ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID, c.cfg.WorkerID,
 			&model.JobMessage{CompartmentID: fmt.Sprintf("unparseable-%s", xmsg.ID)},
@@ -180,6 +193,8 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 	if retries >= maxRetries {
 		log.Printf("[worker %s] compartment %s exceeded max retries (%d/%d), forwarding to DLQ",
 			c.cfg.WorkerID, compartmentID, retries, maxRetries)
+		c.metrics.IncFailed()
+		c.metrics.IncDLQRouted()
 		return c.dlq.RouteToDLQ(ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID, c.cfg.WorkerID,
 			job, retries, "max retries exceeded")
 	}
@@ -195,6 +210,7 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 	taskRes, err := c.runner.Execute(ctx, job, recorder)
 	if err != nil {
 		log.Printf("[worker %s] execution error on compartment %s: %v", c.cfg.WorkerID, compartmentID, err)
+		c.metrics.IncFailed()
 		newRetries, _ := c.dlq.IncrementRetryCount(ctx, compartmentID)
 
 		if strings.Contains(err.Error(), "SIMULATED_WORKER_CRASH") {
@@ -203,6 +219,7 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 		}
 
 		if newRetries >= maxRetries {
+			c.metrics.IncDLQRouted()
 			return c.dlq.RouteToDLQ(ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID, c.cfg.WorkerID,
 				job, newRetries, err.Error())
 		}
@@ -230,6 +247,7 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 	if err := c.archive.Seal(ctx, deadDrop); err != nil {
 		return fmt.Errorf("failed to seal dead drop archive: %w", err)
 	}
+	c.metrics.IncSealed()
 
 	if err := fsm.Transition(ctx, model.StateArchived, 100, fmt.Sprintf("Dead drop sealed with checksum %s", deadDrop.Checksum)); err != nil {
 		return fmt.Errorf("failed to transition to ARCHIVED: %w", err)
@@ -245,6 +263,7 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 	if err != nil || exists {
 		return fmt.Errorf("zero-leak invariant violated: scratchpad for %s still exists post-purge", compartmentID)
 	}
+	c.metrics.IncPurged()
 
 	if err := fsm.Transition(ctx, model.StatePurged, 100, "Scratchpad memory purged atomically"); err != nil {
 		return fmt.Errorf("failed to transition to PURGED: %w", err)
@@ -254,6 +273,7 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 	if err := c.client.XAck(ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID).Err(); err != nil {
 		return fmt.Errorf("failed to XACK message %s: %w", xmsg.ID, err)
 	}
+	c.metrics.IncCompleted()
 
 	// 8. Clean up retry counter
 	_ = c.client.Del(ctx, c.dlq.RetryKey(compartmentID)).Err()
@@ -339,6 +359,7 @@ func (c *Consumer) runRecoveryPass(ctx context.Context) {
 	}
 
 	for _, msg := range msgs {
+		c.metrics.IncRecovered()
 		_ = c.ProcessJob(ctx, msg)
 	}
 }

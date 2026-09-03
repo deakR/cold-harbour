@@ -134,6 +134,13 @@ public class EventRelayService implements MessageListener {
 
     private void recordDurableAudit(EventMessage event) {
         String compartmentId = event.getCompartmentId();
+        String state = event.getEffectiveToState();
+        // Only terminal success states persist; intermediate events (RUNNING,
+        // CHECKPOINT, COMPLETED) would otherwise race into duplicate rows.
+        if (!"ARCHIVED".equalsIgnoreCase(state) && !"PURGED".equalsIgnoreCase(state)
+                && !"FAILED".equalsIgnoreCase(state)) {
+            return;
+        }
         try {
             String archiveKey = archivePrefix + compartmentId;
             String archiveJson = redisTemplate.opsForValue().get(archiveKey);

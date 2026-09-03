@@ -19,7 +19,8 @@ services:
     container_name: coldharbor-postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      # Host postgres occupies 5432 on dev machines; remapped to avoid conflict.
+      - "5433:5432"
     environment:
       POSTGRES_DB: coldharbor
       POSTGRES_USER: coldharbor

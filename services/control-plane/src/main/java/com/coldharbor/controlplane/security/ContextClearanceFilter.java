@@ -24,9 +24,21 @@ public class ContextClearanceFilter extends OncePerRequestFilter {
     public static final String CLEARANCE_HEADER = "X-Context-Clearance";
     public static final String FALLBACK_HEADER_1 = "X-Clearance";
     public static final String FALLBACK_HEADER_2 = "X-ColdHarbor-Context";
+    public static final String API_KEY_HEADER = "X-API-Key";
+    public static final String TRACE_HEADER = "X-Trace-Id";
     public static final String CLEARANCE_ATTRIBUTE = "coldharbor_clearance";
+    public static final String TRACE_ATTRIBUTE = "coldharbor_trace_id";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ApiKeyClearanceProperties apiKeys;
+
+    public ContextClearanceFilter() {
+        this(new ApiKeyClearanceProperties());
+    }
+
+    public ContextClearanceFilter(ApiKeyClearanceProperties apiKeys) {
+        this.apiKeys = apiKeys != null ? apiKeys : new ApiKeyClearanceProperties();
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -51,11 +63,31 @@ public class ContextClearanceFilter extends OncePerRequestFilter {
             headerValue = request.getHeader(FALLBACK_HEADER_2);
         }
 
-        ContextClearance clearance = ContextClearance.fromString(headerValue);
+        String apiKey = ApiKeyClearanceProperties.normalizeKey(request.getHeader(API_KEY_HEADER));
+        ContextClearance clearance = null;
+        if (apiKey != null && !apiKey.isEmpty()) {
+            clearance = apiKeys.resolve(apiKey);
+            if (clearance == null) {
+                sendErrorResponse(response, HttpStatus.UNAUTHORIZED.value(), "Unauthorized", "Invalid API key.");
+                return;
+            }
+        } else if (apiKeys.hasKeys() && !apiKeys.isAllowUnsafeHeader()) {
+            sendErrorResponse(response, HttpStatus.UNAUTHORIZED.value(), "Unauthorized", "API key required. Provide a valid " + API_KEY_HEADER + " header.");
+            return;
+        } else {
+            clearance = ContextClearance.fromString(headerValue);
+        }
         if (clearance == null) {
             sendForbiddenResponse(response, "Missing or invalid " + CLEARANCE_HEADER + " header. Allowed values: INNIE, OUTIE, SYSTEM, ADMIN.");
             return;
         }
+
+        String traceId = request.getHeader(TRACE_HEADER);
+        if (traceId == null || traceId.trim().isEmpty()) {
+            traceId = java.util.UUID.randomUUID().toString();
+        }
+        request.setAttribute(TRACE_ATTRIBUTE, traceId);
+        response.setHeader(TRACE_HEADER, traceId);
 
         ClearanceContext.setClearance(clearance);
         request.setAttribute(CLEARANCE_ATTRIBUTE, clearance);
@@ -67,11 +99,15 @@ public class ContextClearanceFilter extends OncePerRequestFilter {
     }
 
     private void sendForbiddenResponse(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpStatus.FORBIDDEN.value());
+        sendErrorResponse(response, HttpStatus.FORBIDDEN.value(), "Forbidden", message);
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, int status, String error, String message) throws IOException {
+        response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         Map<String, Object> body = Map.of(
-                "status", HttpStatus.FORBIDDEN.value(),
-                "error", "Forbidden",
+                "status", status,
+                "error", error,
                 "message", message
         );
         response.getWriter().write(objectMapper.writeValueAsString(body));

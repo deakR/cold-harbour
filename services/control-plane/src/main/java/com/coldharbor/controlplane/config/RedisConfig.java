@@ -42,6 +42,13 @@ public class RedisConfig {
                                                                       EventRelayService eventRelayService) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
+        // Single-threaded dispatch: preserves Pub/Sub order per compartment so the
+        // audit exists-check-then-insert in EventRelayService/AuditService cannot race.
+        container.setTaskExecutor(java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "coldharbor-event-relay");
+            t.setDaemon(true);
+            return t;
+        }));
         container.addMessageListener(eventRelayService, new ChannelTopic(eventChannel));
         return container;
     }

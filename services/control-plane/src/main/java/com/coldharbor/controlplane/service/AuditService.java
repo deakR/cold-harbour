@@ -42,7 +42,7 @@ public class AuditService {
     }
 
     @Transactional
-    public AuditRecord recordCompletedJob(String compartmentId, DeadDropPayload deadDrop, String details) {
+    public synchronized AuditRecord recordCompletedJob(String compartmentId, DeadDropPayload deadDrop, String details) {
         if (auditRecordRepository.existsByCompartmentIdAndFinalState(compartmentId, "PURGED") ||
                 auditRecordRepository.existsByCompartmentIdAndFinalState(compartmentId, "ARCHIVED") ||
                 auditRecordRepository.existsByCompartmentIdAndFinalState(compartmentId, "COMPLETED")) {
