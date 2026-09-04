@@ -33,6 +33,9 @@ public class WorkerWellnessMonitor {
     @Value("${coldharbor.redis.dlq-stream-name:coldharbor:jobs:dlq}")
     private String dlqStreamName;
 
+    @Value("${coldharbor.redis.stream-name:coldharbor:jobs}")
+    private String streamName;
+
     private final Map<String, WorkerStatusResponse> workerRegistry = new ConcurrentHashMap<>();
 
     public WorkerWellnessMonitor(StringRedisTemplate redisTemplate, ObjectMapper objectMapper) {
@@ -175,5 +178,61 @@ public class WorkerWellnessMonitor {
         snapshot.put("size", size);
         snapshot.put("entries", entries);
         return snapshot;
+    }
+
+    /**
+     * Requeues up to {@code limit} dead-letter entries onto the main stream for
+     * another attempt (e.g. after fixing the transient cause), removing them from
+     * the DLQ. Returns the redriven stream IDs. Poison pills that still fail will
+     * land back in the DLQ through the normal retry path.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> redriveDlq(int limit) {
+        int capped = Math.min(Math.max(limit, 1), 100);
+        List<String> redriven = new ArrayList<>();
+        try {
+            var ops = redisTemplate.opsForStream();
+            var records = ops.range(
+                    dlqStreamName,
+                    org.springframework.data.domain.Range.closed("0-0", "+"),
+                    org.springframework.data.redis.connection.Limit.limit().count(capped));
+            if (records == null || records.isEmpty()) {
+                return Map.of("redriven", 0, "ids", List.of());
+            }
+            List<org.springframework.data.redis.connection.stream.RecordId> ids = new ArrayList<>();
+            for (var record : records) {
+                Map<String, String> fields = new java.util.LinkedHashMap<>();
+                record.getValue().forEach((k, v) -> fields.put(String.valueOf(k), String.valueOf(v)));
+                String jobData = fields.get("jobData");
+                if (jobData == null || jobData.trim().isEmpty()) {
+                    continue;
+                }
+                Map<String, Object> job = objectMapper.readValue(jobData, Map.class);
+                Map<String, String> streamFields = new java.util.LinkedHashMap<>();
+                for (String key : new String[]{"compartmentId", "context", "ownerId", "taskType",
+                        "maxRetries", "timeoutSeconds", "createdAt"}) {
+                    Object val = job.get(key);
+                    if (val != null) {
+                        streamFields.put(key, String.valueOf(val));
+                    }
+                }
+                Object payload = job.get("payload");
+                streamFields.put("payload", payload != null ? objectMapper.writeValueAsString(payload) : "{}");
+                streamFields.put("data", jobData);
+                ops.add(org.springframework.data.redis.connection.stream.MapRecord.create(streamName, streamFields));
+                ids.add(record.getId());
+                redriven.add(String.valueOf(fields.getOrDefault("compartmentId", record.getId().getValue())));
+            }
+            if (!ids.isEmpty()) {
+                ops.delete(dlqStreamName, ids.toArray(new org.springframework.data.redis.connection.stream.RecordId[0]));
+            }
+        } catch (Exception e) {
+            log.warn("DLQ redrive failed: {}", e.getMessage());
+            throw new RuntimeException("DLQ redrive failed: " + e.getMessage(), e);
+        }
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("redriven", redriven.size());
+        result.put("ids", redriven);
+        return result;
     }
 }

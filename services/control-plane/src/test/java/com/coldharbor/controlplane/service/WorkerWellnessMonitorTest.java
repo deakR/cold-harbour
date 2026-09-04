@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class WorkerWellnessMonitorTest {
@@ -76,5 +78,40 @@ class WorkerWellnessMonitorTest {
         assertThat(w.getStatus()).isEqualTo("DEAD");
         assertThat(w.isHealthy()).isFalse();
         assertThat(w.getSecondsSinceLastHeartbeat()).isGreaterThanOrEqualTo(45L);
+    }
+
+    @Test
+    @DisplayName("Redrive moves DLQ entries back to the main stream and clears them")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void shouldRedriveDlqEntries() throws Exception {
+        org.springframework.data.redis.core.StreamOperations streamOps =
+                mock(org.springframework.data.redis.core.StreamOperations.class);
+        when(redisTemplate.opsForStream()).thenReturn(streamOps);
+        ReflectionTestUtils.setField(monitor, "dlqStreamName", "coldharbor:jobs:dlq");
+        ReflectionTestUtils.setField(monitor, "streamName", "coldharbor:jobs");
+
+        String jobData = "{\"compartmentId\":\"cpt_dlq_1\",\"context\":\"INNIE\","
+                + "\"ownerId\":\"usr_1\",\"taskType\":\"DATA_REDUCTION\","
+                + "\"payload\":{\"batchSize\":100},\"maxRetries\":3,\"timeoutSeconds\":300,"
+                + "\"createdAt\":\"2026-09-03T10:00:00Z\"}";
+        org.springframework.data.redis.connection.stream.MapRecord<String, String, String> record =
+                mock(org.springframework.data.redis.connection.stream.MapRecord.class);
+        org.springframework.data.redis.connection.stream.RecordId recordId =
+                mock(org.springframework.data.redis.connection.stream.RecordId.class);
+        when(record.getId()).thenReturn(recordId);
+        java.util.Map<String, String> fields = new java.util.LinkedHashMap<>();
+        fields.put("compartmentId", "cpt_dlq_1");
+        fields.put("jobData", jobData);
+        when(record.getValue()).thenReturn((java.util.Map) fields);
+        when(streamOps.range(org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any())).thenReturn(java.util.List.of(record));
+
+        java.util.Map<String, Object> result = monitor.redriveDlq(10);
+
+        assertThat(result.get("redriven")).isEqualTo(1);
+        verify(streamOps, times(1)).add(any());
+        verify(streamOps, times(1)).delete(eq("coldharbor:jobs:dlq"),
+                any(org.springframework.data.redis.connection.stream.RecordId[].class));
     }
 }

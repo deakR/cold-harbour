@@ -19,6 +19,7 @@ via `XAUTOCLAIM` (see `TEST_INFRA.md` TC-T1-F07-01).
 | Date (UTC) | Scenario | Outcome |
 |---|---|---|
 | 2026-09-03 17:19 | `simulateCrashAtStep: 2`, single worker, PEL reclaim | Crashed at step 2, sealed 43s later from step 3 (`reducedSum` 19801 correct). Metrics: failed 1, recovered 1, completed 52. Exactly 1 audit row after single-thread relay fix. |
+| 2026-09-04 03:00 | Poison pill (`simulateFailure`, `maxRetries: 1`) then DLQ redrive | Failed job landed in `coldharbor:jobs:dlq` with reason and original payload. `POST /api/v1/workers/dlq/redrive` returned `redriven: 1`; worker reprocessed and the still-failing job returned to the DLQ (size back to 1). Redrive loop proven end to end. |
 
 ## Live E2E
 

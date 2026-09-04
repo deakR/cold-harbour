@@ -4,6 +4,7 @@ import com.coldharbor.controlplane.dto.WorkerStatusResponse;
 import com.coldharbor.controlplane.service.WorkerWellnessMonitor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,5 +41,14 @@ public class WorkerController {
     public ResponseEntity<Map<String, Object>> getDlq(
             @RequestParam(name = "limit", defaultValue = "20") int limit) {
         return ResponseEntity.ok(workerWellnessMonitor.getDlqSnapshot(limit));
+    }
+
+    /**
+     * Requeues dead-letter entries onto the main stream for another attempt.
+     */
+    @PostMapping("/dlq/redrive")
+    public ResponseEntity<Map<String, Object>> redriveDlq(
+            @RequestParam(name = "limit", defaultValue = "10") int limit) {
+        return ResponseEntity.ok(workerWellnessMonitor.redriveDlq(limit));
     }
 }
