@@ -9,7 +9,7 @@
 
 **ColdHarbor** is a distributed execution engine built on the principles of execution isolation, ephemeral memory, fault-tolerant checkpointing, and immutable outcomes. 
 
-Every task runs in an isolated **Compartment** with strict security boundaries (`INNIE` / `OUTIE`). During execution, intermediate calculations are written to temporary scratchpad memory. Upon task completion or failure, all runtime scratchpad memory is permanently destroyed—leaving only a cryptographically signed output in a self-destructing Dead Drop archive and a durable audit record.
+Every task runs in an isolated **Compartment** with strict security boundaries (`INNIE` / `OUTIE`). During execution, intermediate calculations are written to temporary scratchpad memory. Upon task completion or failure, the runtime scratchpad key is deleted—leaving only a SHA-256 checksummed output in a self-destructing Dead Drop archive and a durable audit record.
 
 ---
 
@@ -70,7 +70,7 @@ Intermediate state is held in Redis Hashes (`compartment:{id}:mem`). When a job 
 Workers record periodic progress checkpoints (e.g., 25%, 50%, 75%). If a worker crashes mid-task, another worker claims the unacknowledged message from the Redis Stream consumer group and resumes execution from the latest checkpoint.
 
 ### 4. Dead Drop Archive
-Completed task outputs are sealed with a cryptographic **SHA-256 checksum** and stored with an expiring **TTL** in Redis (`archive:{id}`).
+Completed task outputs are sealed with a **SHA-256 integrity checksum** and stored with an expiring **TTL** in Redis (`archive:{id}`). The checksum detects tampering and corruption; it is not a digital signature and does not authenticate the producer.
 
 ### 5. Dual-Tier Persistence
 - **Hot / Ephemeral (Redis)**: Milliseconds to hours lifespan for active queues, scratchpads, and dead drops.
@@ -98,9 +98,6 @@ coldharbour/
 │   └── worker-engine/         # Go worker pool: FSM, checkpoints, XAUTOCLAIM
 │                              # recovery, Dead Drop sealing, Prometheus metrics
 ├── web/                       # React telemetry dashboard (Vite + TypeScript)
-├── apps/
-│   └── batchseal/             # Wails desktop SaaS: verifiable batch computation
-│                              # (Go + React, seal verification, offline receipts)
 ├── Makefile                   # build/up/stack/verify/bench shortcuts
 └── README.md
 ```
@@ -151,17 +148,6 @@ make bench         # 50-job dispatch benchmark + Dead Drop completion probe
 
 ---
 
-## BatchSeal Desktop App
-
-`apps/batchseal/` is a Wails desktop client that makes the platform daily-use:
-paste numeric batches, watch checkpoint progress, keep SHA-256 receipts with
-local verification and offline copies, browse the durable audit, monitor the
-fleet, and redrive dead letters. See
-[apps/batchseal/README.md](apps/batchseal/README.md). Build with `wails build`
-(requires Go 1.25+, Node 22+, WebView2 runtime).
-
----
-
 ## API Overview
 
 All mutating reads require clearance: `X-API-Key` (preferred, mapped
@@ -179,7 +165,6 @@ server-side via `coldharbor.security.api-keys`) or, when
 | `GET /api/v1/workers` | Worker liveness from heartbeat scan |
 | `GET /api/v1/workers/dlq` | Dead-letter queue depth + recent entries (`?limit=`) |
 | `POST /api/v1/workers/dlq/redrive` | Requeue dead letters onto the main stream (`?limit=`); poison pills that still fail return to the DLQ |
-| `GET /api/v1/workers/dlq` | Dead-letter queue depth + recent entries (`?limit=`) |
 | `GET /ws/events` | WebSocket fanout of `coldharbor:events` transitions |
 | `GET /actuator/health`, `/actuator/prometheus` | Liveness and metrics |
 

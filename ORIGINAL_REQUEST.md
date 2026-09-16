@@ -50,22 +50,22 @@ Implement a production-grade React (Vite + TypeScript + Tailwind CSS) dashboard 
 ## Acceptance Criteria
 
 ### Worker Engine & State Machine
-- [ ] Go worker engine compiles cleanly (`go build ./...`) and passes all unit and integration tests (`go test -v ./...`).
-- [ ] Consumer group consumes jobs reliably and acknowledges (`XACK`) messages only after successful archive and purge.
-- [ ] Ephemeral scratchpad key `compartment:{id}:mem` is verified non-existent (`EXISTS == 0`) after completion and after failure.
-- [ ] Checkpoint resumption successfully recovers interrupted jobs from the exact checkpoint step without re-executing completed work.
-- [ ] Dead Drop key `archive:{id}` contains valid SHA-256 checksum and expires after configured TTL.
+- [x] Go worker engine compiles cleanly (`go build ./...`) and passes all unit and integration tests (`go test -v ./...`).
+- [x] Consumer group consumes jobs reliably and acknowledges (`XACK`) messages only after successful archive and purge.
+- [x] Ephemeral scratchpad key `compartment:{id}:mem` is verified non-existent (`EXISTS == 0`) after completion and after failure.
+- [x] Checkpoint resumption successfully recovers interrupted jobs from the exact checkpoint step without re-executing completed work.
+- [x] Dead Drop key `archive:{id}` contains valid SHA-256 checksum and expires after configured TTL.
 
 ### Control Plane & Persistence
-- [ ] Spring Boot 3 control plane compiles and packages cleanly with Maven/Gradle.
-- [ ] REST API validates payload schemas, authenticates requests, and correctly writes jobs to Redis Streams.
-- [ ] Audit records are durably persisted to PostgreSQL `audit_records` with accurate duration and checksum matching the Dead Drop.
-- [ ] WebSocket gateway streams events to subscribers with sub-second latency.
+- [x] Spring Boot 3 control plane compiles and packages cleanly with Maven/Gradle.
+- [x] REST API validates payload schemas, authenticates requests, and correctly writes jobs to Redis Streams.
+- [x] Audit records are durably persisted to PostgreSQL `audit_records` with accurate duration and checksum matching the Dead Drop.
+- [x] WebSocket gateway streams events to subscribers with sub-second latency.
 
 ### Front-End Dashboard
-- [ ] React application builds without TypeScript or bundle errors (`npm run build`).
-- [ ] UI connects to WebSocket and reflects live state changes in real time.
-- [ ] UI displays worker liveness, compartment progress, and historical audits.
+- [x] React application builds without TypeScript or bundle errors (`npm run build`).
+- [x] UI connects to WebSocket and reflects live state changes in real time.
+- [x] UI displays worker liveness, compartment progress, and historical audits.
 
 ### Safety & Environmental Constraints
-- [ ] No remote Git operations performed (`git push`, GitHub remote modifications are strictly avoided).
+- [x] No remote Git operations performed (`git push`, GitHub remote modifications are strictly avoided).
