@@ -14,6 +14,9 @@
 4. Go workers to Redis. Trusted VPC. Workers hold no credentials and keep no
    local state. Scratchpads are namespaced per compartment and purged on
    terminal state.
+5. WebSocket clients to control plane. The handshake uses the same API-key
+   mapping as REST. The server stores clearance on the session and sends only
+   events whose compartment context is accessible to that clearance.
 
 ## Abuse cases and mitigations
 
@@ -26,9 +29,13 @@
 | Dead Drop expiry destroying evidence | `GET /api/v1/compartments/{id}/deaddrop` falls back to the PostgreSQL audit record after Redis TTL expiry, with `remainingTtlSeconds: 0`. Checksum comparison still applies. |
 | Worker impersonation via forged heartbeat | Heartbeats are liveness hints only. Job ownership derives from Redis Stream PEL semantics (`XAUTOCLAIM` with idle timeout), not heartbeat content. |
 | Scratchpad leak across compartments | Keys are namespaced `compartment:{id}:mem`. Purge is `DEL` on terminal state in success and failure branches, verified with `EXISTS == 0` before `XACK`. |
+| Lost terminal event during control-plane outage | Workers append lifecycle events and full terminal audit envelopes to Redis Streams. PostgreSQL consumers acknowledge and delete audit envelopes only after idempotent persistence. Pub/Sub is live fanout only. |
 
 ## Residual risks
 
-- No request rate limiting. Add a gateway or Spring throttling before internet exposure.
+- Dispatch has an optional per-process, per-IP fixed-window limit. It is
+  disabled by default, resets on restart, and is not shared across control-plane
+  replicas. Enable it for development defense-in-depth and enforce distributed
+  throttling at the production gateway.
 - Redis traffic is unencrypted by default. Enable TLS in managed deployments.
 - API keys are static. Rotate on a schedule. Prefer a secret manager over config files.

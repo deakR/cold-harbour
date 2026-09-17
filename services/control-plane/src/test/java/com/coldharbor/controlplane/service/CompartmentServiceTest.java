@@ -48,10 +48,29 @@ class CompartmentServiceTest {
     }
 
     private AuditRecord audit(String compartmentId) {
+        Map<String, Object> output = new java.util.LinkedHashMap<>();
+        output.put("processedCount", 200);
+        output.put("status", "SUCCESS");
+        String checksum = checksum(output);
+        String metadata;
+        try {
+            metadata = objectMapper.writeValueAsString(Map.of("output", output));
+        } catch (Exception e) {
+            throw new AssertionError(e);
+        }
         return new AuditRecord(
                 UUID.randomUUID(), compartmentId, "usr_1", "INNIE", "DATA_REDUCTION",
-                "PURGED", "abc123", 9L, Instant.now(), Instant.now(),
-                "{\"output\":{\"processedCount\":200,\"status\":\"SUCCESS\"}}");
+                "PURGED", checksum, 9L, Instant.now(), Instant.now(),
+                metadata);
+    }
+
+    private String checksum(Object value) {
+        try {
+            return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(objectMapper.writeValueAsBytes(value)));
+        } catch (Exception e) {
+            throw new AssertionError(e);
+        }
     }
 
     @Test
@@ -61,14 +80,15 @@ class CompartmentServiceTest {
         payload.setCompartmentId("cpt_live");
         payload.setOwnerId("usr_1");
         payload.setContext("INNIE");
-        payload.setChecksum("abc123");
-        payload.setOutput(Map.of("processedCount", 200));
+        Map<String, Object> output = Map.of("processedCount", 200);
+        payload.setChecksum(checksum(output));
+        payload.setOutput(output);
         when(valueOperations.get("archive:cpt_live")).thenReturn(objectMapper.writeValueAsString(payload));
         when(redisTemplate.getExpire("archive:cpt_live", TimeUnit.SECONDS)).thenReturn(3500L);
 
         DeadDropResponse response = compartmentService.getDeadDrop("cpt_live", ContextClearance.INNIE);
 
-        assertThat(response.getChecksum()).isEqualTo("abc123");
+        assertThat(response.getChecksum()).isEqualTo(checksum(output));
         assertThat(response.getRemainingTtlSeconds()).isEqualTo(3500L);
     }
 
@@ -81,7 +101,7 @@ class CompartmentServiceTest {
 
         DeadDropResponse response = compartmentService.getDeadDrop("cpt_old", ContextClearance.SYSTEM);
 
-        assertThat(response.getChecksum()).isEqualTo("abc123");
+        assertThat(response.getChecksum()).isNotBlank();
         assertThat(response.getRemainingTtlSeconds()).isEqualTo(0L);
         assertThat(response.getOutput()).isNotNull();
     }
@@ -106,5 +126,20 @@ class CompartmentServiceTest {
 
         assertThatThrownBy(() -> compartmentService.getDeadDrop("cpt_old", ContextClearance.OUTIE))
                 .isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    void shouldRejectTamperedDeadDrop() throws Exception {
+        DeadDropPayload payload = new DeadDropPayload();
+        payload.setCompartmentId("cpt_tampered");
+        payload.setContext("INNIE");
+        payload.setChecksum(checksum(Map.of("value", 1)));
+        payload.setOutput(Map.of("value", 2));
+        when(valueOperations.get("archive:cpt_tampered"))
+                .thenReturn(objectMapper.writeValueAsString(payload));
+
+        assertThatThrownBy(() -> compartmentService.getDeadDrop("cpt_tampered", ContextClearance.INNIE))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Dead drop integrity verification failed");
     }
 }

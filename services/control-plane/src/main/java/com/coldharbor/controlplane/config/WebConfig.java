@@ -1,6 +1,7 @@
 package com.coldharbor.controlplane.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -10,13 +11,17 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    @Value("${coldharbor.websocket.allowed-origins:http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173}")
+    private String[] allowedOrigins;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns("*")
+                .allowedOrigins(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH")
                 .allowedHeaders("*")
-                .exposedHeaders("X-Context-Clearance", "X-Clearance", "X-ColdHarbor-Context")
+                .exposedHeaders("X-Context-Clearance", "X-Clearance",
+                        "X-ColdHarbor-Context", "X-Trace-Id")
                 .allowCredentials(false)
                 .maxAge(3600);
     }

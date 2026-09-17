@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    groups:
+      web-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: maven
+    directory: /services/control-plane
+    schedule:
+      interval: weekly
+    groups:
+      control-plane-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: gomod
+    directory: /services/worker-engine
+    schedule:
+      interval: weekly
+    groups:
+      worker-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

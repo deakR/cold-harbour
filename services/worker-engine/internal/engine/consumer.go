@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -23,22 +22,33 @@ type Consumer struct {
 	client     redis.UniversalClient
 	scratchpad *ScratchpadManager
 	archive    *ArchiveManager
+	completion *CompletionGuard
 	publisher  EventPublisher
 	dlq        *DLQHandler
 	recovery   *RecoveryManager
 	heartbeat  *HeartbeatEmitter
-	runner     *TaskRunner
+	runner     TaskExecutor
+	jobs       chan redis.XMessage
 	stopChan   chan struct{}
+	runCancel  context.CancelFunc
 	wg         sync.WaitGroup
 	metrics    *Metrics
 }
 
 // NewConsumer initializes the consumer engine with all required subsystems
 func NewConsumer(cfg *config.Config, client redis.UniversalClient) *Consumer {
+	if cfg.Concurrency <= 0 {
+		cfg.Concurrency = 1
+	}
+	if cfg.MaxRetries <= 0 {
+		cfg.MaxRetries = config.DefaultConfig().MaxRetries
+	}
+	metrics := &Metrics{}
 	scratchpad := NewScratchpadManager(client)
 	archive := NewArchiveManager(client, cfg.ArchiveTTL)
-	publisher := NewEventPublisher(client, cfg.EventChannel)
-	dlq := NewDLQHandler(client, cfg.DLQStreamName, scratchpad, publisher)
+	publisher := NewEventPublisher(client, cfg.EventChannel, cfg.EventStreamName)
+	publisher.metrics = metrics
+	dlq := NewDLQHandler(client, cfg.DLQStreamName, scratchpad, publisher, cfg.AuditStreamName)
 	recovery := NewRecoveryManager(client, cfg.StreamName, cfg.ConsumerGroup, cfg.WorkerID, cfg.MinIdleRecoveryTime, scratchpad)
 	heartbeat := NewHeartbeatEmitter(client, cfg.WorkerID, cfg.HeartbeatInterval, cfg.HeartbeatTTL)
 	runner := NewTaskRunner(scratchpad)
@@ -48,13 +58,15 @@ func NewConsumer(cfg *config.Config, client redis.UniversalClient) *Consumer {
 		client:     client,
 		scratchpad: scratchpad,
 		archive:    archive,
+		completion: NewCompletionGuard(client, cfg.ArchiveTTL),
 		publisher:  publisher,
 		dlq:        dlq,
 		recovery:   recovery,
 		heartbeat:  heartbeat,
 		runner:     runner,
+		jobs:       make(chan redis.XMessage, cfg.Concurrency),
 		stopChan:   make(chan struct{}),
-		metrics:    &Metrics{},
+		metrics:    metrics,
 	}
 }
 
@@ -121,20 +133,14 @@ func ParseStreamMessage(xmsg redis.XMessage) (*model.JobMessage, error) {
 	}
 
 	if retries, ok := values["maxRetries"]; ok {
-		switch r := retries.(type) {
-		case int:
-			job.MaxRetries = r
-		case string:
-			job.MaxRetries, _ = strconv.Atoi(r)
+		if r, valid := numericInt64(retries); valid && r >= 0 && r <= int64(^uint(0)>>1) {
+			job.MaxRetries = int(r)
 		}
 	}
 
 	if timeout, ok := values["timeoutSeconds"]; ok {
-		switch to := timeout.(type) {
-		case int:
-			job.TimeoutSeconds = to
-		case string:
-			job.TimeoutSeconds, _ = strconv.Atoi(to)
+		if seconds, valid := numericInt64(timeout); valid && seconds >= 0 && seconds <= int64(^uint(0)>>1) {
+			job.TimeoutSeconds = int(seconds)
 		}
 	}
 
@@ -180,6 +186,45 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 	}
 
 	compartmentID := job.CompartmentID
+	completed, err := c.completion.IsCompleted(ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID)
+	if err != nil {
+		return err
+	}
+	if completed {
+		return c.ackCompletedJob(ctx, xmsg, job)
+	}
+
+	leaseTTL := time.Hour
+	if job.TimeoutSeconds > 0 {
+		leaseTTL = time.Duration(job.TimeoutSeconds)*time.Second + time.Minute
+	}
+	if minimum := 2 * c.cfg.MinIdleRecoveryTime; leaseTTL < minimum {
+		leaseTTL = minimum
+	}
+	leaseToken, acquired, completed, err := c.completion.Acquire(ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID, leaseTTL)
+	if err != nil {
+		return err
+	}
+	if completed {
+		return c.ackCompletedJob(ctx, xmsg, job)
+	}
+	if !acquired {
+		// Another live processor owns this delivery. Leave it pending; the
+		// completion marker or recovery pass will safely ACK it later.
+		return nil
+	}
+	leaseHeld := true
+	defer func() {
+		if !leaseHeld {
+			return
+		}
+		releaseCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := c.completion.Release(releaseCtx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID, leaseToken); err != nil {
+			log.Printf("[worker %s] failed to release lease for message %s: %v", c.cfg.WorkerID, xmsg.ID, err)
+		}
+	}()
+
 	c.heartbeat.SetStatus("BUSY", compartmentID)
 	defer c.heartbeat.SetStatus("IDLE", "")
 
@@ -189,7 +234,10 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 	}
 
 	// 1. Check current retry count
-	retries, _ := c.dlq.GetRetryCount(ctx, compartmentID)
+	retries, err := c.dlq.GetRetryCount(ctx, compartmentID)
+	if err != nil {
+		return err
+	}
 	if retries >= maxRetries {
 		log.Printf("[worker %s] compartment %s exceeded max retries (%d/%d), forwarding to DLQ",
 			c.cfg.WorkerID, compartmentID, retries, maxRetries)
@@ -207,26 +255,46 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 
 	// 3. Initialize Checkpoint Recorder & Execute Task
 	recorder := NewCheckpointRecorder(c.scratchpad, fsm)
-	taskRes, err := c.runner.Execute(ctx, job, recorder)
+	executionCtx := ctx
+	cancelExecution := func() {}
+	if job.TimeoutSeconds > 0 {
+		executionCtx, cancelExecution = context.WithTimeout(ctx, time.Duration(job.TimeoutSeconds)*time.Second)
+	}
+	taskRes, err := c.runner.Execute(executionCtx, job, recorder)
+	cancelExecution()
 	if err != nil {
 		log.Printf("[worker %s] execution error on compartment %s: %v", c.cfg.WorkerID, compartmentID, err)
 		c.metrics.IncFailed()
-		newRetries, _ := c.dlq.IncrementRetryCount(ctx, compartmentID)
 
 		if strings.Contains(err.Error(), "SIMULATED_WORKER_CRASH") {
 			// Simulated crash for recovery test: do not ack, do not purge, leave for PEL recovery
 			return err
 		}
+		if ctx.Err() != nil {
+			// Service shutdown/caller cancellation is not a job failure and
+			// must not consume retry budget.
+			return fmt.Errorf("job execution canceled: %w", err)
+		}
+
+		reason := err.Error()
+		if job.TimeoutSeconds > 0 && errors.Is(err, context.DeadlineExceeded) {
+			reason = fmt.Sprintf("job execution timed out after %d seconds", job.TimeoutSeconds)
+			c.metrics.IncTimedOut()
+		}
+		newRetries, retryErr := c.dlq.IncrementRetryCount(ctx, compartmentID)
+		if retryErr != nil {
+			return fmt.Errorf("record retry after execution failure (%s): %w", reason, retryErr)
+		}
 
 		if newRetries >= maxRetries {
 			c.metrics.IncDLQRouted()
 			return c.dlq.RouteToDLQ(ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID, c.cfg.WorkerID,
-				job, newRetries, err.Error())
+				job, newRetries, reason)
 		}
 
 		// Transient failure: retries remaining. Do not emit StateFailed to avoid premature terminal failure events.
 		// Leave unacknowledged in stream / PEL for next retry attempt.
-		return err
+		return fmt.Errorf("%s: %w", reason, err)
 	}
 
 	// 4. Task completed successfully -> COMPLETED
@@ -254,9 +322,11 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 	}
 
 	// 6. Ephemeral Scratchpad Purge (Zero-Leak Guarantee) -> PURGED
-	if err := c.scratchpad.Purge(ctx, compartmentID); err != nil {
-		return fmt.Errorf("failed to purge scratchpad: %w", err)
+	if err := c.completion.Finalize(ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID,
+		c.scratchpad.Key(compartmentID), leaseToken); err != nil {
+		return err
 	}
+	leaseHeld = false
 
 	// Verify invariant: EXISTS == 0
 	exists, err := c.scratchpad.Exists(ctx, compartmentID)
@@ -265,8 +335,17 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 	}
 	c.metrics.IncPurged()
 
+	if err := c.ensureAuditPublished(ctx, xmsg, deadDrop); err != nil {
+		return err
+	}
+
 	if err := fsm.Transition(ctx, model.StatePurged, 100, "Scratchpad memory purged atomically"); err != nil {
 		return fmt.Errorf("failed to transition to PURGED: %w", err)
+	}
+	if err := c.completion.MarkTerminalEventPublished(
+		ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID,
+	); err != nil {
+		return err
 	}
 
 	// 7. Deferred XACK only after successful archive and scratchpad purge
@@ -276,16 +355,108 @@ func (c *Consumer) ProcessJob(ctx context.Context, xmsg redis.XMessage) error {
 	c.metrics.IncCompleted()
 
 	// 8. Clean up retry counter
-	_ = c.client.Del(ctx, c.dlq.RetryKey(compartmentID)).Err()
+	if err := c.client.Del(ctx, c.dlq.RetryKey(compartmentID)).Err(); err != nil {
+		log.Printf("[worker %s] failed to clear retry key for compartment %s: %v", c.cfg.WorkerID, compartmentID, err)
+	}
 
 	log.Printf("[worker %s] successfully completed, sealed, purged, and ACKed compartment %s (checksum: %s)",
 		c.cfg.WorkerID, compartmentID, deadDrop.Checksum)
 	return nil
 }
 
+func (c *Consumer) ackCompletedJob(ctx context.Context, xmsg redis.XMessage, job *model.JobMessage) error {
+	deadDrop, err := c.archive.Get(ctx, job.CompartmentID)
+	if err != nil {
+		return fmt.Errorf("retrieve completed archive for audit recovery: %w", err)
+	}
+	if err := c.ensureAuditPublished(ctx, xmsg, deadDrop); err != nil {
+		return err
+	}
+	needsEvent, err := c.completion.NeedsTerminalEvent(
+		ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID,
+	)
+	if err != nil {
+		return err
+	}
+	if needsEvent {
+		if err := c.publisher.Publish(ctx, &model.EventMessage{
+			CompartmentID: job.CompartmentID,
+			WorkerID:      c.cfg.WorkerID,
+			FromState:     model.StateArchived,
+			ToState:       model.StatePurged,
+			PreviousState: model.StateArchived,
+			CurrentState:  model.StatePurged,
+			CheckpointPct: 100,
+			Progress:      100,
+			Timestamp:     time.Now().UTC(),
+			Details:       "Recovered durable PURGED event for completed delivery",
+		}); err != nil {
+			return err
+		}
+		if err := c.completion.MarkTerminalEventPublished(
+			ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID,
+		); err != nil {
+			return err
+		}
+	}
+	if err := c.client.XAck(ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID).Err(); err != nil {
+		return fmt.Errorf("failed to XACK completed message %s: %w", xmsg.ID, err)
+	}
+	c.metrics.IncDeduplicated()
+	return nil
+}
+
+func (c *Consumer) ensureAuditPublished(
+	ctx context.Context, xmsg redis.XMessage, deadDrop *model.DeadDropPayload,
+) error {
+	published, err := c.completion.IsAuditPublished(
+		ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID,
+	)
+	if err != nil {
+		return err
+	}
+	if published {
+		return nil
+	}
+	if err := appendAuditEnvelope(
+		ctx,
+		c.client,
+		c.cfg.AuditStreamName,
+		deadDrop,
+		string(model.StatePurged),
+		"Scratchpad memory purged atomically",
+	); err != nil {
+		return err
+	}
+	return c.completion.MarkAuditPublished(
+		ctx, c.cfg.StreamName, c.cfg.ConsumerGroup, xmsg.ID,
+	)
+}
+
 // Start begins consuming jobs from the Redis Stream and periodic recovery
 func (c *Consumer) Start(ctx context.Context) {
-	c.heartbeat.Start(ctx)
+	runCtx, cancel := context.WithCancel(ctx)
+	c.runCancel = cancel
+	c.heartbeat.Start(runCtx)
+
+	// A single bounded pool services both new deliveries and recovered PEL
+	// entries, so WORKER_CONCURRENCY is an actual execution limit.
+	for i := 0; i < c.cfg.Concurrency; i++ {
+		c.wg.Add(1)
+		go func() {
+			defer c.wg.Done()
+			for {
+				select {
+				case msg := <-c.jobs:
+					c.processAndReport(runCtx, msg)
+				case <-c.stopChan:
+					return
+				case <-runCtx.Done():
+					return
+				}
+			}
+		}()
+	}
 
 	// Recovery routine
 	c.wg.Add(1)
@@ -297,10 +468,10 @@ func (c *Consumer) Start(ctx context.Context) {
 		for {
 			select {
 			case <-ticker.C:
-				c.runRecoveryPass(ctx)
+				c.runRecoveryPass(runCtx)
 			case <-c.stopChan:
 				return
-			case <-ctx.Done():
+			case <-runCtx.Done():
 				return
 			}
 		}
@@ -314,11 +485,11 @@ func (c *Consumer) Start(ctx context.Context) {
 			select {
 			case <-c.stopChan:
 				return
-			case <-ctx.Done():
+			case <-runCtx.Done():
 				return
 			default:
 				// Read new messages with XREADGROUP
-				streams, err := c.client.XReadGroup(ctx, &redis.XReadGroupArgs{
+				streams, err := c.client.XReadGroup(runCtx, &redis.XReadGroupArgs{
 					Group:    c.cfg.ConsumerGroup,
 					Consumer: c.cfg.WorkerID,
 					Streams:  []string{c.cfg.StreamName, ">"},
@@ -333,7 +504,7 @@ func (c *Consumer) Start(ctx context.Context) {
 					select {
 					case <-c.stopChan:
 						return
-					case <-ctx.Done():
+					case <-runCtx.Done():
 						return
 					default:
 						time.Sleep(200 * time.Millisecond)
@@ -343,7 +514,9 @@ func (c *Consumer) Start(ctx context.Context) {
 
 				for _, stream := range streams {
 					for _, msg := range stream.Messages {
-						_ = c.ProcessJob(ctx, msg)
+						if !c.submit(runCtx, msg) {
+							return
+						}
 					}
 				}
 			}
@@ -360,7 +533,27 @@ func (c *Consumer) runRecoveryPass(ctx context.Context) {
 
 	for _, msg := range msgs {
 		c.metrics.IncRecovered()
-		_ = c.ProcessJob(ctx, msg)
+		if !c.submit(ctx, msg) {
+			return
+		}
+	}
+}
+
+func (c *Consumer) submit(ctx context.Context, msg redis.XMessage) bool {
+	select {
+	case c.jobs <- msg:
+		return true
+	case <-c.stopChan:
+		return false
+	case <-ctx.Done():
+		return false
+	}
+}
+
+func (c *Consumer) processAndReport(ctx context.Context, msg redis.XMessage) {
+	if err := c.ProcessJob(ctx, msg); err != nil {
+		c.metrics.IncProcessErrors()
+		log.Printf("[worker %s] ProcessJob failed for message %s: %v", c.cfg.WorkerID, msg.ID, err)
 	}
 }
 
@@ -371,6 +564,9 @@ func (c *Consumer) Stop() {
 		return
 	default:
 		close(c.stopChan)
+	}
+	if c.runCancel != nil {
+		c.runCancel()
 	}
 	c.heartbeat.Stop()
 	c.wg.Wait()

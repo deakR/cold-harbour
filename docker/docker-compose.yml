@@ -72,6 +72,13 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       DB_HOST: postgres
       DB_PORT: 5432
+      # Explicit local-development opt-ins. Production deployments must omit
+      # these and configure server-side API keys.
+      COLDHARBOR_ALLOW_UNSAFE_HEADER: "true"
+      COLDHARBOR_API_DOCS_ENABLED: "true"
+      COLDHARBOR_SWAGGER_ENABLED: "true"
+      COLDHARBOR_ACTUATOR_ENDPOINTS: "health,info,prometheus"
+      COLDHARBOR_HEALTH_DETAILS: "always"
     ports:
       - "8080:8080"
     healthcheck:
@@ -91,7 +98,7 @@ services:
       control-plane:
         condition: service_healthy
     ports:
-      - "3000:80"
+      - "3000:8080"
 
 volumes:
   redis_data:

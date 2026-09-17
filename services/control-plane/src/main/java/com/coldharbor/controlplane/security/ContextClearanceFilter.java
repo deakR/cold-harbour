@@ -6,10 +6,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.annotation.Order;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.slf4j.MDC;
 
 import java.io.IOException;
 import java.util.Map;
@@ -39,6 +41,7 @@ public class ContextClearanceFilter extends OncePerRequestFilter {
         this(new ApiKeyClearanceProperties());
     }
 
+    @Autowired
     public ContextClearanceFilter(ApiKeyClearanceProperties apiKeys) {
         this.apiKeys = apiKeys != null ? apiKeys : new ApiKeyClearanceProperties();
     }
@@ -76,7 +79,7 @@ public class ContextClearanceFilter extends OncePerRequestFilter {
                 sendErrorResponse(response, HttpStatus.UNAUTHORIZED.value(), "Unauthorized", "Invalid API key.");
                 return;
             }
-        } else if (apiKeys.hasKeys() && !apiKeys.isAllowUnsafeHeader()) {
+        } else if (!apiKeys.isAllowUnsafeHeader()) {
             sendErrorResponse(response, HttpStatus.UNAUTHORIZED.value(), "Unauthorized", "API key required. Provide a valid " + API_KEY_HEADER + " header.");
             return;
         } else {
@@ -95,6 +98,7 @@ public class ContextClearanceFilter extends OncePerRequestFilter {
         response.setHeader(TRACE_HEADER, traceId);
 
         ClearanceContext.setClearance(clearance);
+        MDC.put("traceId", traceId);
         request.setAttribute(CLEARANCE_ATTRIBUTE, clearance);
         try {
             if (isDispatchRequest(request) && !allowDispatch(request)) {
@@ -105,6 +109,7 @@ public class ContextClearanceFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             ClearanceContext.clear();
+            MDC.remove("traceId");
         }
     }
 

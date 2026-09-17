@@ -121,6 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 key={c}
                 type="button"
+                aria-pressed={clearance === c}
                 onClick={() => onClearanceChange(c)}
                 className={`px-2.5 py-1 text-xs font-mono font-medium rounded transition-all ${
                   clearance === c
@@ -143,15 +144,27 @@ export const Header: React.FC<HeaderProps> = ({
             <RefreshCw className="w-4 h-4" />
           </button>
 
-          {/* API Key (optional, persisted) */}
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => onApiKeyChange?.(e.target.value)}
-            placeholder="API key (optional)"
-            title="X-API-Key sent with every request when set"
-            className="w-32 bg-[#151c2c] text-xs font-mono text-gray-200 px-2.5 py-1.5 rounded-lg border border-gray-700 focus:outline-none focus:border-cyan-500 placeholder:text-gray-600"
-          />
+          <div className="flex items-center">
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => onApiKeyChange?.(e.target.value)}
+              placeholder="Session API key"
+              aria-label="API key, stored for this browser session only"
+              title="Sent as X-API-Key and cleared when this browser session ends"
+              className="w-32 bg-[#151c2c] text-xs font-mono text-gray-200 px-2.5 py-1.5 rounded-l-lg border border-gray-700 focus:outline-none focus:border-cyan-500 placeholder:text-gray-600"
+            />
+            {apiKey && (
+              <button
+                type="button"
+                onClick={() => onApiKeyChange?.('')}
+                aria-label="Clear session API key"
+                className="px-2 py-1.5 rounded-r-lg border border-l-0 border-gray-700 bg-gray-800 text-xs text-gray-400 hover:text-white"
+              >
+                ×
+              </button>
+            )}
+          </div>
 
           {/* Dispatch Job Button */}
           <button

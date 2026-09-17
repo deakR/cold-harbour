@@ -65,6 +65,22 @@ class ApiKeyClearanceFilterTest {
     }
 
     @Test
+    void shouldRejectSelfAssertedClearanceWhenSecureModeHasNoConfiguredKeys()
+            throws ServletException, IOException {
+        ApiKeyClearanceProperties props = new ApiKeyClearanceProperties();
+        props.setAllowUnsafeHeader(false);
+        ContextClearanceFilter filter = new ContextClearanceFilter(props);
+        MockHttpServletRequest request =
+                new MockHttpServletRequest("GET", "/api/v1/compartments");
+        request.addHeader("X-Context-Clearance", "ADMIN");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, mock(FilterChain.class));
+
+        assertThat(response.getStatus()).isEqualTo(401);
+    }
+
+    @Test
     @DisplayName("Trace ID is propagated or generated per request")
     void shouldPropagateTraceId() throws ServletException, IOException {        ContextClearanceFilter filter = filterWithKeys(true);
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/workers");

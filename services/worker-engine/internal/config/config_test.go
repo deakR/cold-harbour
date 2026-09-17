@@ -66,3 +66,14 @@ func TestLoadConfigFromEnv(t *testing.T) {
 		t.Errorf("expected 5s, got %v", cfg.HeartbeatInterval)
 	}
 }
+
+func TestMaxRetriesZeroUsesSafeDefault(t *testing.T) {
+	t.Setenv("MAX_RETRIES", "0")
+	cfg, err := LoadConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.MaxRetries != DefaultConfig().MaxRetries {
+		t.Fatalf("MAX_RETRIES=0 must use default %d, got %d", DefaultConfig().MaxRetries, cfg.MaxRetries)
+	}
+}

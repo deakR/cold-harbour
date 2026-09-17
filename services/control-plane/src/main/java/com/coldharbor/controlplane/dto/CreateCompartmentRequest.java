@@ -1,7 +1,10 @@
 package com.coldharbor.controlplane.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.util.Map;
 
@@ -10,6 +13,8 @@ import java.util.Map;
  */
 public class CreateCompartmentRequest {
 
+    @Pattern(regexp = "^[A-Za-z0-9_-]{1,64}$",
+            message = "compartmentId must be 1-64 letters, numbers, underscores, or hyphens")
     private String compartmentId;
 
     @NotBlank(message = "context is required")
@@ -17,13 +22,21 @@ public class CreateCompartmentRequest {
     private String context;
 
     @NotBlank(message = "ownerId is required")
+    @Size(max = 64, message = "ownerId must not exceed 64 characters")
+    @Pattern(regexp = "^[A-Za-z0-9_.@-]+$", message = "ownerId contains invalid characters")
     private String ownerId;
 
     @NotBlank(message = "taskType is required")
+    @Size(max = 64, message = "taskType must not exceed 64 characters")
+    @Pattern(regexp = "^[A-Za-z][A-Za-z0-9_-]*$", message = "taskType contains invalid characters")
     private String taskType;
 
     private Map<String, Object> payload;
+    @Min(value = 0, message = "maxRetries must be at least 0")
+    @Max(value = 20, message = "maxRetries must not exceed 20")
     private Integer maxRetries = 3;
+    @Min(value = 1, message = "timeoutSeconds must be at least 1")
+    @Max(value = 86400, message = "timeoutSeconds must not exceed 86400")
     private Integer timeoutSeconds = 300;
 
     public CreateCompartmentRequest() {

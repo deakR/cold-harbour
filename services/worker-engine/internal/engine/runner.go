@@ -17,6 +17,12 @@ type TaskResult struct {
 	DurationMs int64
 }
 
+// TaskExecutor allows the consumer to execute jobs while tests can inject a
+// deterministic, race-safe executor.
+type TaskExecutor interface {
+	Execute(context.Context, *model.JobMessage, *CheckpointRecorder) (*TaskResult, error)
+}
+
 // TaskRunner orchestrates multi-step task execution, checkpointing, and resume logic
 type TaskRunner struct {
 	scratchpad *ScratchpadManager
@@ -49,11 +55,8 @@ func (r *TaskRunner) Execute(
 	crashAtStep := 0
 	if job.Payload != nil {
 		if val, ok := job.Payload["simulateCrashAtStep"]; ok {
-			switch v := val.(type) {
-			case float64:
+			if v, ok := numericInt64(val); ok {
 				crashAtStep = int(v)
-			case int:
-				crashAtStep = v
 			}
 		}
 		if val, ok := job.Payload["simulateFailure"]; ok {
@@ -92,8 +95,8 @@ func (r *TaskRunner) Execute(
 	batchSize := int64(500)
 	if job.Payload != nil {
 		if bVal, ok := job.Payload["batchSize"]; ok {
-			if bFloat, ok := bVal.(float64); ok {
-				batchSize = int64(bFloat)
+			if value, ok := numericInt64(bVal); ok {
+				batchSize = value
 			}
 		}
 	}

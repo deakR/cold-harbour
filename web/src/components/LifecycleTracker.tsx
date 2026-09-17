@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Layers,
   ArrowRight,
@@ -12,12 +12,13 @@ import {
   GitBranch,
   Search,
 } from 'lucide-react';
-import { CompartmentState, EventMessage, normalizeEventMessage } from '../types';
+import { Compartment, CompartmentState, EventMessage, normalizeEventMessage } from '../types';
 
 interface LifecycleTrackerProps {
   selectedCompartmentId: string;
   onSelectCompartmentId: (id: string) => void;
   events: EventMessage[];
+  fetchCompartment: (id: string) => Promise<Compartment | null>;
 }
 
 const ORDERED_STEPS: { state: CompartmentState; label: string; icon: React.ElementType }[] = [
@@ -43,19 +44,48 @@ export const LifecycleTracker: React.FC<LifecycleTrackerProps> = ({
   selectedCompartmentId,
   onSelectCompartmentId,
   events,
+  fetchCompartment,
 }) => {
   const [searchInput, setSearchInput] = useState<string>('');
+  const [compartment, setCompartment] = useState<Compartment | null>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedCompartmentId) {
+      setCompartment(null);
+      setLookupError(null);
+      return;
+    }
+    let active = true;
+    setLookupLoading(true);
+    setLookupError(null);
+    fetchCompartment(selectedCompartmentId)
+      .then((data) => {
+        if (active) setCompartment(data);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setCompartment(null);
+        setLookupError(error instanceof Error ? error.message : 'Compartment lookup failed');
+      })
+      .finally(() => {
+        if (active) setLookupLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [fetchCompartment, selectedCompartmentId]);
 
   // Extract events relevant to selected compartment
   const compartmentEvents = events
     .filter((e) => e.compartmentId && e.compartmentId.toLowerCase() === selectedCompartmentId.toLowerCase())
     .map(normalizeEventMessage);
 
-  // Latest event determines current state
   const latestEvent = compartmentEvents[0];
-  const currentState: CompartmentState = latestEvent ? latestEvent.toState : 'CREATED';
-  const currentProgress: number = latestEvent ? latestEvent.progress : 0;
-  const isFailed = currentState === 'FAILED' || compartmentEvents.some((e) => e.toState === 'FAILED');
+  const currentState = compartment?.state;
+  const currentProgress = compartment?.progress ?? 0;
+  const isFailed = currentState === 'FAILED';
 
   // List of distinct recent compartment IDs from all events for easy quick-switching
   const recentCompartments = Array.from(
@@ -66,7 +96,7 @@ export const LifecycleTracker: React.FC<LifecycleTrackerProps> = ({
     return ORDERED_STEPS.findIndex((s) => s.state === state);
   };
 
-  const currentStepIdx = getStepIndex(currentState);
+  const currentStepIdx = currentState ? getStepIndex(currentState) : -1;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,12 +171,12 @@ export const LifecycleTracker: React.FC<LifecycleTrackerProps> = ({
                 </span>
               ) : (
                 <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 text-[11px] font-mono font-bold">
-                  {currentState}
+                  {lookupLoading ? 'LOADING' : currentState || 'NOT FOUND'}
                 </span>
               )}
             </div>
             <h3 className="text-lg font-bold font-mono text-white mt-1 break-all">
-              {selectedCompartmentId || 'None Selected'}
+              {selectedCompartmentId || 'No compartment selected'}
             </h3>
           </div>
 
@@ -164,6 +194,12 @@ export const LifecycleTracker: React.FC<LifecycleTrackerProps> = ({
           </div>
         </div>
 
+        {lookupError && (
+          <div role="alert" className="p-3 rounded-lg bg-rose-950/40 border border-rose-800 text-xs font-mono text-rose-300">
+            Server state unavailable: {lookupError}
+          </div>
+        )}
+
         {/* Stepper Pipeline Flow */}
         <div className="relative">
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -171,7 +207,7 @@ export const LifecycleTracker: React.FC<LifecycleTrackerProps> = ({
               const StepIcon = step.icon;
               const isPast = !isFailed && idx < currentStepIdx;
               const isCurrent = !isFailed && idx === currentStepIdx;
-              const isFuture = !isFailed && idx > currentStepIdx;
+              const isFuture = !isFailed && (currentStepIdx < 0 || idx > currentStepIdx);
 
               let cardBg = 'bg-[#151f33] border-gray-800 text-gray-500';
               let iconColor = 'text-gray-600';
@@ -219,7 +255,9 @@ export const LifecycleTracker: React.FC<LifecycleTrackerProps> = ({
               style={{
                 width: isFailed
                   ? '100%'
-                  : `${Math.max(5, Math.min(100, (currentStepIdx / (ORDERED_STEPS.length - 1)) * 100))}%`,
+                  : currentStepIdx < 0
+                    ? '0%'
+                    : `${Math.max(5, Math.min(100, (currentStepIdx / (ORDERED_STEPS.length - 1)) * 100))}%`,
               }}
             />
           </div>
@@ -235,7 +273,7 @@ export const LifecycleTracker: React.FC<LifecycleTrackerProps> = ({
 
           {compartmentEvents.length === 0 ? (
             <p className="text-xs font-mono text-gray-500 py-3 text-center">
-              No live events recorded yet for this compartment.
+              No live transition events were captured in this browser session.
             </p>
           ) : (
             <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
@@ -262,6 +300,9 @@ export const LifecycleTracker: React.FC<LifecycleTrackerProps> = ({
               ))}
             </div>
           )}
+          <p className="text-[10px] font-mono text-gray-600 mt-2">
+            Current state is loaded from the server. Transition history contains only live events received during this session.
+          </p>
         </div>
       </div>
     </div>

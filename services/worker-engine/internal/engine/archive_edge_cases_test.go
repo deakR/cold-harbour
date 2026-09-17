@@ -16,8 +16,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-
-
 // TestEdgeCaseArchivePayloadTypes verifies that archive.go safely handles:
 // strings, byte slices, maps, raw JSON, slices, numbers, booleans, and nil without panicking.
 func TestEdgeCaseArchivePayloadTypes(t *testing.T) {

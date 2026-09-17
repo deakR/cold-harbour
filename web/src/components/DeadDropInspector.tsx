@@ -64,11 +64,10 @@ export const DeadDropInspector: React.FC<DeadDropInspectorProps> = ({
       if (!data) {
         throw new Error('No dead drop payload returned for this compartment');
       }
-      setResult(data);
-
       // Extract output or resultPayload
       const payloadToHash = data.output ?? data.resultPayload ?? {};
       const calculated = await computeSha256(payloadToHash);
+      setResult(data);
       setComputedHash(calculated);
 
       // Verify checksum

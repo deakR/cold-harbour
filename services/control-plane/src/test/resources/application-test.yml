@@ -12,6 +12,8 @@ spring:
       ddl-auto: create-drop
     show-sql: false
     open-in-view: false
+  flyway:
+    enabled: false
   data:
     redis:
       host: localhost
@@ -19,6 +21,7 @@ spring:
 
 coldharbor:
   redis:
+    durable-consumers-enabled: false
     stream-name: coldharbor:jobs
     event-channel: coldharbor:events
     heartbeat-pattern: "worker:*:heartbeat"

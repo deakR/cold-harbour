@@ -11,6 +11,7 @@ import jakarta.persistence.criteria.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,18 +37,35 @@ public class AuditService {
         this.objectMapper = objectMapper;
     }
 
-    @Transactional
     public AuditRecord saveAuditRecord(AuditRecord record) {
-        return auditRecordRepository.save(record);
+        try {
+            return auditRecordRepository.saveAndFlush(record);
+        } catch (DataIntegrityViolationException duplicate) {
+            var existing = auditRecordRepository
+                    .findFirstByCompartmentIdAndFinalStateOrderByCompletedAtDesc(
+                            record.getCompartmentId(), record.getFinalState());
+            if (existing.isPresent()) {
+                log.debug("Terminal audit record already exists for compartment {}; returning existing record",
+                        record.getCompartmentId());
+                return existing.get();
+            }
+            throw duplicate;
+        }
     }
 
-    @Transactional
-    public synchronized AuditRecord recordCompletedJob(String compartmentId, DeadDropPayload deadDrop, String details) {
-        if (auditRecordRepository.existsByCompartmentIdAndFinalState(compartmentId, "PURGED") ||
-                auditRecordRepository.existsByCompartmentIdAndFinalState(compartmentId, "ARCHIVED") ||
-                auditRecordRepository.existsByCompartmentIdAndFinalState(compartmentId, "COMPLETED")) {
-            log.debug("Audit record for compartment {} already exists; skipping duplicate persistence", compartmentId);
-            return auditRecordRepository.findFirstByCompartmentIdOrderByCompletedAtDesc(compartmentId).orElse(null);
+    public AuditRecord recordCompletedJob(String compartmentId, DeadDropPayload deadDrop, String details) {
+        return recordCompletedJob(compartmentId, deadDrop, details, "PURGED");
+    }
+
+    public AuditRecord recordCompletedJob(String compartmentId, DeadDropPayload deadDrop,
+                                          String details, String finalState) {
+        if (deadDrop == null || deadDrop.getContext() == null
+                || deadDrop.getOwnerId() == null || deadDrop.getTaskType() == null) {
+            throw new IllegalArgumentException(
+                    "Dead drop must include trusted context, ownerId, and taskType for audit persistence");
+        }
+        if (!"PURGED".equalsIgnoreCase(finalState) && !"FAILED".equalsIgnoreCase(finalState)) {
+            throw new IllegalArgumentException("Unsupported terminal audit state: " + finalState);
         }
 
         String metadataJson = "{}";
@@ -63,10 +81,10 @@ public class AuditService {
         AuditRecord record = new AuditRecord(
                 UUID.randomUUID(),
                 compartmentId,
-                deadDrop.getOwnerId() != null ? deadDrop.getOwnerId() : "unknown",
-                deadDrop.getContext() != null ? deadDrop.getContext() : "INNIE",
-                deadDrop.getTaskType() != null ? deadDrop.getTaskType() : "TASK",
-                "PURGED",
+                deadDrop.getOwnerId(),
+                deadDrop.getContext(),
+                deadDrop.getTaskType(),
+                finalState.toUpperCase(),
                 deadDrop.getChecksum() != null ? deadDrop.getChecksum() : "",
                 deadDrop.getDurationMs() != null ? deadDrop.getDurationMs() : 0L,
                 deadDrop.getArchivedAt() != null ? deadDrop.getArchivedAt() : Instant.now(),
@@ -74,7 +92,10 @@ public class AuditService {
                 metadataJson
         );
 
-        AuditRecord saved = auditRecordRepository.save(record);
+        AuditRecord saved = saveAuditRecord(record);
+        if (saved == null) {
+            return null;
+        }
         log.info("Persisted durable audit record {} for compartment {} [context: {}, checksum: {}]",
                 saved.getId(), compartmentId, saved.getContext(), saved.getChecksum());
         return saved;

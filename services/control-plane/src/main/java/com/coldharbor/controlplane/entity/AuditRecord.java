@@ -8,7 +8,10 @@ import java.util.UUID;
  * Immutable execution audit record mapped to PostgreSQL audit_records table.
  */
 @Entity
-@Table(name = "audit_records", indexes = {
+@Table(name = "audit_records", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_audit_compartment_terminal",
+                columnNames = {"compartment_id", "final_state"})
+}, indexes = {
         @Index(name = "idx_audit_compartment_id", columnList = "compartment_id"),
         @Index(name = "idx_audit_owner_id", columnList = "owner_id"),
         @Index(name = "idx_audit_created_at", columnList = "created_at DESC"),

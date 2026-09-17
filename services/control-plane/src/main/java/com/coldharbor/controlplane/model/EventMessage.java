@@ -25,6 +25,9 @@ public class EventMessage {
     private Instant timestamp = Instant.now();
 
     private String details;
+    private String context;
+    private String ownerId;
+    private String taskType;
 
     public EventMessage() {
     }
@@ -136,5 +139,29 @@ public class EventMessage {
 
     public void setDetails(String details) {
         this.details = details;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public String getTaskType() {
+        return taskType;
+    }
+
+    public void setTaskType(String taskType) {
+        this.taskType = taskType;
     }
 }

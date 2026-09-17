@@ -1,6 +1,9 @@
 package com.coldharbor.controlplane.controller;
 
 import com.coldharbor.controlplane.dto.WorkerStatusResponse;
+import com.coldharbor.controlplane.exception.ForbiddenException;
+import com.coldharbor.controlplane.security.ClearanceContext;
+import com.coldharbor.controlplane.security.ContextClearance;
 import com.coldharbor.controlplane.service.WorkerWellnessMonitor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,6 +43,7 @@ public class WorkerController {
     @GetMapping("/dlq")
     public ResponseEntity<Map<String, Object>> getDlq(
             @RequestParam(name = "limit", defaultValue = "20") int limit) {
+        requireOperatorClearance();
         return ResponseEntity.ok(workerWellnessMonitor.getDlqSnapshot(limit));
     }
 
@@ -49,6 +53,14 @@ public class WorkerController {
     @PostMapping("/dlq/redrive")
     public ResponseEntity<Map<String, Object>> redriveDlq(
             @RequestParam(name = "limit", defaultValue = "10") int limit) {
+        requireOperatorClearance();
         return ResponseEntity.ok(workerWellnessMonitor.redriveDlq(limit));
+    }
+
+    private static void requireOperatorClearance() {
+        ContextClearance clearance = ClearanceContext.getClearance();
+        if (clearance != ContextClearance.ADMIN && clearance != ContextClearance.SYSTEM) {
+            throw new ForbiddenException("ADMIN or SYSTEM clearance is required for DLQ operations");
+        }
     }
 }

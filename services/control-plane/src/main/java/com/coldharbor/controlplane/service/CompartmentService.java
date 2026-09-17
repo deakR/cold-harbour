@@ -17,6 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 
 /**
  * Service for querying compartment state and inspecting sealed Dead Drop archives.
@@ -75,7 +78,7 @@ public class CompartmentService {
                         100,
                         ar.getCreatedAt(),
                         ar.getCompletedAt(),
-                        "Completed and purged. Stored in durable audit record."
+                        "Terminal state " + ar.getFinalState() + ". Stored in durable audit record."
                 );
             }
         }
@@ -109,7 +112,7 @@ public class CompartmentService {
             payload = objectMapper.readValue(archiveJson, DeadDropPayload.class);
         } catch (Exception e) {
             log.error("Failed to parse dead drop JSON for compartment {}: {}", compartmentId, e.getMessage());
-            throw new RuntimeException("Corrupted dead drop payload: " + e.getMessage(), e);
+            throw new IllegalStateException("Dead drop integrity verification failed", e);
         }
 
         // Enforce context clearance
@@ -117,6 +120,9 @@ public class CompartmentService {
             throw new ForbiddenException("Clearance " + callerClearance + " cannot access " +
                     payload.getContext() + " dead drop for " + compartmentId);
         }
+
+        verifyChecksum(payload.getOutput() != null ? payload.getOutput() : payload.getResultPayload(),
+                payload.getChecksum());
 
         Long remainingTtl = redisTemplate.getExpire(archiveKey, TimeUnit.SECONDS);
 
@@ -139,6 +145,39 @@ public class CompartmentService {
         return getDeadDropFromAudit(compartmentId, callerClearance);
     }
 
+    private void verifyChecksum(Object target, String expected) {
+        try {
+            byte[] bytes;
+            if (target == null) {
+                bytes = new byte[0];
+            } else if (target instanceof String string) {
+                bytes = string.getBytes(StandardCharsets.UTF_8);
+            } else if (target instanceof byte[] raw) {
+                bytes = raw;
+            } else {
+                // Go's encoding/json escapes these characters by default.
+                String json = objectMapper.writeValueAsString(target)
+                        .replace("&", "\\u0026")
+                        .replace("<", "\\u003c")
+                        .replace(">", "\\u003e")
+                        .replace("\u2028", "\\u2028")
+                        .replace("\u2029", "\\u2029");
+                bytes = json.getBytes(StandardCharsets.UTF_8);
+            }
+            String actual = HexFormat.of().formatHex(
+                    MessageDigest.getInstance("SHA-256").digest(bytes));
+            if (expected == null || !MessageDigest.isEqual(
+                    actual.getBytes(StandardCharsets.US_ASCII),
+                    expected.toLowerCase(java.util.Locale.ROOT).getBytes(StandardCharsets.US_ASCII))) {
+                throw new IllegalStateException("Dead drop integrity verification failed");
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException("Dead drop integrity verification failed", e);
+        }
+    }
+
     private DeadDropResponse getDeadDropFromAudit(String compartmentId, ContextClearance callerClearance) {
         AuditRecord ar = auditRecordRepository.findFirstByCompartmentIdOrderByCompletedAtDesc(compartmentId)
                 .orElseThrow(() -> new NotFoundException("Dead drop not found or expired for compartment: " + compartmentId));
@@ -155,6 +194,7 @@ public class CompartmentService {
         } catch (Exception e) {
             log.warn("Failed to parse audit metadata output for {}: {}", compartmentId, e.getMessage());
         }
+        verifyChecksum(output, ar.getChecksum());
         DeadDropResponse response = new DeadDropResponse();
         response.setCompartmentId(ar.getCompartmentId());
         response.setOwnerId(ar.getOwnerId());

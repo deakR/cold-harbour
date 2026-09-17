@@ -153,7 +153,7 @@ func TestConsumerCrashRecovery(t *testing.T) {
 		OwnerID:       "usr-crash",
 		TaskType:      "DATA_REDUCTION",
 		Payload: map[string]any{
-			"batchSize":            float64(500),
+			"batchSize":           float64(500),
 			"simulateCrashAtStep": float64(2),
 		},
 		CreatedAt: time.Now().UTC(),

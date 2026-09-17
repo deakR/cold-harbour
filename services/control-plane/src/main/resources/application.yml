@@ -12,9 +12,13 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
     open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
@@ -22,9 +26,20 @@ spring:
       timeout: 2000ms
 
 coldharbor:
+  websocket:
+    allowed-origins: ${COLDHARBOR_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173}
   redis:
+    durable-consumers-enabled: true
     stream-name: coldharbor:jobs
     event-channel: coldharbor:events
+    event-stream-name: coldharbor:events:stream
+    event-consumer-group: control-plane-events
+    event-consumer-name: event-projector
+    event-poll-ms: 500
+    audit-stream-name: coldharbor:audits
+    audit-consumer-group: control-plane-audit
+    audit-consumer-name: audit-writer
+    audit-poll-ms: 500
     heartbeat-pattern: "worker:*:heartbeat"
     archive-prefix: "archive:"
     scratchpad-prefix: "compartment:"
@@ -36,9 +51,9 @@ coldharbor:
     #   coldharbor.security.api-keys.admin-key-1: ADMIN
     # When keys are configured, presenting a valid X-API-Key takes precedence
     # over the self-asserted clearance header.
-    # When true (dev/test default), the self-asserted clearance header is accepted
-    # when no API key is presented. Set false in production with keys configured.
-    allow-unsafe-header: ${COLDHARBOR_ALLOW_UNSAFE_HEADER:true}
+    # Development Compose opts in explicitly. Secure-by-default source runs
+    # require API keys unless this escape hatch is deliberately enabled.
+    allow-unsafe-header: ${COLDHARBOR_ALLOW_UNSAFE_HEADER:false}
     # Max compartment dispatches per client IP per minute. Zero disables limiting.
     dispatch-per-minute: ${COLDHARBOR_DISPATCH_PER_MINUTE:0}
 
@@ -46,10 +61,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: ${COLDHARBOR_ACTUATOR_ENDPOINTS:health}
   endpoint:
     health:
-      show-details: always
+      show-details: ${COLDHARBOR_HEALTH_DETAILS:never}
   metrics:
     tags:
       application: coldharbor-control-plane
@@ -58,3 +73,9 @@ logging:
   level:
     root: INFO
     com.coldharbor.controlplane: INFO
+
+springdoc:
+  api-docs:
+    enabled: ${COLDHARBOR_API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${COLDHARBOR_SWAGGER_ENABLED:false}

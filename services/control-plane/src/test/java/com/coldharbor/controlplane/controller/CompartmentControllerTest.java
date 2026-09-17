@@ -5,6 +5,7 @@ import com.coldharbor.controlplane.dto.CreateCompartmentRequest;
 import com.coldharbor.controlplane.dto.DeadDropResponse;
 import com.coldharbor.controlplane.exception.NotFoundException;
 import com.coldharbor.controlplane.security.ContextClearanceFilter;
+import com.coldharbor.controlplane.security.ApiKeyClearanceProperties;
 import com.coldharbor.controlplane.service.CompartmentService;
 import com.coldharbor.controlplane.service.JobDispatchService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,8 +29,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CompartmentController.class)
-@Import({ContextClearanceFilter.class, GlobalExceptionHandler.class})
+@WebMvcTest(value = CompartmentController.class,
+        properties = "coldharbor.security.allow-unsafe-header=true")
+@Import({ContextClearanceFilter.class, ApiKeyClearanceProperties.class,
+        GlobalExceptionHandler.class})
 class CompartmentControllerTest {
 
     @Autowired

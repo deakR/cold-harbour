@@ -20,5 +20,8 @@ public interface AuditRecordRepository extends JpaRepository<AuditRecord, UUID>,
 
     Optional<AuditRecord> findFirstByCompartmentIdOrderByCompletedAtDesc(String compartmentId);
 
+    Optional<AuditRecord> findFirstByCompartmentIdAndFinalStateOrderByCompletedAtDesc(
+            String compartmentId, String finalState);
+
     boolean existsByCompartmentIdAndFinalState(String compartmentId, String finalState);
 }

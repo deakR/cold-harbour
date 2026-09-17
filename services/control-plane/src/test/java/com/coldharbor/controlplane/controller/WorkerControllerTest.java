@@ -2,6 +2,7 @@ package com.coldharbor.controlplane.controller;
 
 import com.coldharbor.controlplane.dto.WorkerStatusResponse;
 import com.coldharbor.controlplane.security.ContextClearanceFilter;
+import com.coldharbor.controlplane.security.ApiKeyClearanceProperties;
 import com.coldharbor.controlplane.service.WorkerWellnessMonitor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,11 +19,14 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(WorkerController.class)
-@Import({ContextClearanceFilter.class, GlobalExceptionHandler.class})
+@WebMvcTest(value = WorkerController.class,
+        properties = "coldharbor.security.allow-unsafe-header=true")
+@Import({ContextClearanceFilter.class, ApiKeyClearanceProperties.class,
+        GlobalExceptionHandler.class})
 class WorkerControllerTest {
 
     @Autowired
@@ -66,5 +70,23 @@ class WorkerControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stream").value("coldharbor:jobs:dlq"))
                 .andExpect(jsonPath("$.size").value(2));
+    }
+
+    @Test
+    void shouldRejectDlqInspectionForContextClearance() throws Exception {
+        mockMvc.perform(get("/api/v1/workers/dlq")
+                        .header("X-Context-Clearance", "INNIE"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowAdminDlqRedrive() throws Exception {
+        when(workerWellnessMonitor.redriveDlq(anyInt()))
+                .thenReturn(Map.of("redriven", 1, "ids", List.of("cpt_1")));
+
+        mockMvc.perform(post("/api/v1/workers/dlq/redrive")
+                        .header("X-Context-Clearance", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.redriven").value(1));
     }
 }

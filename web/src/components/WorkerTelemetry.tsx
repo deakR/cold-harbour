@@ -5,6 +5,7 @@ import { WorkerHeartbeat } from '../types';
 interface WorkerTelemetryProps {
   workers: WorkerHeartbeat[];
   loading: boolean;
+  error?: string | null;
   onRefresh: () => void;
   onSelectCompartment?: (compartmentId: string) => void;
 }
@@ -12,6 +13,7 @@ interface WorkerTelemetryProps {
 export const WorkerTelemetry: React.FC<WorkerTelemetryProps> = ({
   workers,
   loading,
+  error,
   onRefresh,
   onSelectCompartment,
 }) => {
@@ -23,11 +25,13 @@ export const WorkerTelemetry: React.FC<WorkerTelemetryProps> = ({
   }, []);
 
   const getWorkerLiveness = (worker: WorkerHeartbeat) => {
-    const hbTime = new Date(worker.timestamp).getTime();
-    const elapsedSeconds = Math.max(0, Math.floor((currentTime - hbTime) / 1000));
+    const hbTime = new Date(worker.lastHeartbeat).getTime();
+    const elapsedFromTimestamp = Number.isFinite(hbTime)
+      ? Math.max(0, Math.floor((currentTime - hbTime) / 1000))
+      : 0;
+    const elapsedSeconds = Math.max(worker.secondsSinceLastHeartbeat, elapsedFromTimestamp);
     
-    // Status logic: if explicitly DEAD/UNHEALTHY or heartbeat > 30s
-    if (worker.status === 'DEAD' || worker.status === 'UNHEALTHY' || elapsedSeconds > 30) {
+    if (!worker.healthy || worker.status === 'DEAD') {
       return {
         label: 'DEAD / UNHEALTHY',
         isAlive: false,
@@ -83,7 +87,13 @@ export const WorkerTelemetry: React.FC<WorkerTelemetryProps> = ({
 
       {/* Content */}
       <div className="p-4">
-        {workers.length === 0 ? (
+        {error ? (
+          <div role="alert" className="text-center py-10 px-4 border border-rose-900/70 bg-rose-950/20 rounded-lg">
+            <AlertTriangle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
+            <p className="text-sm font-mono text-rose-300">Worker telemetry is offline</p>
+            <p className="text-xs text-rose-400/80 mt-1">{error}</p>
+          </div>
+        ) : workers.length === 0 ? (
           <div className="text-center py-10 px-4 border border-dashed border-gray-800 rounded-lg">
             <Activity className="w-8 h-8 text-gray-600 mx-auto mb-2 animate-pulse" />
             <p className="text-sm font-mono text-gray-400">No active workers reporting heartbeats</p>
@@ -158,7 +168,7 @@ export const WorkerTelemetry: React.FC<WorkerTelemetryProps> = ({
                     ) : (
                       <span className="flex items-center gap-1 text-rose-400 font-bold">
                         <AlertTriangle className="w-3 h-3" />
-                        Expired &gt;30s
+                        Unhealthy ({liveness.elapsedSeconds}s)
                       </span>
                     )}
                   </div>

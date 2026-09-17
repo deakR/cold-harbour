@@ -55,3 +55,23 @@ jobs:
       - uses: actions/checkout@v4
       - shell: pwsh
         run: ./scripts/verify_e2e.ps1 -MockMode
+
+  live-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [go-worker, control-plane, dashboard]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build and start stack
+        run: docker compose -f docker/docker-compose.yml up -d --build
+      - name: Verify real HTTP, WebSocket, checksum, and TTL flow
+        run: node scripts/verify_live.mjs
+      - name: Capture stack logs
+        if: failure()
+        run: docker compose -f docker/docker-compose.yml logs --no-color
+      - name: Stop stack
+        if: always()
+        run: docker compose -f docker/docker-compose.yml down -v

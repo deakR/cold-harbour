@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"coldharbor/worker-engine/internal/model"
@@ -13,22 +14,30 @@ import (
 
 // RedisEventPublisher broadcasts state transition events to a Redis Pub/Sub channel
 type RedisEventPublisher struct {
-	client  redis.UniversalClient
-	channel string
+	client     redis.UniversalClient
+	channel    string
+	streamName string
+	metrics    *Metrics
 }
 
-// NewEventPublisher creates a new publisher configured with the target pub/sub channel
-func NewEventPublisher(client redis.UniversalClient, channel string) *RedisEventPublisher {
+// NewEventPublisher creates a publisher that writes every event to a durable
+// stream before attempting best-effort Pub/Sub fanout.
+func NewEventPublisher(client redis.UniversalClient, channel string, eventStream ...string) *RedisEventPublisher {
 	if channel == "" {
 		channel = "coldharbor:events"
 	}
+	streamName := "coldharbor:events:stream"
+	if len(eventStream) > 0 && eventStream[0] != "" {
+		streamName = eventStream[0]
+	}
 	return &RedisEventPublisher{
-		client:  client,
-		channel: channel,
+		client:     client,
+		channel:    channel,
+		streamName: streamName,
 	}
 }
 
-// Publish broadcasts an event to the Redis Pub/Sub channel
+// Publish appends an event to the durable stream, then broadcasts it live.
 func (p *RedisEventPublisher) Publish(ctx context.Context, evt *model.EventMessage) error {
 	if evt == nil {
 		return nil
@@ -58,8 +67,29 @@ func (p *RedisEventPublisher) Publish(ctx context.Context, evt *model.EventMessa
 		return fmt.Errorf("failed to marshal event message: %w", err)
 	}
 
+	if err := p.client.XAdd(ctx, &redis.XAddArgs{
+		Stream: p.streamName,
+		MaxLen: 100_000,
+		Approx: true,
+		Values: map[string]any{
+			"data":          string(payload),
+			"eventId":       evt.EventID,
+			"compartmentId": evt.CompartmentID,
+			"toState":       string(evt.ToState),
+		},
+	}).Err(); err != nil {
+		if p.metrics != nil {
+			p.metrics.IncPublishErrors()
+		}
+		log.Printf("[events] failed to persist transition for compartment %s: %v", evt.CompartmentID, err)
+		return fmt.Errorf("failed to append event to stream %s: %w", p.streamName, err)
+	}
+
 	if err := p.client.Publish(ctx, p.channel, payload).Err(); err != nil {
-		return fmt.Errorf("failed to publish event to channel %s: %w", p.channel, err)
+		if p.metrics != nil {
+			p.metrics.IncPublishErrors()
+		}
+		log.Printf("[events] failed to publish transition for compartment %s: %v", evt.CompartmentID, err)
 	}
 
 	return nil

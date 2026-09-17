@@ -12,22 +12,24 @@ import (
 
 // Config holds all runtime settings for the Go worker engine
 type Config struct {
-	RedisAddr            string
-	RedisPassword        string
-	RedisDB              int
-	WorkerID             string
-	ConsumerGroup        string
-	StreamName           string
-	DLQStreamName        string
-	EventChannel         string
-	HeartbeatInterval    time.Duration
-	HeartbeatTTL         time.Duration
-	ArchiveTTL           time.Duration
-	MaxRetries           int
-	Concurrency          int
-	BlockDuration        time.Duration
-	RecoveryInterval     time.Duration
-	MinIdleRecoveryTime  time.Duration
+	RedisAddr           string
+	RedisPassword       string
+	RedisDB             int
+	WorkerID            string
+	ConsumerGroup       string
+	StreamName          string
+	DLQStreamName       string
+	EventChannel        string
+	EventStreamName     string
+	AuditStreamName     string
+	HeartbeatInterval   time.Duration
+	HeartbeatTTL        time.Duration
+	ArchiveTTL          time.Duration
+	MaxRetries          int
+	Concurrency         int
+	BlockDuration       time.Duration
+	RecoveryInterval    time.Duration
+	MinIdleRecoveryTime time.Duration
 }
 
 // DefaultConfig returns production default settings
@@ -46,6 +48,8 @@ func DefaultConfig() *Config {
 		StreamName:          "coldharbor:jobs",
 		DLQStreamName:       "coldharbor:jobs:dlq",
 		EventChannel:        "coldharbor:events",
+		EventStreamName:     "coldharbor:events:stream",
+		AuditStreamName:     "coldharbor:audits",
 		HeartbeatInterval:   10 * time.Second,
 		HeartbeatTTL:        30 * time.Second,
 		ArchiveTTL:          3600 * time.Second,
@@ -87,6 +91,12 @@ func LoadConfig() (*Config, error) {
 	if ec := os.Getenv("EVENT_CHANNEL"); ec != "" {
 		cfg.EventChannel = ec
 	}
+	if es := os.Getenv("EVENT_STREAM_NAME"); es != "" {
+		cfg.EventStreamName = es
+	}
+	if as := os.Getenv("AUDIT_STREAM_NAME"); as != "" {
+		cfg.AuditStreamName = as
+	}
 
 	if hbSec := os.Getenv("HEARTBEAT_INTERVAL_SECONDS"); hbSec != "" {
 		if sec, err := strconv.Atoi(hbSec); err == nil && sec > 0 {
@@ -104,7 +114,9 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 	if retries := os.Getenv("MAX_RETRIES"); retries != "" {
-		if r, err := strconv.Atoi(retries); err == nil && r >= 0 {
+		// Zero means "use the safe default", not immediate DLQ. A job may
+		// still override the default with a positive maxRetries value.
+		if r, err := strconv.Atoi(retries); err == nil && r > 0 {
 			cfg.MaxRetries = r
 		}
 	}

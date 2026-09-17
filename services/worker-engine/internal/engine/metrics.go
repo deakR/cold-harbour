@@ -9,22 +9,30 @@ import (
 // Metrics tracks worker-engine throughput with lock-free counters.
 // Exposed as Prometheus text exposition by cmd/worker via WritePrometheus.
 type Metrics struct {
-	Claimed   atomic.Int64
-	Completed atomic.Int64
-	Failed    atomic.Int64
-	Recovered atomic.Int64
-	Sealed    atomic.Int64
-	Purged    atomic.Int64
-	DLQRouted atomic.Int64
+	Claimed       atomic.Int64
+	Completed     atomic.Int64
+	Failed        atomic.Int64
+	Recovered     atomic.Int64
+	Sealed        atomic.Int64
+	Purged        atomic.Int64
+	DLQRouted     atomic.Int64
+	TimedOut      atomic.Int64
+	Deduped       atomic.Int64
+	ProcessErrors atomic.Int64
+	PublishErrors atomic.Int64
 }
 
-func (m *Metrics) IncClaimed()   { m.Claimed.Add(1) }
-func (m *Metrics) IncCompleted() { m.Completed.Add(1) }
-func (m *Metrics) IncFailed()    { m.Failed.Add(1) }
-func (m *Metrics) IncRecovered() { m.Recovered.Add(1) }
-func (m *Metrics) IncSealed()    { m.Sealed.Add(1) }
-func (m *Metrics) IncPurged()    { m.Purged.Add(1) }
-func (m *Metrics) IncDLQRouted() { m.DLQRouted.Add(1) }
+func (m *Metrics) IncClaimed()       { m.Claimed.Add(1) }
+func (m *Metrics) IncCompleted()     { m.Completed.Add(1) }
+func (m *Metrics) IncFailed()        { m.Failed.Add(1) }
+func (m *Metrics) IncRecovered()     { m.Recovered.Add(1) }
+func (m *Metrics) IncSealed()        { m.Sealed.Add(1) }
+func (m *Metrics) IncPurged()        { m.Purged.Add(1) }
+func (m *Metrics) IncDLQRouted()     { m.DLQRouted.Add(1) }
+func (m *Metrics) IncTimedOut()      { m.TimedOut.Add(1) }
+func (m *Metrics) IncDeduplicated()  { m.Deduped.Add(1) }
+func (m *Metrics) IncProcessErrors() { m.ProcessErrors.Add(1) }
+func (m *Metrics) IncPublishErrors() { m.PublishErrors.Add(1) }
 
 // WritePrometheus renders counters in Prometheus text exposition format.
 func (m *Metrics) WritePrometheus(w io.Writer) {
@@ -40,6 +48,10 @@ func (m *Metrics) WritePrometheus(w io.Writer) {
 		{"coldharbor_worker_sealed_total", "Dead drops sealed with SHA-256", m.Sealed.Load()},
 		{"coldharbor_worker_purged_total", "Scratchpads purged with zero-leak verified", m.Purged.Load()},
 		{"coldharbor_worker_dlq_routed_total", "Messages routed to the dead-letter stream", m.DLQRouted.Load()},
+		{"coldharbor_worker_timeouts_total", "Job executions stopped by their configured timeout", m.TimedOut.Load()},
+		{"coldharbor_worker_deduplicated_total", "Completed messages acknowledged without re-execution", m.Deduped.Load()},
+		{"coldharbor_worker_process_errors_total", "ProcessJob errors observed by worker goroutines", m.ProcessErrors.Load()},
+		{"coldharbor_worker_publish_errors_total", "State event publication failures", m.PublishErrors.Load()},
 	}
 	for _, c := range counters {
 		fmt.Fprintf(w, "# HELP %s %s.\n# TYPE %s counter\n%s %d\n", c.name, c.help, c.name, c.name, c.value)

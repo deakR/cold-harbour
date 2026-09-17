@@ -14,6 +14,8 @@ This document defines the strict communication and storage contracts between the
 | **Dead Drop Archive** | `archive:{compartmentId}` | String (JSON) | Configurable (Default: 3600s) | Immutable sealed output with SHA-256 checksum and auto-purge countdown. |
 | **Worker Heartbeat** | `worker:{workerId}:heartbeat` | String (JSON) | 30s | Liveness pulse emitted every 10s by each active Go worker. |
 | **Live Event Bus** | `coldharbor:events` | Pub/Sub | Instantaneous | Real-time state transition broadcast channel. |
+| **Durable Event Log** | `coldharbor:events:stream` | Stream | Capped | Replayable lifecycle projection source; acknowledged after control-plane metadata projection. |
+| **Durable Audit Queue** | `coldharbor:audits` | Stream | Until persisted | Full terminal audit envelopes; deleted only after PostgreSQL persistence succeeds. |
 
 ---
 

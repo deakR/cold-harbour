@@ -6,12 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.data.redis.connection.stream.MapRecord;
-import org.springframework.data.redis.connection.stream.RecordId;
-import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
@@ -25,7 +22,6 @@ import static org.mockito.Mockito.*;
 class JobDispatchServiceTest {
 
     private StringRedisTemplate redisTemplate;
-    private StreamOperations<String, Object, Object> streamOperations;
     private ValueOperations<String, String> valueOperations;
     private ObjectMapper objectMapper;
     private JobDispatchService dispatchService;
@@ -33,10 +29,8 @@ class JobDispatchServiceTest {
     @BeforeEach
     void setUp() {
         redisTemplate = mock(StringRedisTemplate.class);
-        streamOperations = mock(StreamOperations.class);
         valueOperations = mock(ValueOperations.class);
 
-        when(redisTemplate.opsForStream()).thenReturn(streamOperations);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
         objectMapper = new ObjectMapper();
@@ -56,7 +50,8 @@ class JobDispatchServiceTest {
         req.setTaskType("DATA_REDUCTION");
         req.setPayload(Map.of("batchSize", 500));
 
-        when(streamOperations.add(any(MapRecord.class))).thenReturn(RecordId.of("1720000000-0"));
+        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), any(String[].class)))
+                .thenReturn(1L);
 
         CompartmentDetail result = dispatchService.dispatchJob(req);
 
@@ -65,23 +60,22 @@ class JobDispatchServiceTest {
         assertThat(result.getState()).isEqualTo("QUEUED");
         assertThat(result.getProgress()).isEqualTo(0);
 
-        // Verify stream write
-        ArgumentCaptor<MapRecord> captor = ArgumentCaptor.forClass(MapRecord.class);
-        verify(streamOperations, times(1)).add(captor.capture());
+        verify(redisTemplate).execute(any(DefaultRedisScript.class),
+                eq(java.util.List.of("compartment:cpt_abc123:meta", "coldharbor:jobs",
+                        "compartment:cpt_abc123:meta:dispatch")),
+                any(String[].class));
+        verify(valueOperations, never()).set(anyString(), anyString(), any(Duration.class));
+    }
 
-        MapRecord record = captor.getValue();
-        assertThat(record.getStream()).isEqualTo("coldharbor:jobs");
-        Map<String, String> value = (Map<String, String>) record.getValue();
-        assertThat(value.get("compartmentId")).isEqualTo("cpt_abc123");
-        assertThat(value.get("context")).isEqualTo("INNIE");
-        assertThat(value.get("taskType")).isEqualTo("DATA_REDUCTION");
-        assertThat(value.get("ownerId")).isEqualTo("usr_9918");
+    @Test
+    void shouldRejectDuplicateCompartmentId() {
+        CreateCompartmentRequest req = new CreateCompartmentRequest(
+                "cpt_duplicate", "INNIE", "usr_1", "TASK", Map.of());
+        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), any(String[].class)))
+                .thenReturn(0L);
 
-        // Verify metadata set in Redis
-        verify(valueOperations, times(1)).set(
-                eq("compartment:cpt_abc123:meta"),
-                anyString(),
-                any(Duration.class)
-        );
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> dispatchService.dispatchJob(req))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("already exists");
     }
 }
