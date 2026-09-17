@@ -15,7 +15,7 @@ verify:
 	powershell -ExecutionPolicy Bypass -File scripts/verify_e2e.ps1 -MockMode
 
 verify-live:
-	powershell -ExecutionPolicy Bypass -File scripts/verify_e2e.ps1 -PostgresPort 5433
+	node scripts/verify_live.mjs
 
 bench:
 	powershell -ExecutionPolicy Bypass -File scripts/benchmark.ps1 -Count 50

@@ -25,13 +25,18 @@ From the repository root, run the offline contract simulation:
 For integration checks, start the complete stack following the README, then run:
 
 ```powershell
-./scripts/verify_e2e.ps1 -PostgresPort 5433
+node scripts/verify_live.mjs
 ```
 
-The harness can fall back to simulation when infrastructure is unavailable.
-Check its connectivity and scenario output, and distinguish mock results from
-live results in your pull request. A mock pass does not prove live recovery,
-Redis cleanup, or PostgreSQL persistence.
+Requires Node 22.12+ and the running stack. This creates one job, checks proxied
+health and metrics, receives real WebSocket events, and verifies the output,
+checksum, and archive TTL. It fails when services are unavailable; no mock fallback.
+Set `BASE_URL` to override `http://localhost:3000` and `API_KEY` when required.
+The job and audit record are retained. Browser interactions, crash recovery,
+and direct Redis/PostgreSQL checks are separate from this smoke test.
+
+The older `verify_e2e.ps1` simulates scenarios 2–6 even when services are
+available. Its scorecard is not evidence of live recovery or persistence.
 
 ## Change guidelines
 

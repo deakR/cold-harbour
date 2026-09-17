@@ -148,14 +148,14 @@ make up
 - [Docker & Docker Compose](https://www.docker.com/)
 - [Go 1.25+](https://go.dev/)
 - [Java 21+](https://adoptium.net/) and [Maven](https://maven.apache.org/) installed on `PATH` (`mvnw` is a launcher, not a self-downloading wrapper)
-- [Node.js 22+](https://nodejs.org/)
+- [Node.js 22.12+](https://nodejs.org/)
 - GNU Make for the shortcuts above; Windows PowerShell for the Makefile verification/benchmark targets (or run the scripts directly with PowerShell 7 `pwsh`)
 
 ### Verify
 
 ```bash
 make verify        # offline contract verification, no Docker needed
-make verify-live   # against the live stack (Postgres probe uses :5433)
+make verify-live   # real HTTP/WebSocket smoke test; no simulation fallback
 make bench         # 50-job dispatch benchmark + Dead Drop completion probe
 ```
 
