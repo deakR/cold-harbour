@@ -81,3 +81,33 @@ against the API proxy, Redis, worker logs, and PostgreSQL established:
 - Marked the Unix Maven launcher executable for CI.
 - Removed a developer-specific Maven path from the Windows launcher; install
   Maven on PATH before using either launcher.
+
+## Publication status
+
+- Pushed to `deakR/cold-harbour` `main`:
+  - `fd6d3bd` — repository polish, Maven launcher fixes, first verification handoff.
+  - `736ad4b` — live smoke harness (`scripts/verify_live.mjs`), web tooling
+    upgrade (Vite 7 / Vitest 4), updated docs and this handoff.
+- CI runs Go, Java, web, and mock E2E on push and pull requests; the README
+  badge tracks it. CI does not run the live smoke test — it needs a running stack.
+- `.opencode/` and `nul` are intentionally left untracked at the user's request.
+  Neither was staged, deleted, or modified during handoff finalization.
+  Stage repository changes explicitly rather than using `git add .`.
+
+## Final assessment
+
+The development/reference implementation passed the checks recorded above;
+this is not a production-readiness certification. Development credentials,
+self-asserted clearance, and exposed service ports require hardening before
+public deployment. Browser coverage is limited to dispatch and Live Events;
+the repeatable live smoke test does not replace crash-recovery or database tests.
+
+To repeat the smoke check with the stack running, use Node 22.12+:
+
+```sh
+node scripts/verify_live.mjs
+```
+
+Verification jobs and audit records remain in local storage. The temporary
+recovery worker was removed; the regular worker was restored. Service status
+and audit findings above describe the verification runs, not ongoing monitoring.
