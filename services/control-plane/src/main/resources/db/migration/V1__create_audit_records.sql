@@ -24,5 +24,23 @@ CREATE INDEX IF NOT EXISTS idx_audit_created_at
     ON audit_records(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_context
     ON audit_records(context);
+
+-- Older local development databases may contain duplicate terminal records
+-- because uniqueness was previously enforced only in application memory.
+-- Retain the newest record before installing the database invariant.
+DELETE FROM audit_records
+WHERE ctid IN (
+    SELECT duplicate_ctid
+    FROM (
+        SELECT ctid AS duplicate_ctid,
+               ROW_NUMBER() OVER (
+                   PARTITION BY compartment_id, final_state
+                   ORDER BY completed_at DESC, id DESC
+               ) AS row_number
+        FROM audit_records
+    ) ranked
+    WHERE row_number > 1
+);
+
 CREATE UNIQUE INDEX IF NOT EXISTS uk_audit_compartment_terminal
     ON audit_records(compartment_id, final_state);

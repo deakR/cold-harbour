@@ -3,16 +3,23 @@
 [![Verify](https://github.com/deakR/cold-harbour/actions/workflows/verify.yml/badge.svg)](https://github.com/deakR/cold-harbour/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **A Distributed, Compartmentalized Task Execution Platform**  
-> *Memory is temporary. Results are permanent. Context must never leak.*
+> A distributed, compartmentalized task execution platform.
+
+ColdHarbor demonstrates asynchronous workload execution with explicit context
+boundaries, checkpoint-based recovery, ephemeral working state, and durable
+execution records.
 
 ---
 
 ## Overview
 
-**ColdHarbor** is a distributed execution engine built on the principles of execution isolation, ephemeral memory, fault-tolerant checkpointing, and immutable outcomes. 
+Each job runs in a **Compartment** with an explicit security context
+(`INNIE` or `OUTIE`). Intermediate state is stored temporarily in Redis and
+removed at terminal completion. Final output is sealed with a SHA-256 checksum,
+retained for a configurable TTL, and represented in PostgreSQL.
 
-Every task runs in an isolated **Compartment** with strict security boundaries (`INNIE` / `OUTIE`). During execution, intermediate calculations are written to temporary scratchpad memory. Upon task completion or failure, the runtime scratchpad key is deleted—leaving only a SHA-256 checksummed output in a self-destructing Dead Drop archive and a durable audit record.
+ColdHarbor is intentionally an educational reference implementation. It does
+not provide an OS sandbox for arbitrary untrusted code.
 
 ---
 
@@ -54,7 +61,10 @@ Redis (Streams / Hashes / Pub/Sub / TTL)
 
 - **Spring Boot 3 (Java 21)**: Control plane, API-key clearance mapping, context checks at the API layer, compartment lifecycle manager, REST endpoints, and WebSocket event gateway.
 - **Go (Golang 1.25+)**: High-throughput worker engine, Redis Stream consumer groups, deterministic state machine, checkpoint recovery, and ephemeral memory management.
-- **Redis 7 (Alpine)**: Execution backbone powering Stream consumer groups (`coldharbor:jobs`), ephemeral memory hashes (`compartment:{id}:mem`), real-time pub/sub broadcasts (`coldharbor:events`), and self-destructing dead drops (`archive:{id}`).
+- **Redis 7 (Alpine)**: Execution backbone powering the job stream
+  (`coldharbor:jobs`), durable lifecycle and audit streams, ephemeral memory
+  hashes (`compartment:{id}:mem`), live pub/sub broadcasts
+  (`coldharbor:events`), and TTL dead drops (`archive:{id}`).
 - **PostgreSQL 16 (Alpine)**: Relational, durable audit store preserving historical run records, execution durations, and output checksums.
 - **React (Vite + TypeScript)**: Operational dashboard with live worker telemetry, compartment state visualizer, and event feeds.
 - **Docker Compose**: Containerized local development and deployment orchestration.
@@ -79,6 +89,14 @@ Completed task outputs are sealed with a **SHA-256 integrity checksum** and stor
 - **Hot / Ephemeral (Redis)**: Milliseconds to hours lifespan for active queues, scratchpads, and dead drops.
 - **Cold / Permanent (PostgreSQL)**: Durable `audit_records` table storing completion metadata, timestamps, and integrity checksums.
 
+### 6. Durable Event Delivery
+
+Workers append lifecycle events to `coldharbor:events:stream` and terminal
+audit envelopes to `coldharbor:audits`. The control plane consumes these
+streams and acknowledges entries only after projection or PostgreSQL
+persistence succeeds. Redis Pub/Sub remains a low-latency dashboard fanout
+channel; it is not the durable source of truth.
+
 ---
 
 ## Project Structure
@@ -87,7 +105,8 @@ Completed task outputs are sealed with a **SHA-256 integrity checksum** and stor
 coldharbour/
 ├── docker/
 │   ├── docker-compose.yml     # Redis 7 + PostgreSQL 16 + full-stack services
-│   └── init-db.sql            # Audit table DDL and indices
+│   ├── init-db.sql            # Local database bootstrap
+│   └── ...                    # Versioned Flyway migrations
 ├── docs/
 │   ├── contracts.md           # Redis schemas, payloads, and state transitions
 │   ├── threat-model.md        # Trust boundaries and abuse-case mitigations
@@ -107,33 +126,50 @@ coldharbour/
 
 ---
 
-## Project Status
+## Project status
 
-ColdHarbor is a development/reference implementation of a distributed task
-execution platform. Compartments provide application-level context separation,
-not an OS sandbox for untrusted code. The default Compose configuration is for
-local development only: it publishes database ports and uses development
-credentials and self-asserted clearance. Do not expose it directly to the internet.
-See the [threat model](docs/threat-model.md) for security boundaries and limitations.
+The repository contains a working local stack and automated verification for
+the control plane, worker engine, dashboard, and contract harness. The default
+Compose configuration is for local development only: it publishes database
+ports and uses development credentials. Do not expose it directly to the
+internet. See the [threat model](docs/threat-model.md) for boundaries and
+residual risks.
 
 ## Quickstart
 
-### Option A: Full stack in Docker (recommended)
+### Full stack with Docker Compose
+
+Docker Compose builds the worker, control plane, and dashboard images and
+starts Redis and PostgreSQL with their health checks.
 
 ```bash
-make build   # Go + Spring jar + web bundle
-make stack   # Redis, Postgres, worker, control plane, dashboard
+docker compose -f docker/docker-compose.yml up -d --build
 ```
 
-Open the dashboard at <http://localhost:3000>, API at
-<http://localhost:8080>, Swagger UI at
-<http://localhost:8080/swagger-ui/index.html>.
+Open:
 
-### Option B: Infrastructure only, services from source
+- Dashboard: <http://localhost:3000>
+- API: <http://localhost:8080>
+- Swagger UI: <http://localhost:8080/swagger-ui/index.html>
+
+The Compose stack is configured for local development and accepts the
+self-asserted `X-Context-Clearance` header. Use API keys and disable that
+development escape hatch before deploying elsewhere.
+
+Stop the stack with:
+
+```bash
+docker compose -f docker/docker-compose.yml down
+```
+
+### Infrastructure only
 
 ```bash
 make up
 ```
+
+Start the worker, control plane, and dashboard from source after the
+infrastructure is ready.
 
 | Service | Host port | Credentials / notes |
 |---|---|---|
@@ -154,16 +190,46 @@ make up
 ### Verify
 
 ```bash
-make verify        # offline contract verification, no Docker needed
-make verify-live   # real HTTP/WebSocket smoke test; no simulation fallback
-make bench         # 50-job dispatch benchmark + Dead Drop completion probe
+make verify        # deterministic contract verification; no Docker needed
+make verify-live   # real HTTP/WebSocket/checksum/TTL smoke test
+make bench         # 50-job dispatch benchmark and completion probe
 ```
+
+`verify_e2e.ps1 -MockMode` is deterministic and simulates worker scenarios.
+`verify_live.mjs` requires the running stack and never falls back to
+simulation. It creates a verification job and retains its audit record.
 
 ---
 
-## API Overview
+## Security
 
-All API operations require clearance: `X-API-Key` (preferred, mapped
+ColdHarbor has two clearance mechanisms:
+
+1. `X-API-Key`, mapped server-side to a clearance level. This is the
+   production mechanism.
+2. `X-Context-Clearance`, accepted only when
+   `COLDHARBOR_ALLOW_UNSAFE_HEADER=true`. Compose enables this explicitly for
+   local development.
+
+WebSocket handshakes use the `coldharbor` subprotocol plus
+`clearance.<LEVEL>`. When API keys are configured, clients also provide an
+`api-key.<base64url-key>` subprotocol. Events are filtered by the authenticated
+session's clearance.
+
+Before a non-local deployment:
+
+- set `COLDHARBOR_ALLOW_UNSAFE_HEADER=false`;
+- configure API keys through a secret manager;
+- restrict `COLDHARBOR_ALLOWED_ORIGINS`;
+- keep Redis and PostgreSQL on private networks with authentication and TLS;
+- restrict Actuator, Swagger, metrics, and DLQ operator endpoints.
+
+Read [SECURITY.md](SECURITY.md) and the
+[threat model](docs/threat-model.md) for the deployment baseline.
+
+## API overview
+
+All protected API operations require clearance: `X-API-Key` (preferred, mapped
 server-side via `coldharbor.security.api-keys`) or, when
 `allow-unsafe-header=true` (explicitly enabled by development Compose), a self-asserted
 `X-Context-Clearance: INNIE|OUTIE|SYSTEM|ADMIN` header. Every response carries
@@ -202,6 +268,8 @@ Full interactive reference: `/swagger-ui/index.html`.
 | `COLDHARBOR_DISPATCH_PER_MINUTE` | `0` (disabled) | Per-IP dispatch rate limit |
 | `EVENT_STREAM_NAME` / `AUDIT_STREAM_NAME` | `coldharbor:events:stream` / `coldharbor:audits` | Replayable lifecycle events and terminal audit delivery |
 | `COLDHARBOR_ALLOWED_ORIGINS` | Local dashboard origins | Allowed browser and WebSocket origins |
+| `COLDHARBOR_API_DOCS_ENABLED` / `COLDHARBOR_SWAGGER_ENABLED` | `false` | Enable API documentation endpoints |
+| `COLDHARBOR_ACTUATOR_ENDPOINTS` | `health` | Actuator endpoints exposed over HTTP |
 
 ---
 
@@ -210,3 +278,5 @@ Full interactive reference: `/swagger-ui/index.html`.
 - [System Contracts & Protocol Specification](docs/contracts.md)
 - [Threat Model](docs/threat-model.md)
 - [Benchmarks & Live Verification](docs/benchmarks.md)
+- [Security Policy](SECURITY.md)
+- [Contributing Guide](CONTRIBUTING.md)
