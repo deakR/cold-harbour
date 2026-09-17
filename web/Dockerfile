@@ -7,7 +7,7 @@ COPY index.html vite.config.ts tsconfig.json tailwind.config.js postcss.config.j
 COPY src/ src/
 RUN npm run build
 
-FROM nginx:alpine
+FROM nginxinc/nginx-unprivileged:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /web/dist /usr/share/nginx/html
-EXPOSE 80
+EXPOSE 8080

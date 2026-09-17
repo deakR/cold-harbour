@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Send, X, AlertCircle, CheckCircle2, Shield } from 'lucide-react';
 import { ContextClearance, JobDispatchPayload } from '../types';
 
@@ -27,6 +27,22 @@ export const JobDispatcher: React.FC<JobDispatcherProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
   const [simulateCrash, setSimulateCrash] = useState<boolean>(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    requestAnimationFrame(() => dialogRef.current?.focus());
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previouslyFocusedRef.current?.focus();
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -72,18 +88,26 @@ export const JobDispatcher: React.FC<JobDispatcherProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-[#0f172a] rounded-2xl border border-gray-700 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dispatch-dialog-title"
+        tabIndex={-1}
+        className="bg-[#0f172a] rounded-2xl border border-gray-700 shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] focus:outline-none"
+      >
         {/* Header */}
         <div className="p-4 bg-[#131d33] border-b border-gray-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-cyan-400" />
-            <h3 className="font-semibold text-white font-mono text-sm tracking-wide">
+            <h3 id="dispatch-dialog-title" className="font-semibold text-white font-mono text-sm tracking-wide">
               DISPATCH COMPARTMENT JOB
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close dispatch dialog"
             className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800 transition"
           >
             <X className="w-5 h-5" />
@@ -118,6 +142,7 @@ export const JobDispatcher: React.FC<JobDispatcherProps> = ({
                 <button
                   type="button"
                   key={c}
+                  aria-pressed={context === c}
                   onClick={() => setContext(c)}
                   className={`py-2 px-3 rounded-lg border font-bold transition text-center ${
                     context === c

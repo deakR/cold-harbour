@@ -8,17 +8,17 @@ import com.coldharbor.controlplane.websocket.EventWebSocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -35,9 +35,6 @@ public class EventRelayService implements MessageListener {
     private final AuditService auditService;
     private final EventWebSocketHandler webSocketHandler;
     private final ObjectMapper objectMapper;
-
-    @Autowired(required = false)
-    private SimpMessagingTemplate messagingTemplate;
 
     @Value("${coldharbor.redis.meta-prefix:compartment:}")
     private String metaPrefix;
@@ -74,30 +71,70 @@ public class EventRelayService implements MessageListener {
             log.info("Received event for compartment {}: {} -> {} (progress: {}%)",
                     compartmentId, event.getEffectiveFromState(), toState, event.getEffectiveProgress());
 
+            // Resolve security metadata before mutating state or publishing.
+            CompartmentDetail securityMetadata = enrichEventContext(event);
+
             // 1. Update live compartment metadata in Redis
             updateCompartmentMeta(event);
 
             // 2. Auto-record completed/failed jobs to PostgreSQL audit_records
-            if ("PURGED".equalsIgnoreCase(toState) || "ARCHIVED".equalsIgnoreCase(toState)
-                    || "COMPLETED".equalsIgnoreCase(toState) || "FAILED".equalsIgnoreCase(toState)) {
-                recordDurableAudit(event);
+            if ("PURGED".equalsIgnoreCase(toState)) {
+                recordDurableAudit(event, securityMetadata);
             }
 
-            // 3. Broadcast to native WebSocket clients
-            webSocketHandler.broadcast(jsonPayload);
-
-            // 4. Also broadcast to STOMP clients on /topic/events if active
-            if (messagingTemplate != null) {
-                try {
-                    messagingTemplate.convertAndSend("/topic/events", event);
-                } catch (Exception e) {
-                    log.debug("STOMP relay skipped or unavailable: {}", e.getMessage());
-                }
+            // 3. Broadcast only when the event context is known and authorizable.
+            if (event.getContext() != null) {
+                webSocketHandler.broadcast(objectMapper.writeValueAsString(event), event.getContext());
+            } else {
+                log.warn("Dropped event broadcast for compartment {} because security context is unavailable",
+                        compartmentId);
             }
 
         } catch (Exception e) {
             log.error("Failed to parse or relay event message: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Replays a durable event into the query projection without duplicating
+     * live WebSocket fanout or terminal audit writes.
+     */
+    public void processDurableEvent(String jsonPayload) throws Exception {
+        EventMessage event = objectMapper.readValue(jsonPayload, EventMessage.class);
+        enrichEventContext(event);
+        updateCompartmentMeta(event);
+    }
+
+    private CompartmentDetail enrichEventContext(EventMessage event) {
+        CompartmentDetail detail = null;
+        try {
+            String metaJson = redisTemplate.opsForValue()
+                    .get(metaPrefix + event.getCompartmentId() + ":meta");
+            if (metaJson != null && !metaJson.trim().isEmpty()) {
+                detail = objectMapper.readValue(metaJson, CompartmentDetail.class);
+            }
+            if (detail == null) {
+                String archiveJson = redisTemplate.opsForValue()
+                        .get(archivePrefix + event.getCompartmentId());
+                if (archiveJson != null && !archiveJson.trim().isEmpty()) {
+                    DeadDropPayload deadDrop = objectMapper.readValue(archiveJson, DeadDropPayload.class);
+                    detail = new CompartmentDetail();
+                    detail.setCompartmentId(event.getCompartmentId());
+                    detail.setContext(deadDrop.getContext());
+                    detail.setOwnerId(deadDrop.getOwnerId());
+                    detail.setTaskType(deadDrop.getTaskType());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to resolve event security metadata for {}: {}",
+                    event.getCompartmentId(), e.getMessage());
+        }
+        if (detail != null) {
+            event.setContext(detail.getContext());
+            event.setOwnerId(detail.getOwnerId());
+            event.setTaskType(detail.getTaskType());
+        }
+        return detail;
     }
 
     private void updateCompartmentMeta(EventMessage event) {
@@ -110,13 +147,24 @@ public class EventRelayService implements MessageListener {
             CompartmentDetail detail;
             if (existingJson != null) {
                 detail = objectMapper.readValue(existingJson, CompartmentDetail.class);
+                if (detail.getUpdatedAt() != null && event.getTimestamp() != null
+                        && event.getTimestamp().isBefore(detail.getUpdatedAt())) {
+                    log.debug("Ignored stale event {} for compartment {}",
+                            event.getEventId(), event.getCompartmentId());
+                    return;
+                }
             } else {
+                if (event.getContext() == null || event.getOwnerId() == null || event.getTaskType() == null) {
+                    log.warn("Not creating metadata for {} without trusted context/owner/task",
+                            event.getCompartmentId());
+                    return;
+                }
                 detail = new CompartmentDetail();
                 detail.setCompartmentId(event.getCompartmentId());
                 detail.setCreatedAt(Instant.now());
-                detail.setContext("INNIE");
-                detail.setOwnerId("system");
-                detail.setTaskType("TASK");
+                detail.setContext(event.getContext());
+                detail.setOwnerId(event.getOwnerId());
+                detail.setTaskType(event.getTaskType());
             }
 
             detail.setState(event.getEffectiveToState());
@@ -132,13 +180,10 @@ public class EventRelayService implements MessageListener {
         }
     }
 
-    private void recordDurableAudit(EventMessage event) {
+    private void recordDurableAudit(EventMessage event, CompartmentDetail metadata) {
         String compartmentId = event.getCompartmentId();
         String state = event.getEffectiveToState();
-        // Only terminal success states persist; intermediate events (RUNNING,
-        // CHECKPOINT, COMPLETED) would otherwise race into duplicate rows.
-        if (!"ARCHIVED".equalsIgnoreCase(state) && !"PURGED".equalsIgnoreCase(state)
-                && !"FAILED".equalsIgnoreCase(state)) {
+        if (!"PURGED".equalsIgnoreCase(state) && !"FAILED".equalsIgnoreCase(state)) {
             return;
         }
         try {
@@ -147,20 +192,29 @@ public class EventRelayService implements MessageListener {
 
             if (archiveJson != null && !archiveJson.trim().isEmpty()) {
                 DeadDropPayload deadDrop = objectMapper.readValue(archiveJson, DeadDropPayload.class);
-                auditService.recordCompletedJob(compartmentId, deadDrop, event.getDetails());
+                auditService.recordCompletedJob(compartmentId, deadDrop, event.getDetails(), state.toUpperCase());
             } else if ("FAILED".equalsIgnoreCase(event.getEffectiveToState())) {
+                if (metadata == null || metadata.getContext() == null
+                        || metadata.getOwnerId() == null || metadata.getTaskType() == null) {
+                    log.warn("Skipped FAILED audit for {} because trusted security metadata is unavailable",
+                            compartmentId);
+                    return;
+                }
+                Map<String, Object> failureMetadata = new LinkedHashMap<>();
+                failureMetadata.put("error", "Task failed");
+                failureMetadata.put("details", event.getDetails() != null ? event.getDetails() : "");
                 AuditRecord failedRecord = new AuditRecord(
                         UUID.randomUUID(),
                         compartmentId,
-                        "unknown",
-                        "INNIE",
-                        "TASK",
+                        metadata.getOwnerId(),
+                        metadata.getContext(),
+                        metadata.getTaskType(),
                         "FAILED",
                         "",
                         0L,
                         Instant.now(),
                         Instant.now(),
-                        "{\"error\":\"Task failed\",\"details\":\"" + (event.getDetails() != null ? event.getDetails() : "") + "\"}"
+                        objectMapper.writeValueAsString(failureMetadata)
                 );
                 auditService.saveAuditRecord(failedRecord);
             }

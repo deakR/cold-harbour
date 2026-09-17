@@ -17,17 +17,21 @@ import { Activity, Layers, Terminal, PackageCheck, FileSpreadsheet, Cpu } from '
 
 export const App: React.FC = () => {
   const [clearance, setClearance] = useState<ContextClearance>('INNIE');
-  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('coldharbor_api_key') || '');
+  const [apiKey, setApiKey] = useState<string>(() => sessionStorage.getItem('coldharbor_api_key') || '');
   const [workers, setWorkers] = useState<WorkerHeartbeat[]>([]);
   const [audits, setAudits] = useState<AuditRecord[]>([]);
-  const [selectedCompartmentId, setSelectedCompartmentId] = useState<string>('cpt_sample_01');
+  const [workerError, setWorkerError] = useState<string | null>(null);
+  const [auditError, setAuditError] = useState<string | null>(null);
+  const [selectedCompartmentId, setSelectedCompartmentId] = useState<string>('');
   const [isDispatchOpen, setIsDispatchOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'telemetry' | 'tracker' | 'feed' | 'deaddrop' | 'audits'>('overview');
 
   const {
     loading: apiLoading,
+    error: apiError,
     fetchWorkers,
     fetchAudits,
+    fetchCompartment,
     fetchDeadDrop,
     dispatchJob,
   } = useApi(clearance, apiKey);
@@ -35,69 +39,45 @@ export const App: React.FC = () => {
   const handleApiKeyChange = useCallback((key: string) => {
     setApiKey(key);
     if (key.trim()) {
-      localStorage.setItem('coldharbor_api_key', key.trim());
+      sessionStorage.setItem('coldharbor_api_key', key.trim());
     } else {
-      localStorage.removeItem('coldharbor_api_key');
+      sessionStorage.removeItem('coldharbor_api_key');
     }
   }, []);
 
   const {
     events,
     status: wsStatus,
+    lastError: wsError,
     isPaused,
     togglePause,
     clearEvents,
     addEvent,
-  } = useWebSocketEvents();
+  } = useWebSocketEvents({ clearance, apiKey });
 
   // Load workers
   const loadWorkers = useCallback(async () => {
-    const data = await fetchWorkers();
-    if (data && data.length > 0) {
+    try {
+      const data = await fetchWorkers();
       setWorkers(data);
-    } else if (workers.length === 0) {
-      // Default sample workers for initial view if cluster is offline
-      setWorkers([
-        {
-          workerId: 'worker-engine-01',
-          status: 'IDLE',
-          activeCompartmentId: null,
-          timestamp: new Date().toISOString(),
-        },
-        {
-          workerId: 'worker-engine-02',
-          status: 'BUSY',
-          activeCompartmentId: 'cpt_sample_01',
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      setWorkerError(null);
+    } catch (error) {
+      setWorkers([]);
+      setWorkerError(error instanceof Error ? error.message : 'Worker endpoint connection failed');
     }
-  }, [fetchWorkers, workers.length]);
+  }, [fetchWorkers]);
 
   // Load audits
   const loadAudits = useCallback(async () => {
-    const data = await fetchAudits();
-    if (data && data.length > 0) {
+    try {
+      const data = await fetchAudits();
       setAudits(data);
-    } else if (audits.length === 0) {
-      // Sample bootstrap audits if database empty
-      setAudits([
-        {
-          id: '550e8400-e29b-41d4-a716-446655440000',
-          compartmentId: 'cpt_sample_01',
-          ownerId: 'usr_ops_01',
-          context: 'INNIE',
-          taskType: 'DATA_REDUCTION',
-          finalState: 'PURGED',
-          checksum: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-          durationMs: 412,
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-          completedAt: new Date(Date.now() - 3599500).toISOString(),
-          metadata: { processedCount: 500, checksumVerified: true },
-        },
-      ]);
+      setAuditError(null);
+    } catch (error) {
+      setAudits([]);
+      setAuditError(error instanceof Error ? error.message : 'Audit endpoint connection failed');
     }
-  }, [fetchAudits, audits.length]);
+  }, [fetchAudits]);
 
   const handleRefreshAll = useCallback(() => {
     loadWorkers();
@@ -118,23 +98,17 @@ export const App: React.FC = () => {
     };
   }, [loadWorkers, loadAudits]);
 
-  // If a new event arrives with a compartment ID, auto-select it if still on default
-  useEffect(() => {
-    if (events.length > 0 && selectedCompartmentId === 'cpt_sample_01') {
-      const latest = events[0];
-      if (latest.compartmentId) {
-        setSelectedCompartmentId(latest.compartmentId);
-      }
-    }
-  }, [events, selectedCompartmentId]);
-
   // Calculate active jobs
-  const activeJobsCount = workers.filter((w) => w.status === 'BUSY' && w.activeCompartmentId).length;
+  const activeJobsCount = workers.filter(
+    (w) => w.healthy && w.status === 'BUSY' && w.activeCompartmentId
+  ).length;
 
   const handleSelectCompartment = (id: string) => {
     setSelectedCompartmentId(id);
     setActiveTab('tracker');
   };
+
+  const closeDispatch = useCallback(() => setIsDispatchOpen(false), []);
 
   const handleJobDispatched = (id: string) => {
     setSelectedCompartmentId(id);
@@ -171,9 +145,11 @@ export const App: React.FC = () => {
       {/* Navigation Sub-bar */}
       <div className="border-b border-gray-800/80 bg-[#0d1322] px-6 py-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <nav className="flex items-center gap-1 font-mono text-xs overflow-x-auto py-1">
+          <nav role="tablist" aria-label="Dashboard views" className="flex items-center gap-1 font-mono text-xs overflow-x-auto py-1">
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === 'overview'}
               onClick={() => setActiveTab('overview')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
                 activeTab === 'overview'
@@ -187,6 +163,8 @@ export const App: React.FC = () => {
 
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === 'telemetry'}
               onClick={() => setActiveTab('telemetry')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
                 activeTab === 'telemetry'
@@ -200,6 +178,8 @@ export const App: React.FC = () => {
 
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === 'tracker'}
               onClick={() => setActiveTab('tracker')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
                 activeTab === 'tracker'
@@ -213,6 +193,8 @@ export const App: React.FC = () => {
 
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === 'feed'}
               onClick={() => setActiveTab('feed')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
                 activeTab === 'feed'
@@ -226,6 +208,8 @@ export const App: React.FC = () => {
 
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === 'deaddrop'}
               onClick={() => setActiveTab('deaddrop')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
                 activeTab === 'deaddrop'
@@ -239,6 +223,8 @@ export const App: React.FC = () => {
 
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === 'audits'}
               onClick={() => setActiveTab('audits')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
                 activeTab === 'audits'
@@ -255,6 +241,12 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+        {(apiError || wsError) && (
+          <div role="status" className="rounded-lg border border-rose-900/70 bg-rose-950/30 px-4 py-2 text-xs font-mono text-rose-300">
+            {apiError && <div>API: {apiError}</div>}
+            {wsError && <div>WebSocket: {wsError}</div>}
+          </div>
+        )}
         {/* Overview Tab: Displays all components in a master control room layout */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
@@ -262,6 +254,7 @@ export const App: React.FC = () => {
             <WorkerTelemetry
               workers={workers}
               loading={apiLoading}
+              error={workerError}
               onRefresh={loadWorkers}
               onSelectCompartment={handleSelectCompartment}
             />
@@ -273,6 +266,7 @@ export const App: React.FC = () => {
                   selectedCompartmentId={selectedCompartmentId}
                   onSelectCompartmentId={setSelectedCompartmentId}
                   events={events}
+                  fetchCompartment={fetchCompartment}
                 />
               </div>
               <div className="lg:col-span-5">
@@ -296,6 +290,7 @@ export const App: React.FC = () => {
             <AuditBrowser
               audits={audits}
               loading={apiLoading}
+              error={auditError}
               onRefresh={loadAudits}
               onSelectCompartment={handleSelectCompartment}
             />
@@ -307,6 +302,7 @@ export const App: React.FC = () => {
           <WorkerTelemetry
             workers={workers}
             loading={apiLoading}
+            error={workerError}
             onRefresh={loadWorkers}
             onSelectCompartment={handleSelectCompartment}
           />
@@ -317,6 +313,7 @@ export const App: React.FC = () => {
             selectedCompartmentId={selectedCompartmentId}
             onSelectCompartmentId={setSelectedCompartmentId}
             events={events}
+            fetchCompartment={fetchCompartment}
           />
         )}
 
@@ -341,6 +338,7 @@ export const App: React.FC = () => {
           <AuditBrowser
             audits={audits}
             loading={apiLoading}
+            error={auditError}
             onRefresh={loadAudits}
             onSelectCompartment={handleSelectCompartment}
           />
@@ -350,7 +348,7 @@ export const App: React.FC = () => {
       {/* Modal Job Dispatcher */}
       <JobDispatcher
         isOpen={isDispatchOpen}
-        onClose={() => setIsDispatchOpen(false)}
+        onClose={closeDispatch}
         currentClearance={clearance}
         onDispatch={dispatchJob}
         onJobDispatched={handleJobDispatched}

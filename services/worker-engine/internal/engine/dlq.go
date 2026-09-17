@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"coldharbor/worker-engine/internal/model"
@@ -12,10 +13,11 @@ import (
 
 // DLQHandler manages forwarding failed jobs to the Dead-Letter Queue and purging transient state
 type DLQHandler struct {
-	client     redis.UniversalClient
-	dlqStream  string
-	scratchpad *ScratchpadManager
-	publisher  EventPublisher
+	client      redis.UniversalClient
+	dlqStream   string
+	auditStream string
+	scratchpad  *ScratchpadManager
+	publisher   EventPublisher
 }
 
 // NewDLQHandler creates a new DLQ handler
@@ -24,15 +26,21 @@ func NewDLQHandler(
 	dlqStream string,
 	scratchpad *ScratchpadManager,
 	publisher EventPublisher,
+	auditStream ...string,
 ) *DLQHandler {
 	if dlqStream == "" {
 		dlqStream = "coldharbor:jobs:dlq"
 	}
+	auditStreamName := "coldharbor:audits"
+	if len(auditStream) > 0 && auditStream[0] != "" {
+		auditStreamName = auditStream[0]
+	}
 	return &DLQHandler{
-		client:     client,
-		dlqStream:  dlqStream,
-		scratchpad: scratchpad,
-		publisher:  publisher,
+		client:      client,
+		dlqStream:   dlqStream,
+		auditStream: auditStreamName,
+		scratchpad:  scratchpad,
+		publisher:   publisher,
 	}
 }
 
@@ -99,7 +107,7 @@ func (d *DLQHandler) RouteToDLQ(
 
 	// 2. Publish FAILED event
 	if d.publisher != nil {
-		_ = d.publisher.Publish(ctx, &model.EventMessage{
+		if err := d.publisher.Publish(ctx, &model.EventMessage{
 			CompartmentID: compartmentID,
 			WorkerID:      workerID,
 			FromState:     model.StateRunning,
@@ -109,7 +117,9 @@ func (d *DLQHandler) RouteToDLQ(
 			CheckpointPct: 0,
 			Timestamp:     time.Now().UTC(),
 			Details:       fmt.Sprintf("Moved to DLQ after %d attempts: %s", attemptCount, reason),
-		})
+		}); err != nil {
+			log.Printf("[dlq] failed to publish FAILED event for compartment %s: %v", compartmentID, err)
+		}
 	}
 
 	// 3. Purge scratchpad (zero leak guarantee)
@@ -123,9 +133,21 @@ func (d *DLQHandler) RouteToDLQ(
 		}
 	}
 
+	now := time.Now().UTC()
+	if err := appendAuditEnvelope(ctx, d.client, d.auditStream, &model.DeadDropPayload{
+		CompartmentID: compartmentID,
+		OwnerID:       job.OwnerID,
+		Context:       job.Context,
+		TaskType:      job.TaskType,
+		ArchivedAt:    now,
+		CompletedAt:   now,
+	}, string(model.StateFailed), reason); err != nil {
+		return fmt.Errorf("persist failed-job audit envelope: %w", err)
+	}
+
 	// 4. Publish PURGED event
 	if d.publisher != nil {
-		_ = d.publisher.Publish(ctx, &model.EventMessage{
+		if err := d.publisher.Publish(ctx, &model.EventMessage{
 			CompartmentID: compartmentID,
 			WorkerID:      workerID,
 			FromState:     model.StateFailed,
@@ -135,11 +157,15 @@ func (d *DLQHandler) RouteToDLQ(
 			CheckpointPct: 0,
 			Timestamp:     time.Now().UTC(),
 			Details:       "Scratchpad purged on DLQ routing",
-		})
+		}); err != nil {
+			log.Printf("[dlq] failed to publish PURGED event for compartment %s: %v", compartmentID, err)
+		}
 	}
 
 	// 5. Clean up retry key
-	_ = d.client.Del(ctx, d.RetryKey(compartmentID)).Err()
+	if err := d.client.Del(ctx, d.RetryKey(compartmentID)).Err(); err != nil {
+		log.Printf("[dlq] failed to clear retry key for compartment %s: %v", compartmentID, err)
+	}
 
 	// 6. Acknowledge original message from stream
 	if origStream != "" && origGroup != "" && msgID != "" {

@@ -70,15 +70,25 @@ func main() {
 	if metricsAddr == "" {
 		metricsAddr = "localhost:9091"
 	}
-	metricsSrv := &http.Server{Addr: metricsAddr}
-	http.HandleFunc("/metrics", func(w http.ResponseWriter, _ *http.Request) {
+	mux := http.NewServeMux()
+	metricsSrv := &http.Server{Addr: metricsAddr, Handler: mux}
+	mux.HandleFunc("/metrics", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
 		consumer.MetricsSnapshot().WritePrometheus(w)
 	})
-	http.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+	redisHealth := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		checkCtx, checkCancel := context.WithTimeout(r.Context(), time.Second)
+		defer checkCancel()
+		if err := rdb.Ping(checkCtx).Err(); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			fmt.Fprintf(w, `{"status":"DOWN","workerId":%q,"redis":"UNAVAILABLE"}`, cfg.WorkerID)
+			return
+		}
 		fmt.Fprintf(w, `{"status":"UP","workerId":%q}`, cfg.WorkerID)
-	})
+	}
+	mux.HandleFunc("/healthz", redisHealth)
+	mux.HandleFunc("/readyz", redisHealth)
 	go func() {
 		if err := metricsSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Printf("[Metrics] server error: %v", err)

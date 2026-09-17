@@ -34,14 +34,15 @@ export interface JobDispatchPayload {
 }
 
 export interface Compartment {
-  id: string;
+  compartmentId: string;
   context: ContextClearance;
   ownerId: string;
   taskType: string;
-  currentState: CompartmentState;
+  state: CompartmentState;
   createdAt: string;
   updatedAt?: string;
   progress?: number;
+  details?: string;
 }
 
 export interface EventMessage {
@@ -60,10 +61,11 @@ export interface EventMessage {
 
 export interface WorkerHeartbeat {
   workerId: string;
-  status: 'IDLE' | 'BUSY' | 'ACTIVE' | 'ALIVE' | 'DEAD' | 'UNHEALTHY';
+  status: 'IDLE' | 'BUSY' | 'DEAD';
   activeCompartmentId?: string | null;
-  timestamp: string;
-  lastSeenSeconds?: number;
+  lastHeartbeat: string;
+  healthy: boolean;
+  secondsSinceLastHeartbeat: number;
 }
 
 export interface DeadDropResult {

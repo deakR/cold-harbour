@@ -34,13 +34,25 @@ describe('UI Component Rendering & Contracts', () => {
         workerId: 'worker-engine-01',
         status: 'IDLE' as const,
         activeCompartmentId: null,
-        timestamp: new Date().toISOString(),
+        lastHeartbeat: new Date().toISOString(),
+        healthy: true,
+        secondsSinceLastHeartbeat: 0,
       },
       {
         workerId: 'worker-engine-02',
         status: 'BUSY' as const,
         activeCompartmentId: 'cpt_test_123',
-        timestamp: new Date().toISOString(),
+        lastHeartbeat: new Date().toISOString(),
+        healthy: true,
+        secondsSinceLastHeartbeat: 0,
+      },
+      {
+        workerId: 'worker-engine-03',
+        status: 'DEAD' as const,
+        activeCompartmentId: null,
+        lastHeartbeat: new Date().toISOString(),
+        healthy: false,
+        secondsSinceLastHeartbeat: 45,
       },
     ];
 
@@ -55,6 +67,8 @@ describe('UI Component Rendering & Contracts', () => {
 
     expect(screen.getByText('worker-engine-01')).toBeInTheDocument();
     expect(screen.getByText('worker-engine-02')).toBeInTheDocument();
+    expect(screen.getByText('worker-engine-03')).toBeInTheDocument();
+    expect(screen.getByText('DEAD / UNHEALTHY')).toBeInTheDocument();
     expect(screen.getByText('cpt_test_123')).toBeInTheDocument();
   });
 
@@ -74,6 +88,15 @@ describe('UI Component Rendering & Contracts', () => {
             timestamp: new Date().toISOString(),
           },
         ]}
+        fetchCompartment={async () => ({
+          compartmentId: 'cpt_test_123',
+          context: 'INNIE',
+          ownerId: 'usr_1',
+          taskType: 'DATA_REDUCTION',
+          state: 'RUNNING',
+          progress: 25,
+          createdAt: new Date().toISOString(),
+        })}
       />
     );
 

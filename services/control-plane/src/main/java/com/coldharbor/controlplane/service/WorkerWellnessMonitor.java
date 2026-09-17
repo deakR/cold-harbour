@@ -7,6 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +27,43 @@ public class WorkerWellnessMonitor {
 
     private static final Logger log = LoggerFactory.getLogger(WorkerWellnessMonitor.class);
     private static final long HEARTBEAT_TIMEOUT_SECONDS = 30L;
+    private static final long STALE_REGISTRY_RETENTION_SECONDS = 300L;
+    @SuppressWarnings("rawtypes")
+    private static final DefaultRedisScript<List> REDRIVE_SCRIPT = new DefaultRedisScript<>(
+            """
+            local records = redis.call('XRANGE', KEYS[1], '-', '+', 'COUNT', tonumber(ARGV[1]))
+            local moved = {}
+            for _, record in ipairs(records) do
+              local fields = record[2]
+              local jobData = nil
+              local fallbackId = record[1]
+              for i = 1, #fields, 2 do
+                if fields[i] == 'jobData' then jobData = fields[i + 1] end
+                if fields[i] == 'compartmentId' then fallbackId = fields[i + 1] end
+              end
+              if jobData then
+                local valid, decoded = pcall(cjson.decode, jobData)
+                if valid then
+                  local compartmentId = decoded.compartmentId or fallbackId
+                  local payload = decoded.payload and cjson.encode(decoded.payload) or '{}'
+                  redis.call('XADD', KEYS[2], '*',
+                    'compartmentId', compartmentId,
+                    'context', decoded.context or '',
+                    'ownerId', decoded.ownerId or '',
+                    'taskType', decoded.taskType or '',
+                    'maxRetries', tostring(decoded.maxRetries or 3),
+                    'timeoutSeconds', tostring(decoded.timeoutSeconds or 300),
+                    'createdAt', decoded.createdAt or '',
+                    'payload', payload,
+                    'data', jobData)
+                  redis.call('DEL', ARGV[2] .. compartmentId)
+                  redis.call('XDEL', KEYS[1], record[1])
+                  table.insert(moved, compartmentId)
+                end
+              end
+            end
+            return moved
+            """, List.class);
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -66,15 +107,7 @@ public class WorkerWellnessMonitor {
 
     public void refreshWorkerStatus() {
         Instant now = Instant.now();
-        Set<String> keys = Collections.emptySet();
-
-        try {
-            keys = redisTemplate.keys(heartbeatPattern);
-        } catch (Exception e) {
-            log.debug("Redis keys scan skipped or failed: {}", e.getMessage());
-        }
-
-        Set<String> activeKeys = (keys != null) ? keys : Collections.emptySet();
+        Set<String> activeKeys = scanHeartbeatKeys();
 
         for (String key : activeKeys) {
             try {
@@ -124,12 +157,38 @@ public class WorkerWellnessMonitor {
         for (Map.Entry<String, WorkerStatusResponse> entry : workerRegistry.entrySet()) {
             WorkerStatusResponse existing = entry.getValue();
             long elapsed = Math.max(0, Duration.between(existing.getLastHeartbeat(), now).toSeconds());
+            if (elapsed > STALE_REGISTRY_RETENTION_SECONDS) {
+                workerRegistry.remove(entry.getKey(), existing);
+                continue;
+            }
             if (elapsed > HEARTBEAT_TIMEOUT_SECONDS && existing.isHealthy()) {
                 existing.setHealthy(false);
                 existing.setStatus("DEAD");
                 existing.setSecondsSinceLastHeartbeat(elapsed);
                 log.warn("Worker {} key expired or timed out ({}s elapsed) - flagged DEAD", entry.getKey(), elapsed);
             }
+        }
+    }
+
+    Set<String> scanHeartbeatKeys() {
+        try {
+            Set<String> keys = redisTemplate.execute((RedisCallback<Set<String>>) connection -> {
+                Set<String> matches = new HashSet<>();
+                ScanOptions options = ScanOptions.scanOptions().match(heartbeatPattern).count(200).build();
+                try (Cursor<byte[]> cursor = connection.scan(options)) {
+                    while (cursor.hasNext()) {
+                        String key = redisTemplate.getStringSerializer().deserialize(cursor.next());
+                        if (key != null) {
+                            matches.add(key);
+                        }
+                    }
+                }
+                return matches;
+            });
+            return keys != null ? keys : Collections.emptySet();
+        } catch (Exception e) {
+            log.debug("Redis heartbeat SCAN skipped or failed: {}", e.getMessage());
+            return Collections.emptySet();
         }
     }
 
@@ -189,50 +248,20 @@ public class WorkerWellnessMonitor {
     @SuppressWarnings("unchecked")
     public Map<String, Object> redriveDlq(int limit) {
         int capped = Math.min(Math.max(limit, 1), 100);
-        List<String> redriven = new ArrayList<>();
         try {
-            var ops = redisTemplate.opsForStream();
-            var records = ops.range(
-                    dlqStreamName,
-                    org.springframework.data.domain.Range.closed("0-0", "+"),
-                    org.springframework.data.redis.connection.Limit.limit().count(capped));
-            if (records == null || records.isEmpty()) {
-                return Map.of("redriven", 0, "ids", List.of());
+            List<String> redriven = (List<String>) redisTemplate.execute(
+                    REDRIVE_SCRIPT, List.of(dlqStreamName, streamName),
+                    String.valueOf(capped), "coldharbor:retries:");
+            if (redriven == null) {
+                redriven = List.of();
             }
-            List<org.springframework.data.redis.connection.stream.RecordId> ids = new ArrayList<>();
-            for (var record : records) {
-                Map<String, String> fields = new java.util.LinkedHashMap<>();
-                record.getValue().forEach((k, v) -> fields.put(String.valueOf(k), String.valueOf(v)));
-                String jobData = fields.get("jobData");
-                if (jobData == null || jobData.trim().isEmpty()) {
-                    continue;
-                }
-                Map<String, Object> job = objectMapper.readValue(jobData, Map.class);
-                Map<String, String> streamFields = new java.util.LinkedHashMap<>();
-                for (String key : new String[]{"compartmentId", "context", "ownerId", "taskType",
-                        "maxRetries", "timeoutSeconds", "createdAt"}) {
-                    Object val = job.get(key);
-                    if (val != null) {
-                        streamFields.put(key, String.valueOf(val));
-                    }
-                }
-                Object payload = job.get("payload");
-                streamFields.put("payload", payload != null ? objectMapper.writeValueAsString(payload) : "{}");
-                streamFields.put("data", jobData);
-                ops.add(org.springframework.data.redis.connection.stream.MapRecord.create(streamName, streamFields));
-                ids.add(record.getId());
-                redriven.add(String.valueOf(fields.getOrDefault("compartmentId", record.getId().getValue())));
-            }
-            if (!ids.isEmpty()) {
-                ops.delete(dlqStreamName, ids.toArray(new org.springframework.data.redis.connection.stream.RecordId[0]));
-            }
+            Map<String, Object> result = new java.util.LinkedHashMap<>();
+            result.put("redriven", redriven.size());
+            result.put("ids", redriven);
+            return result;
         } catch (Exception e) {
             log.warn("DLQ redrive failed: {}", e.getMessage());
-            throw new RuntimeException("DLQ redrive failed: " + e.getMessage(), e);
+            throw new RuntimeException("DLQ redrive failed", e);
         }
-        Map<String, Object> result = new java.util.LinkedHashMap<>();
-        result.put("redriven", redriven.size());
-        result.put("ids", redriven);
-        return result;
     }
 }

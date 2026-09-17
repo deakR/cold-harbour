@@ -56,7 +56,7 @@ func TestTaskRunnerExecutionAndResumption(t *testing.T) {
 		OwnerID:       "usr-99",
 		TaskType:      "DATA_REDUCTION",
 		Payload: map[string]any{
-			"batchSize":            float64(500),
+			"batchSize":           float64(500),
 			"simulateCrashAtStep": float64(2),
 		},
 	}

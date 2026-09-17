@@ -20,3 +20,5 @@ CREATE INDEX IF NOT EXISTS idx_audit_compartment_id ON audit_records(compartment
 CREATE INDEX IF NOT EXISTS idx_audit_owner_id ON audit_records(owner_id);
 CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_records(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_context ON audit_records(context);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_audit_compartment_terminal
+    ON audit_records(compartment_id, final_state);

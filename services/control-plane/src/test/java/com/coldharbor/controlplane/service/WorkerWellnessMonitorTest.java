@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -36,7 +37,7 @@ class WorkerWellnessMonitorTest {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
 
-        monitor = new WorkerWellnessMonitor(redisTemplate, objectMapper);
+        monitor = spy(new WorkerWellnessMonitor(redisTemplate, objectMapper));
         ReflectionTestUtils.setField(monitor, "heartbeatPattern", "worker:*:heartbeat");
     }
 
@@ -46,7 +47,7 @@ class WorkerWellnessMonitorTest {
         HeartbeatPayload hb = new HeartbeatPayload("worker-go-01", "BUSY", "cpt_99", Instant.now().minusSeconds(5));
         String json = objectMapper.writeValueAsString(hb);
 
-        when(redisTemplate.keys("worker:*:heartbeat")).thenReturn(Set.of("worker:worker-go-01:heartbeat"));
+        doReturn(Set.of("worker:worker-go-01:heartbeat")).when(monitor).scanHeartbeatKeys();
         when(valueOperations.get("worker:worker-go-01:heartbeat")).thenReturn(json);
 
         monitor.scanWorkerHeartbeats();
@@ -66,7 +67,7 @@ class WorkerWellnessMonitorTest {
         HeartbeatPayload staleHb = new HeartbeatPayload("worker-go-02", "BUSY", "cpt_88", Instant.now().minusSeconds(45));
         String json = objectMapper.writeValueAsString(staleHb);
 
-        when(redisTemplate.keys("worker:*:heartbeat")).thenReturn(Set.of("worker:worker-go-02:heartbeat"));
+        doReturn(Set.of("worker:worker-go-02:heartbeat")).when(monitor).scanHeartbeatKeys();
         when(valueOperations.get("worker:worker-go-02:heartbeat")).thenReturn(json);
 
         monitor.scanWorkerHeartbeats();
@@ -84,34 +85,17 @@ class WorkerWellnessMonitorTest {
     @DisplayName("Redrive moves DLQ entries back to the main stream and clears them")
     @SuppressWarnings({"unchecked", "rawtypes"})
     void shouldRedriveDlqEntries() throws Exception {
-        org.springframework.data.redis.core.StreamOperations streamOps =
-                mock(org.springframework.data.redis.core.StreamOperations.class);
-        when(redisTemplate.opsForStream()).thenReturn(streamOps);
         ReflectionTestUtils.setField(monitor, "dlqStreamName", "coldharbor:jobs:dlq");
         ReflectionTestUtils.setField(monitor, "streamName", "coldharbor:jobs");
 
-        String jobData = "{\"compartmentId\":\"cpt_dlq_1\",\"context\":\"INNIE\","
-                + "\"ownerId\":\"usr_1\",\"taskType\":\"DATA_REDUCTION\","
-                + "\"payload\":{\"batchSize\":100},\"maxRetries\":3,\"timeoutSeconds\":300,"
-                + "\"createdAt\":\"2026-09-03T10:00:00Z\"}";
-        org.springframework.data.redis.connection.stream.MapRecord<String, String, String> record =
-                mock(org.springframework.data.redis.connection.stream.MapRecord.class);
-        org.springframework.data.redis.connection.stream.RecordId recordId =
-                mock(org.springframework.data.redis.connection.stream.RecordId.class);
-        when(record.getId()).thenReturn(recordId);
-        java.util.Map<String, String> fields = new java.util.LinkedHashMap<>();
-        fields.put("compartmentId", "cpt_dlq_1");
-        fields.put("jobData", jobData);
-        when(record.getValue()).thenReturn((java.util.Map) fields);
-        when(streamOps.range(org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.any(),
-                org.mockito.ArgumentMatchers.any())).thenReturn(java.util.List.of(record));
+        when(redisTemplate.execute(any(DefaultRedisScript.class), anyList(), any(), any()))
+                .thenReturn(java.util.List.of("cpt_dlq_1"));
 
         java.util.Map<String, Object> result = monitor.redriveDlq(10);
 
         assertThat(result.get("redriven")).isEqualTo(1);
-        verify(streamOps, times(1)).add(any());
-        verify(streamOps, times(1)).delete(eq("coldharbor:jobs:dlq"),
-                any(org.springframework.data.redis.connection.stream.RecordId[].class));
+        verify(redisTemplate).execute(any(DefaultRedisScript.class),
+                eq(java.util.List.of("coldharbor:jobs:dlq", "coldharbor:jobs")),
+                eq("10"), eq("coldharbor:retries:"));
     }
 }

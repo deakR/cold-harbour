@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	FieldCurrentStep    = "current_step"
-	FieldProgressPct    = "progress_pct"
-	FieldIntermediate   = "intermediate_result"
-	FieldLastUpdated    = "last_updated"
+	FieldCurrentStep  = "current_step"
+	FieldProgressPct  = "progress_pct"
+	FieldIntermediate = "intermediate_result"
+	FieldLastUpdated  = "last_updated"
 )
 
 // ScratchpadManager handles ephemeral Redis Hash storage for compartment computation state

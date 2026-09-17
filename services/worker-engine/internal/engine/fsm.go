@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -57,8 +58,6 @@ func (f *FSM) Transition(ctx context.Context, to model.State, progress int, deta
 		return fmt.Errorf("fsm transition rejected: %w", err)
 	}
 
-	f.currentState = to
-
 	if f.publisher != nil {
 		event := &model.EventMessage{
 			CompartmentID: f.compartmentID,
@@ -72,9 +71,13 @@ func (f *FSM) Transition(ctx context.Context, to model.State, progress int, deta
 			Timestamp:     time.Now().UTC(),
 			Details:       details,
 		}
-		// Non-blocking or logged error on publish
-		_ = f.publisher.Publish(ctx, event)
+		if err := f.publisher.Publish(ctx, event); err != nil {
+			log.Printf("[fsm] failed to publish %s -> %s for compartment %s: %v",
+				from, to, f.compartmentID, err)
+			return fmt.Errorf("persist transition event: %w", err)
+		}
 	}
 
+	f.currentState = to
 	return nil
 }

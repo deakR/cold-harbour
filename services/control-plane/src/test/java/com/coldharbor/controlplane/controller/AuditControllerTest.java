@@ -2,6 +2,7 @@ package com.coldharbor.controlplane.controller;
 
 import com.coldharbor.controlplane.entity.AuditRecord;
 import com.coldharbor.controlplane.security.ContextClearanceFilter;
+import com.coldharbor.controlplane.security.ApiKeyClearanceProperties;
 import com.coldharbor.controlplane.service.AuditService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,8 +22,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(AuditController.class)
-@Import({ContextClearanceFilter.class, GlobalExceptionHandler.class})
+@WebMvcTest(value = AuditController.class,
+        properties = "coldharbor.security.allow-unsafe-header=true")
+@Import({ContextClearanceFilter.class, ApiKeyClearanceProperties.class,
+        GlobalExceptionHandler.class})
 class AuditControllerTest {
 
     @Autowired

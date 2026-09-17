@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { EventMessage, normalizeEventMessage } from '../types';
+import { ContextClearance, EventMessage, normalizeEventMessage } from '../types';
 
 export type ConnectionStatus = 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'ERROR';
 
@@ -7,6 +7,8 @@ export interface UseWebSocketEventsOptions {
   url?: string;
   maxBuffer?: number;
   autoReconnect?: boolean;
+  clearance?: ContextClearance;
+  apiKey?: string;
 }
 
 export function useWebSocketEvents(options: UseWebSocketEventsOptions = {}) {
@@ -21,9 +23,13 @@ export function useWebSocketEvents(options: UseWebSocketEventsOptions = {}) {
   const [lastError, setLastError] = useState<string | null>(null);
 
   const socketRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<any>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pausedBufferRef = useRef<EventMessage[]>([]);
   const retryCountRef = useRef<number>(0);
+  const pausedRef = useRef(false);
+  const mountedRef = useRef(false);
+  const shouldReconnectRef = useRef(autoReconnect);
+  const connectRef = useRef<() => void>(() => {});
 
   const getWsUrl = useCallback(() => {
     if (options.url) return options.url;
@@ -33,16 +39,31 @@ export function useWebSocketEvents(options: UseWebSocketEventsOptions = {}) {
     return `${protocol}//${host}/ws/events`;
   }, [options.url]);
 
+  const getProtocols = useCallback(() => {
+    const protocols = ['coldharbor', `clearance.${options.clearance ?? 'INNIE'}`];
+    if (options.apiKey?.trim()) {
+      const bytes = new TextEncoder().encode(options.apiKey.trim());
+      let binary = '';
+      bytes.forEach((byte) => {
+        binary += String.fromCharCode(byte);
+      });
+      const encoded = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      protocols.push(`api-key.${encoded}`);
+    }
+    return protocols;
+  }, [options.clearance, options.apiKey]);
+
   const addEvent = useCallback((eventRaw: EventMessage) => {
     const normalized = normalizeEventMessage(eventRaw);
-    if (isPaused) {
+    if (pausedRef.current) {
       pausedBufferRef.current.push(normalized);
     } else {
       setEvents((prev) => [normalized, ...prev].slice(0, maxBuffer));
     }
-  }, [isPaused, maxBuffer]);
+  }, [maxBuffer]);
 
   const connect = useCallback(() => {
+    shouldReconnectRef.current = autoReconnect;
     if (socketRef.current && (socketRef.current.readyState === WebSocket.OPEN || socketRef.current.readyState === WebSocket.CONNECTING)) {
       return;
     }
@@ -52,10 +73,11 @@ export function useWebSocketEvents(options: UseWebSocketEventsOptions = {}) {
     setLastError(null);
 
     try {
-      const ws = new WebSocket(targetUrl);
+      const ws = new WebSocket(targetUrl, getProtocols());
       socketRef.current = ws;
 
       ws.onopen = () => {
+        if (socketRef.current !== ws) return;
         setStatus('CONNECTED');
         setLastError(null);
         retryCountRef.current = 0;
@@ -76,13 +98,15 @@ export function useWebSocketEvents(options: UseWebSocketEventsOptions = {}) {
       };
 
       ws.onclose = () => {
+        if (socketRef.current !== ws) return;
         setStatus('DISCONNECTED');
         socketRef.current = null;
-        if (autoReconnect) {
+        if (mountedRef.current && shouldReconnectRef.current) {
           const delay = Math.min(1000 * Math.pow(1.5, retryCountRef.current), 10000);
           retryCountRef.current += 1;
           reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
+            reconnectTimeoutRef.current = null;
+            connectRef.current();
           }, delay);
         }
       };
@@ -90,29 +114,34 @@ export function useWebSocketEvents(options: UseWebSocketEventsOptions = {}) {
       setStatus('ERROR');
       setLastError(e.message || 'Failed to initialize WebSocket');
     }
-  }, [getWsUrl, addEvent, autoReconnect]);
+  }, [getWsUrl, getProtocols, addEvent, autoReconnect]);
 
   const disconnect = useCallback(() => {
+    shouldReconnectRef.current = false;
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-    if (socketRef.current) {
-      socketRef.current.close();
-      socketRef.current = null;
+    const socket = socketRef.current;
+    socketRef.current = null;
+    if (socket) {
+      socket.onclose = null;
+      socket.close();
     }
     setStatus('DISCONNECTED');
   }, []);
 
   const togglePause = useCallback(() => {
-    setIsPaused((prev) => {
-      if (prev) {
-        // Unpausing: flush buffered events
-        setEvents((current) => [...pausedBufferRef.current, ...current].slice(0, maxBuffer));
-        pausedBufferRef.current = [];
-      }
-      return !prev;
-    });
+    if (pausedRef.current) {
+      pausedRef.current = false;
+      setIsPaused(false);
+      const buffered = pausedBufferRef.current.slice().reverse();
+      pausedBufferRef.current = [];
+      setEvents((current) => [...buffered, ...current].slice(0, maxBuffer));
+      return;
+    }
+    pausedRef.current = true;
+    setIsPaused(true);
   }, [maxBuffer]);
 
   const clearEvents = useCallback(() => {
@@ -121,11 +150,15 @@ export function useWebSocketEvents(options: UseWebSocketEventsOptions = {}) {
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
+    shouldReconnectRef.current = autoReconnect;
+    connectRef.current = connect;
     connect();
     return () => {
+      mountedRef.current = false;
       disconnect();
     };
-  }, [connect, disconnect]);
+  }, [autoReconnect, connect, disconnect]);
 
   return {
     events,

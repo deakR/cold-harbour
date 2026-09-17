@@ -163,9 +163,9 @@ make bench         # 50-job dispatch benchmark + Dead Drop completion probe
 
 ## API Overview
 
-All mutating reads require clearance: `X-API-Key` (preferred, mapped
+All API operations require clearance: `X-API-Key` (preferred, mapped
 server-side via `coldharbor.security.api-keys`) or, when
-`allow-unsafe-header=true` (dev default), a self-asserted
+`allow-unsafe-header=true` (explicitly enabled by development Compose), a self-asserted
 `X-Context-Clearance: INNIE|OUTIE|SYSTEM|ADMIN` header. Every response carries
 `X-Trace-Id`.
 
@@ -181,6 +181,10 @@ server-side via `coldharbor.security.api-keys`) or, when
 | `GET /ws/events` | WebSocket fanout of `coldharbor:events` transitions |
 | `GET /actuator/health`, `/actuator/prometheus` | Liveness and metrics |
 
+Browser WebSocket clients authenticate with the `coldharbor` subprotocol plus
+`clearance.<LEVEL>` and, when configured, an `api-key.<base64url-key>`
+subprotocol. This keeps API keys out of URLs and proxy access logs.
+
 Full interactive reference: `/swagger-ui/index.html`.
 
 ---
@@ -194,8 +198,10 @@ Full interactive reference: `/swagger-ui/index.html`.
 | `SPRING_DATA_REDIS_HOST` / `SPRING_DATA_REDIS_PORT` | `localhost` / `6379` | Control-plane Redis target |
 | `REDIS_ADDR` | `localhost:6379` | Worker Redis target |
 | `METRICS_ADDR` | `localhost:9091` | Worker metrics/health bind |
-| `COLDHARBOR_ALLOW_UNSAFE_HEADER` | `true` | Accept self-asserted clearance (set `false` in prod with API keys) |
+| `COLDHARBOR_ALLOW_UNSAFE_HEADER` | `false` | Accept self-asserted clearance. Compose opts in for local development; production must use API keys. |
 | `COLDHARBOR_DISPATCH_PER_MINUTE` | `0` (disabled) | Per-IP dispatch rate limit |
+| `EVENT_STREAM_NAME` / `AUDIT_STREAM_NAME` | `coldharbor:events:stream` / `coldharbor:audits` | Replayable lifecycle events and terminal audit delivery |
+| `COLDHARBOR_ALLOWED_ORIGINS` | Local dashboard origins | Allowed browser and WebSocket origins |
 
 ---
 

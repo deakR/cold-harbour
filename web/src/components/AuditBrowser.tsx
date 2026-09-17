@@ -15,6 +15,7 @@ import { AuditRecord, normalizeAuditRecord, NormalizedAuditRecord } from '../typ
 interface AuditBrowserProps {
   audits: AuditRecord[];
   loading: boolean;
+  error?: string | null;
   onRefresh: () => void;
   onSelectCompartment: (compartmentId: string) => void;
 }
@@ -22,6 +23,7 @@ interface AuditBrowserProps {
 export const AuditBrowser: React.FC<AuditBrowserProps> = ({
   audits,
   loading,
+  error,
   onRefresh,
   onSelectCompartment,
 }) => {
@@ -186,7 +188,13 @@ export const AuditBrowser: React.FC<AuditBrowserProps> = ({
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={8} className="text-center py-10 text-gray-500">
-                  {loading ? 'Loading audit records...' : 'No audit records matching query.'}
+                  {loading
+                    ? 'Loading audit records...'
+                    : error
+                      ? <span role="alert" className="text-rose-400">Audit API unavailable: {error}</span>
+                      : searchTerm || contextFilter !== 'ALL' || stateFilter !== 'ALL'
+                        ? 'No audit records match the current filters.'
+                        : 'No audit records have been recorded.'}
                 </td>
               </tr>
             ) : (

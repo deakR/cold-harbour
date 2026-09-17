@@ -51,7 +51,7 @@ class AuditServiceTest {
         deadDrop.setArchivedAt(Instant.now());
 
         when(repository.existsByCompartmentIdAndFinalState("cpt_123", "PURGED")).thenReturn(false);
-        when(repository.save(any(AuditRecord.class))).thenAnswer(i -> i.getArgument(0));
+        when(repository.saveAndFlush(any(AuditRecord.class))).thenAnswer(i -> i.getArgument(0));
 
         AuditRecord record = auditService.recordCompletedJob("cpt_123", deadDrop, "Completed successfully");
 
@@ -62,23 +62,28 @@ class AuditServiceTest {
         assertThat(record.getChecksum()).isEqualTo("sha256_mock_hash");
         assertThat(record.getDurationMs()).isEqualTo(320L);
 
-        verify(repository, times(1)).save(any(AuditRecord.class));
+        verify(repository, times(1)).saveAndFlush(any(AuditRecord.class));
     }
 
     @Test
     @DisplayName("Prevents duplicate audit records if compartment was already archived or purged")
     void shouldPreventDuplicateAuditRecords() {
-        when(repository.existsByCompartmentIdAndFinalState("cpt_dup", "PURGED")).thenReturn(true);
         AuditRecord existing = new AuditRecord(UUID.randomUUID(), "cpt_dup", "usr_1", "INNIE", "TASK", "PURGED", "c1", 100L, Instant.now(), Instant.now(), "{}");
-        when(repository.findFirstByCompartmentIdOrderByCompletedAtDesc("cpt_dup")).thenReturn(Optional.of(existing));
+        when(repository.findFirstByCompartmentIdAndFinalStateOrderByCompletedAtDesc(
+                "cpt_dup", "PURGED")).thenReturn(Optional.of(existing));
+        when(repository.saveAndFlush(any(AuditRecord.class)))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate"));
 
         DeadDropPayload deadDrop = new DeadDropPayload();
         deadDrop.setCompartmentId("cpt_dup");
+        deadDrop.setOwnerId("usr_1");
+        deadDrop.setContext("INNIE");
+        deadDrop.setTaskType("TASK");
 
         AuditRecord result = auditService.recordCompletedJob("cpt_dup", deadDrop, "details");
         assertThat(result).isNotNull();
         assertThat(result.getCompartmentId()).isEqualTo("cpt_dup");
-        verify(repository, never()).save(any(AuditRecord.class));
+        verify(repository).saveAndFlush(any(AuditRecord.class));
     }
 
     @Test

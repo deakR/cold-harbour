@@ -29,7 +29,12 @@ try {
 
   const url = new URL('/ws/events', base);
   url.protocol = base.protocol === 'https:' ? 'wss:' : 'ws:';
-  socket = new WebSocket(url);
+  const protocols = ['coldharbor', 'clearance.INNIE'];
+  if (process.env.API_KEY) {
+    const encodedKey = Buffer.from(process.env.API_KEY, 'utf8').toString('base64url');
+    protocols.push(`api-key.${encodedKey}`);
+  }
+  socket = new WebSocket(url, protocols);
   socket.addEventListener('message', ({ data }) => {
     try { events.push(JSON.parse(data)); } catch { /* Ignore non-JSON keepalives. */ }
   });
