@@ -24,8 +24,5 @@ desktop.ini
 *.local
 *.log
 
-# Internal AI Configurations & Scratchpads
-.agents/
-AGENTS.md
-GEMINI.md
-context.md
+# Local reference material
+/references/

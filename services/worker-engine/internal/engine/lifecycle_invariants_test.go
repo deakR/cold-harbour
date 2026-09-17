@@ -28,7 +28,7 @@ func TestChallengeZeroLeakPurgeSuccessAndFailure(t *testing.T) {
 	defer cancel()
 
 	cfg := config.DefaultConfig()
-	cfg.WorkerID = "challenger-worker-1"
+	cfg.WorkerID = "invariant-worker-1"
 	consumer := NewConsumer(cfg, rdb)
 	if err := consumer.InitConsumerGroup(ctx); err != nil {
 		t.Fatalf("InitConsumerGroup failed: %v", err)
@@ -36,7 +36,7 @@ func TestChallengeZeroLeakPurgeSuccessAndFailure(t *testing.T) {
 
 	// --- SUBTEST 1A: Success Case Zero-Leak Purge ---
 	t.Run("SuccessPath_ZeroLeakPurge", func(t *testing.T) {
-		compID := "cpt-challenger-success-01"
+		compID := "cpt-invariant-success-01"
 		jobMsg := model.JobMessage{
 			CompartmentID: compID,
 			Context:       "INNIE",
@@ -105,7 +105,7 @@ func TestChallengeZeroLeakPurgeSuccessAndFailure(t *testing.T) {
 
 	// --- SUBTEST 1B: Terminal Failure via DLQ Zero-Leak Purge ---
 	t.Run("DLQFailurePath_ZeroLeakPurge", func(t *testing.T) {
-		compID := "cpt-challenger-dlq-02"
+		compID := "cpt-invariant-dlq-02"
 
 		// Pre-populate dirty scratchpad data to simulate intermediate calculation state
 		_ = consumer.scratchpad.Write(ctx, compID, map[string]any{
@@ -346,7 +346,7 @@ func TestChallengeDLQRoutingSemantics(t *testing.T) {
 
 	ctx := context.Background()
 	cfg := config.DefaultConfig()
-	cfg.WorkerID = "challenger-dlq-worker"
+	cfg.WorkerID = "invariant-dlq-worker"
 	cfg.MaxRetries = 3
 
 	consumer := NewConsumer(cfg, rdb)

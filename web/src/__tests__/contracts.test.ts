@@ -43,7 +43,7 @@ describe('Contract Schema Normalization', () => {
     expect(normalized.checksum).toBe('sha-abc');
   });
 
-  it('should normalize event messages across contracts.md and PROJECT.md field names', () => {
+  it('should normalize canonical and legacy event field names', () => {
     const rawContractEvent: EventMessage = {
       eventId: 'evt_1',
       compartmentId: 'cpt_1',

@@ -18,9 +18,9 @@ import (
 
 
 
-// TestChallengerArchivePayloadTypes verifies that archive.go safely handles:
+// TestEdgeCaseArchivePayloadTypes verifies that archive.go safely handles:
 // strings, byte slices, maps, raw JSON, slices, numbers, booleans, and nil without panicking.
-func TestChallengerArchivePayloadTypes(t *testing.T) {
+func TestEdgeCaseArchivePayloadTypes(t *testing.T) {
 	s := miniredis.RunT(t)
 	defer s.Close()
 
@@ -195,14 +195,14 @@ func TestChallengerArchivePayloadTypes(t *testing.T) {
 	})
 }
 
-// TestChallengerZeroLeakInvariant verifies that compartment:{id}:mem strictly has
+// TestEdgeCaseZeroLeakInvariant verifies that compartment:{id}:mem strictly has
 // EXISTS == 0 on:
 // 1. Successful completion.
 // 2. Terminal failure / DLQ after retry exhaustion.
 // 3. Poison pill / unparseable message DLQ.
 // 4. Recovery after crash resumption.
 // 5. High-concurrency stress test with mixed outcomes.
-func TestChallengerZeroLeakInvariant(t *testing.T) {
+func TestEdgeCaseZeroLeakInvariant(t *testing.T) {
 	s := miniredis.RunT(t)
 	defer s.Close()
 

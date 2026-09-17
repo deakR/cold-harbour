@@ -6,7 +6,7 @@ API and reports dispatch latency. When a Go worker is live, it polls the first
 10 Dead Drops for up to 60s to report completion rate. Chaos procedure: start
 two workers, dispatch with `simulateCrashAtStep: 2` in the payload, kill the
 claiming worker process, and confirm the successor seals the job from step 3
-via `XAUTOCLAIM` (see `TEST_INFRA.md` TC-T1-F07-01).
+via `XAUTOCLAIM`.
 
 ## Results
 

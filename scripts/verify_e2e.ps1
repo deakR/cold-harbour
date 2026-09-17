@@ -2,7 +2,7 @@
 .SYNOPSIS
     ColdHarbor End-to-End (E2E) Integration Verification Harness
 .DESCRIPTION
-    Executes and validates the 6 mandatory integration scenarios defined in ORIGINAL_REQUEST.md §R4:
+    Exercises six lifecycle scenarios, using live services when reachable or offline simulations otherwise:
     Scenario 1: Job submission via REST API
     Scenario 2: Worker claiming job, writing scratchpad, emitting checkpoints
     Scenario 3: Worker crash simulation and checkpoint recovery
