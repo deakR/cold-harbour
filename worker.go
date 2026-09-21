@@ -25,7 +25,12 @@ var demoJobs = []Job{
 }
 
 func runWorker(jobs <-chan Job, results chan<- JobResult) {
-	for range jobs {
+	for job := range jobs {
+		redacted, err := RedactPII(job.Input)
+		if err != nil {
+			panic(err)
+		}
+		results <- JobResult{ID: job.ID, Result: redacted}
 	}
 	close(results)
 }

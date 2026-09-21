@@ -1,22 +1,16 @@
 package main
 
-import (
-	"encoding/json"
-	"fmt"
-)
+import "fmt"
 
 func main() {
-	const fixture = `Contact jane.doe@example.com or (555) 123-4567 for details.
-SSN on file: 123-45-6789. Backup contact: john@company.org.
-Not a match: version 123-45 or year 1234-56-789.`
-
-	result, err := RedactPII(fixture)
-	if err != nil {
-		panic(err)
+	jobs := make(chan Job, len(demoJobs))
+	results := make(chan JobResult)
+	go runWorker(jobs, results)
+	for _, job := range demoJobs {
+		jobs <- job
 	}
-	b, err := json.Marshal(result)
-	if err != nil {
-		panic(err)
+	close(jobs)
+	for result := range results {
+		fmt.Println(formatJobLine(result))
 	}
-	fmt.Println(string(b))
 }
