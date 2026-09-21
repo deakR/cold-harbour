@@ -171,11 +171,8 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, em
 
 	if state == deliveryNew {
 		partial := applyClassWindow(RedactResult{RedactedText: c.job.Input}, stepWindows[0])
-		if _, err := hash.incrStep1(ctx, c.job.ID); err != nil {
-			return err
-		}
 		next := Checkpoint{JobID: c.job.ID, Step: StepEmailsAndPhones, PartialResult: partial}
-		if err := hash.save(ctx, next); err != nil {
+		if err := hash.saveStep1(ctx, next); err != nil {
 			return err
 		}
 		fmt.Println("checkpoint", formatJobLine(JobResult{ID: c.job.ID, Result: partial}))

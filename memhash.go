@@ -62,7 +62,15 @@ func (m *memHash) save(ctx context.Context, cp Checkpoint) error {
 	return m.rdb.HSet(ctx, memKey(cp.JobID), memFieldStep, int(cp.Step), memFieldPartial, string(partial)).Err()
 }
 
-func (m *memHash) incrStep1(ctx context.Context, jobID string) (int, error) {
-	n, err := m.rdb.HIncrBy(ctx, memKey(jobID), memFieldStep1, 1).Result()
-	return int(n), err
+func (m *memHash) saveStep1(ctx context.Context, cp Checkpoint) error {
+	partial, err := json.Marshal(cp.PartialResult)
+	if err != nil {
+		return err
+	}
+	key := memKey(cp.JobID)
+	pipe := m.rdb.TxPipeline()
+	pipe.HIncrBy(ctx, key, memFieldStep1, 1)
+	pipe.HSet(ctx, key, memFieldStep, int(cp.Step), memFieldPartial, string(partial))
+	_, err = pipe.Exec(ctx)
+	return err
 }
