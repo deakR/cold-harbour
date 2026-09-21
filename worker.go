@@ -82,16 +82,20 @@ var demoJobs = []Job{
 	{ID: "job-3", Input: "Reach +1 212 555 0100 or bob.smith@mail.net."},
 }
 
+func processJob(job Job) JobResult {
+	machine := newJobMachine()
+	machine.pickup(time.Now())
+	redacted, err := RedactPII(job.Input)
+	if err != nil {
+		panic(err)
+	}
+	machine.complete(time.Now())
+	return JobResult{ID: job.ID, Result: redacted, History: machine.history()}
+}
+
 func runWorker(jobs <-chan Job, results chan<- JobResult) {
 	for job := range jobs {
-		machine := newJobMachine()
-		machine.pickup(time.Now())
-		redacted, err := RedactPII(job.Input)
-		if err != nil {
-			panic(err)
-		}
-		machine.complete(time.Now())
-		results <- JobResult{ID: job.ID, Result: redacted, History: machine.history()}
+		results <- processJob(job)
 	}
 	close(results)
 }
