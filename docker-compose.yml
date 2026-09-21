@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: coldharbour-m7-postgres
+    environment:
+      POSTGRES_USER: coldharbour
+      POSTGRES_PASSWORD: coldharbour
+      POSTGRES_DB: coldharbour
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro

@@ -14,11 +14,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	journal, err := OpenJournal(postgresDSN())
+	if err != nil {
+		panic(err)
+	}
+	defer journal.Close()
 	stream := openJobs(redisAddr())
 	if err := prepareGroup(context.Background(), stream, demoJobs); err != nil {
 		panic(err)
 	}
-	if err := runGroup(context.Background(), stream, cfg, func(result JobResult) {
+	if err := runGroup(context.Background(), stream, cfg, journal, func(result JobResult) {
 		fmt.Println(formatJobLine(result))
 		fmt.Println(result.History)
 	}); err != nil {
