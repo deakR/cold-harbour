@@ -74,14 +74,7 @@ func openJobs(addr string) *jobStream {
 }
 
 func (s *jobStream) Add(ctx context.Context, job Job) error {
-	values := map[string]any{"input": job.Input}
-	if job.ID != "" {
-		values["id"] = job.ID
-	}
-	return s.rdb.XAdd(ctx, &redis.XAddArgs{
-		Stream: jobsStreamKey,
-		Values: values,
-	}).Err()
+	return s.enqueue(ctx, job, CrashNever)
 }
 
 func (s *jobStream) Len(ctx context.Context) (int64, error) {
@@ -102,39 +95,6 @@ func seedIfEmpty(ctx context.Context, stream *jobStream, jobs []Job) error {
 		}
 	}
 	return nil
-}
-
-func runStream(ctx context.Context, stream *jobStream, emit func(JobResult)) error {
-	cursor := StreamIDZero()
-	for {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-		streams, err := stream.rdb.XRead(ctx, &redis.XReadArgs{
-			Streams: []string{jobsStreamKey, cursor.String()},
-			Block:   0,
-		}).Result()
-		if err != nil {
-			if errors.Is(err, redis.Nil) {
-				continue
-			}
-			return err
-		}
-		for _, xs := range streams {
-			for _, msg := range xs.Messages {
-				id, err := ParseStreamID(msg.ID)
-				if err != nil {
-					return err
-				}
-				cursor = id
-				job, err := parseJob(id, valuesToFields(msg.Values))
-				if err != nil {
-					continue
-				}
-				emit(processJob(job))
-			}
-		}
-	}
 }
 
 func valuesToFields(values map[string]any) map[string]string {
