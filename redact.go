@@ -37,17 +37,21 @@ var classes = []patternClass{
 	},
 }
 
+func applyClass(text string, counts *RedactCounts, pc *patternClass) string {
+	n := 0
+	text = pc.re.ReplaceAllStringFunc(text, func(string) string {
+		n++
+		return pc.placeholder
+	})
+	*pc.countField(counts) = n
+	return text
+}
+
 func RedactPII(input string) (RedactResult, error) {
 	text := input
 	var counts RedactCounts
 	for i := range classes {
-		pc := &classes[i]
-		n := 0
-		text = pc.re.ReplaceAllStringFunc(text, func(string) string {
-			n++
-			return pc.placeholder
-		})
-		*pc.countField(&counts) = n
+		text = applyClass(text, &counts, &classes[i])
 	}
 	return RedactResult{RedactedText: text, Counts: counts}, nil
 }
