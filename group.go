@@ -87,7 +87,10 @@ func prepareGroup(ctx context.Context, stream *jobStream, jobs []Job) error {
 	return seedIfEmpty(ctx, stream, jobs)
 }
 
-func runGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, emit func(JobResult)) error {
+func runGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, journal Journal, emit func(JobResult)) error {
+	if journal == nil {
+		panic("nil journal")
+	}
 	if err := cfg.valid(); err != nil {
 		return err
 	}
@@ -110,7 +113,7 @@ func runGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, emit fun
 			return err
 		}
 		for _, msg := range stolen {
-			if err := dispatch(ctx, stream, hash, msg, emit); err != nil {
+			if err := dispatch(ctx, stream, hash, msg, journal, emit); err != nil {
 				return err
 			}
 		}
@@ -131,7 +134,7 @@ func runGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, emit fun
 		}
 		for _, xs := range streams {
 			for _, msg := range xs.Messages {
-				if err := dispatch(ctx, stream, hash, msg, emit); err != nil {
+				if err := dispatch(ctx, stream, hash, msg, journal, emit); err != nil {
 					return err
 				}
 			}
@@ -144,7 +147,7 @@ func isReadTimeout(err error) bool {
 	return errors.As(err, &to) && to.Timeout()
 }
 
-func dispatch(ctx context.Context, stream *jobStream, hash *memHash, msg redis.XMessage, emit func(JobResult)) error {
+func dispatch(ctx context.Context, stream *jobStream, hash *memHash, msg redis.XMessage, journal Journal, emit func(JobResult)) error {
 	id, err := ParseStreamID(msg.ID)
 	if err != nil {
 		return err
@@ -156,10 +159,10 @@ func dispatch(ctx context.Context, stream *jobStream, hash *memHash, msg redis.X
 	if err != nil {
 		return err
 	}
-	return handle(ctx, stream, hash, c, emit)
+	return handle(ctx, stream, hash, c, journal, emit)
 }
 
-func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, emit func(JobResult)) error {
+func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, journal Journal, emit func(JobResult)) error {
 	cp, err := hash.load(ctx, c.job.ID)
 	if err != nil {
 		return err
@@ -196,6 +199,10 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, em
 	machine := newJobMachine()
 	machine.pickup(time.Now())
 	machine.complete(time.Now())
-	emit(JobResult{ID: c.job.ID, Result: cp.PartialResult, History: machine.history()})
+	result := JobResult{ID: c.job.ID, Result: cp.PartialResult, History: machine.history()}
+	if err := journal.Record(ctx, result); err != nil {
+		return err
+	}
+	emit(result)
 	return stream.ack(context.WithoutCancel(ctx), c.entry)
 }

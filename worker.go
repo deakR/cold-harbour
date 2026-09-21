@@ -66,6 +66,10 @@ func (m *jobMachine) complete(at time.Time) {
 	m.steps = append(slices.Clone(m.steps), Transition{From: RUNNING, To: COMPLETED, At: at})
 }
 
+func (m *jobMachine) fail(at time.Time) {
+	m.steps = append(slices.Clone(m.steps), Transition{From: RUNNING, To: FAILED, At: at})
+}
+
 func (m *jobMachine) history() History {
 	return History{steps: slices.Clone(m.steps)}
 }
@@ -100,10 +104,14 @@ func runWorker(jobs <-chan Job, results chan<- JobResult) {
 	close(results)
 }
 
-func formatJobLine(result JobResult) string {
-	b, err := json.Marshal(result.Result)
+func marshalResult(result RedactResult) []byte {
+	b, err := json.Marshal(result)
 	if err != nil {
 		panic(err)
 	}
-	return result.ID + " " + string(b)
+	return b
+}
+
+func formatJobLine(result JobResult) string {
+	return result.ID + " " + string(marshalResult(result.Result))
 }
