@@ -12,5 +12,6 @@ func main() {
 	close(jobs)
 	for result := range results {
 		fmt.Println(formatJobLine(result))
+		fmt.Println(result.History)
 	}
 }

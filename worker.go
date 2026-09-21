@@ -1,6 +1,12 @@
 package main
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+	"slices"
+	"strings"
+	"time"
+)
 
 type Job struct {
 	ID    string
@@ -8,8 +14,60 @@ type Job struct {
 }
 
 type JobResult struct {
-	ID     string
-	Result RedactResult
+	ID      string
+	Result  RedactResult
+	History History
+}
+
+type JobState string
+
+const (
+	CREATED   JobState = "CREATED"
+	RUNNING   JobState = "RUNNING"
+	COMPLETED JobState = "COMPLETED"
+	FAILED    JobState = "FAILED"
+)
+
+type Transition struct {
+	From JobState
+	To   JobState
+	At   time.Time
+}
+
+type History struct {
+	steps []Transition
+}
+
+func (h History) Transitions() []Transition {
+	return slices.Clone(h.steps)
+}
+
+func (h History) String() string {
+	parts := make([]string, len(h.steps))
+	for i, step := range h.steps {
+		parts[i] = fmt.Sprintf("%s→%s (%s)", step.From, step.To, step.At.Format("15:04:05"))
+	}
+	return strings.Join(parts, " → ")
+}
+
+type jobMachine struct {
+	steps []Transition
+}
+
+func newJobMachine() *jobMachine {
+	return &jobMachine{}
+}
+
+func (m *jobMachine) pickup(at time.Time) {
+	m.steps = append(m.steps, Transition{From: CREATED, To: RUNNING, At: at})
+}
+
+func (m *jobMachine) complete(at time.Time) {
+	m.steps = append(slices.Clone(m.steps), Transition{From: RUNNING, To: COMPLETED, At: at})
+}
+
+func (m *jobMachine) history() History {
+	return History{steps: slices.Clone(m.steps)}
 }
 
 const m1Fixture = `Contact jane.doe@example.com or (555) 123-4567 for details.
@@ -26,11 +84,14 @@ var demoJobs = []Job{
 
 func runWorker(jobs <-chan Job, results chan<- JobResult) {
 	for job := range jobs {
+		machine := newJobMachine()
+		machine.pickup(time.Now())
 		redacted, err := RedactPII(job.Input)
 		if err != nil {
 			panic(err)
 		}
-		results <- JobResult{ID: job.ID, Result: redacted}
+		machine.complete(time.Now())
+		results <- JobResult{ID: job.ID, Result: redacted, History: machine.history()}
 	}
 	close(results)
 }
