@@ -85,6 +85,13 @@ func TestParseTerminalRejectsNonTerminal(t *testing.T) {
 	if !errors.Is(err, errNotTerminal) {
 		t.Fatalf("err = %v, want errNotTerminal", err)
 	}
+
+	doneOnly := newJobMachine()
+	doneOnly.complete(time.Date(2026, 1, 1, 0, 0, 1, 0, time.UTC))
+	_, err = parseTerminal(JobResult{ID: "job-5", History: doneOnly.history()})
+	if !errors.Is(err, errMissingPickup) {
+		t.Fatalf("err = %v, want errMissingPickup", err)
+	}
 }
 
 func TestMemoryJournalIdempotentTimestamps(t *testing.T) {

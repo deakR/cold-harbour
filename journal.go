@@ -18,6 +18,7 @@ const jobTypeRedact = "redact"
 
 var (
 	errNotTerminal      = errors.New("journal records only COMPLETED or FAILED")
+	errMissingPickup    = errors.New("terminal history has no CREATED to RUNNING pickup")
 	errJournalConflict  = errors.New("durable row exists with a different checksum or final_state")
 	errUnknownStoredJob = errors.New("no durable row for job")
 	errMissingDSN       = errors.New("POSTGRES_DSN is required")
@@ -103,7 +104,7 @@ func parseTerminal(result JobResult) (StoredJob, error) {
 		}
 	}
 	if !foundPickup {
-		return StoredJob{}, errNotTerminal
+		return StoredJob{}, errMissingPickup
 	}
 	return StoredJob{
 		ID:          DurableIDFor(result.ID),
@@ -155,18 +156,20 @@ func (j *pgJournal) Record(ctx context.Context, result JobResult) error {
 	if err != nil {
 		return err
 	}
-	var inserted uuid.UUID
-	err = j.db.QueryRowContext(ctx, `
+	res, err := j.db.ExecContext(ctx, `
 		INSERT INTO jobs (id, job_type, final_state, output_checksum, created_at, completed_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO NOTHING
-		RETURNING id
-	`, row.ID, row.JobType, string(row.FinalState), row.Checksum, row.CreatedAt, row.CompletedAt).Scan(&inserted)
-	if err == nil {
-		return nil
-	}
-	if !errors.Is(err, sql.ErrNoRows) {
+	`, row.ID, row.JobType, string(row.FinalState), row.Checksum, row.CreatedAt, row.CompletedAt)
+	if err != nil {
 		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 1 {
+		return nil
 	}
 	var checksum, finalState string
 	err = j.db.QueryRowContext(ctx, `
