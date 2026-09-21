@@ -77,13 +77,40 @@ func TestParseJob(t *testing.T) {
 	}
 }
 
+func TestParseClaim(t *testing.T) {
+	entry, err := ParseStreamID("99-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := parseClaim(entry, map[string]string{"id": "crash-1", "input": "hello", "simulateCrashAtStep": "1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.job != (Job{ID: "crash-1", Input: "hello"}) {
+		t.Fatalf("job = %+v", c.job)
+	}
+	if c.crash != CrashAfterStep1 {
+		t.Fatalf("crash = %v, want CrashAfterStep1", c.crash)
+	}
+
+	c, err = parseClaim(entry, map[string]string{"input": "hello", "simulateCrashAtStep": "2"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.crash != CrashNever {
+		t.Fatalf("crash = %v, want CrashNever", c.crash)
+	}
+}
+
 func TestStreamPicksUpSittingJob(t *testing.T) {
-	mr := miniredis.RunT(t)
-	stream := openJobs(mr.Addr())
-	t.Cleanup(func() { _ = stream.rdb.Close() })
+	_, stream := startStream(t)
+	ctx := context.Background()
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatal(err)
+	}
 
 	input := "Email alice.nguyen@school.edu about the lab report."
-	if err := stream.Add(context.Background(), Job{ID: "job-cli", Input: input}); err != nil {
+	if err := stream.Add(ctx, Job{ID: "job-cli", Input: input}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -92,49 +119,23 @@ func TestStreamPicksUpSittingJob(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	got := make(chan JobResult, 1)
-	errc := make(chan error, 1)
-	go func() {
-		errc <- runStream(ctx, stream, func(result JobResult) {
-			got <- result
-			cancel()
-		})
-	}()
-
-	select {
-	case result := <-got:
-		if result.ID != "job-cli" {
-			t.Fatalf("ID = %q, want %q", result.ID, "job-cli")
-		}
-		if result.Result != want {
-			t.Fatalf("Result = %+v, want %+v", result.Result, want)
-		}
-		if result.Result.RedactedText != "Email [EMAIL_REDACTED] about the lab report." {
-			t.Fatalf("RedactedText = %q, want Email [EMAIL_REDACTED] about the lab report.", result.Result.RedactedText)
-		}
-	case err := <-errc:
-		t.Fatalf("runStream returned before emit: %v", err)
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for sitting job; XREAD likely started at $")
+	got, err := runGroupOnce(t, stream, testWorkerConfig("sit"))
+	if err != nil {
+		t.Fatal(err)
 	}
-
-	select {
-	case err := <-errc:
-		if err != nil && !errors.Is(err, context.Canceled) {
-			t.Fatalf("runStream err = %v", err)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("runStream did not return after cancel")
+	if got.ID != "job-cli" {
+		t.Fatalf("ID = %q, want %q", got.ID, "job-cli")
+	}
+	if got.Result != want {
+		t.Fatalf("Result = %+v, want %+v", got.Result, want)
+	}
+	if got.Result.RedactedText != "Email [EMAIL_REDACTED] about the lab report." {
+		t.Fatalf("RedactedText = %q, want Email [EMAIL_REDACTED] about the lab report.", got.Result.RedactedText)
 	}
 }
 
 func TestSeedIfEmpty(t *testing.T) {
-	mr := miniredis.RunT(t)
-	stream := openJobs(mr.Addr())
-	t.Cleanup(func() { _ = stream.rdb.Close() })
+	_, stream := startStream(t)
 	ctx := context.Background()
 
 	if err := seedIfEmpty(ctx, stream, []Job{{ID: "a", Input: "x"}}); err != nil {
@@ -160,15 +161,14 @@ func TestSeedIfEmpty(t *testing.T) {
 	}
 }
 
-func TestRunStreamSkipsBadEntry(t *testing.T) {
-	mr := miniredis.RunT(t)
-	stream := openJobs(mr.Addr())
-	t.Cleanup(func() { _ = stream.rdb.Close() })
+func TestRunGroupSkipsBadEntry(t *testing.T) {
+	_, stream := startStream(t)
+	ctx := context.Background()
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatal(err)
+	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	raw := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	raw := redis.NewClient(&redis.Options{Addr: stream.rdb.Options().Addr})
 	t.Cleanup(func() { _ = raw.Close() })
 	if err := raw.XAdd(ctx, &redis.XAddArgs{
 		Stream: jobsStreamKey,
@@ -180,21 +180,101 @@ func TestRunStreamSkipsBadEntry(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got := make(chan JobResult, 1)
-	go func() {
-		_ = runStream(ctx, stream, func(result JobResult) {
-			got <- result
-		})
-	}()
+	got, err := runGroupOnce(t, stream, testWorkerConfig("skip"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != "good" {
+		t.Fatalf("ID = %q, want good", got.ID)
+	}
 
-	select {
-	case result := <-got:
-		cancel()
-		if result.ID != "good" {
-			t.Fatalf("ID = %q, want good", result.ID)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("did not skip bad entry")
+	pending, err := stream.rdb.XPending(ctx, jobsStreamKey, workerGroup).Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pending.Count != 0 {
+		t.Fatalf("pending after poison skip = %d, want 0", pending.Count)
+	}
+}
+
+func TestRunGroupRecoversViaAutoClaim(t *testing.T) {
+	mr, stream := startStream(t)
+	ctx := context.Background()
+	cfg1 := testWorkerConfig("w1")
+	cfg2 := testWorkerConfig("w2")
+
+	t0 := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	mr.SetTime(t0)
+
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.enqueue(ctx, Job{ID: "crash-1", Input: m1Fixture}, CrashAfterStep1); err != nil {
+		t.Fatal(err)
+	}
+
+	err := runGroup(ctx, stream, cfg1, func(JobResult) {})
+	if !errors.Is(err, ErrSimulatedCrash) {
+		t.Fatalf("worker 1 err = %v, want ErrSimulatedCrash", err)
+	}
+
+	pending, err := stream.rdb.XPending(ctx, jobsStreamKey, workerGroup).Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pending.Count != 1 {
+		t.Fatalf("pending after crash = %d, want 1", pending.Count)
+	}
+
+	mr.SetTime(t0.Add(cfg1.Idle))
+
+	got, err := runGroupOnce(t, stream, cfg2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := RedactPII(m1Fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != "crash-1" {
+		t.Fatalf("ID = %q, want crash-1", got.ID)
+	}
+	if got.Result != want {
+		t.Fatalf("Result = %+v, want %+v", got.Result, want)
+	}
+
+	step, err := stream.rdb.HGet(ctx, memKey("crash-1"), memFieldStep).Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if step != "2" {
+		t.Fatalf("hash step = %q, want 2", step)
+	}
+	step1, err := stream.rdb.HGet(ctx, memKey("crash-1"), memFieldStep1).Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if step1 != "1" {
+		t.Fatalf("step1 = %q, want 1", step1)
+	}
+
+	pending, err = stream.rdb.XPending(ctx, jobsStreamKey, workerGroup).Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pending.Count != 0 {
+		t.Fatalf("pending after reclaim = %d, want 0", pending.Count)
+	}
+}
+
+func TestEnsureGroupBusyGroup(t *testing.T) {
+	_, stream := startStream(t)
+	ctx := context.Background()
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatalf("second ensureGroup err = %v", err)
 	}
 }
 
@@ -206,5 +286,39 @@ func TestRedisAddr(t *testing.T) {
 	t.Setenv("REDIS_ADDR", "10.0.0.1:6380")
 	if got := redisAddr(); got != "10.0.0.1:6380" {
 		t.Fatalf("redisAddr() = %q, want 10.0.0.1:6380", got)
+	}
+}
+
+func startStream(t *testing.T) (*miniredis.Miniredis, *jobStream) {
+	t.Helper()
+	mr := miniredis.RunT(t)
+	stream := openJobs(mr.Addr())
+	t.Cleanup(func() { _ = stream.rdb.Close() })
+	return mr, stream
+}
+
+func runGroupOnce(t *testing.T, stream *jobStream, cfg WorkerConfig) (JobResult, error) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	got := make(chan JobResult, 1)
+	err := runGroup(ctx, stream, cfg, func(result JobResult) {
+		select {
+		case got <- result:
+		default:
+		}
+		cancel()
+	})
+	if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+		return JobResult{}, err
+	}
+	select {
+	case result := <-got:
+		return result, nil
+	default:
+		if err != nil {
+			return JobResult{}, err
+		}
+		return JobResult{}, errors.New("runGroup returned without emit")
 	}
 }

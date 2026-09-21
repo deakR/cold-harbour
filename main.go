@@ -4,19 +4,27 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 )
 
 func main() {
 	printM4CheckpointDemo()
 
-	stream := openJobs(redisAddr())
-	if err := seedIfEmpty(context.Background(), stream, demoJobs); err != nil {
+	cfg, err := loadWorkerConfig()
+	if err != nil {
 		panic(err)
 	}
-	if err := runStream(context.Background(), stream, func(result JobResult) {
+	stream := openJobs(redisAddr())
+	if err := prepareGroup(context.Background(), stream, demoJobs); err != nil {
+		panic(err)
+	}
+	if err := runGroup(context.Background(), stream, cfg, func(result JobResult) {
 		fmt.Println(formatJobLine(result))
 		fmt.Println(result.History)
 	}); err != nil {
+		if errors.Is(err, ErrSimulatedCrash) {
+			os.Exit(1)
+		}
 		panic(err)
 	}
 }
