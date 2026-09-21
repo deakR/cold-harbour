@@ -1,23 +1,35 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
 )
 
 func main() {
-	jobs := make(chan Job, len(demoJobs))
-	results := make(chan JobResult)
-	go runWorker(jobs, results)
-	for _, job := range demoJobs {
-		jobs <- job
+	printM4CheckpointDemo()
+
+	cfg, err := loadWorkerConfig()
+	if err != nil {
+		panic(err)
 	}
-	close(jobs)
-	for result := range results {
+	stream := openJobs(redisAddr())
+	if err := prepareGroup(context.Background(), stream, demoJobs); err != nil {
+		panic(err)
+	}
+	if err := runGroup(context.Background(), stream, cfg, func(result JobResult) {
 		fmt.Println(formatJobLine(result))
 		fmt.Println(result.History)
+	}); err != nil {
+		if errors.Is(err, ErrSimulatedCrash) {
+			os.Exit(1)
+		}
+		panic(err)
 	}
+}
 
+func printM4CheckpointDemo() {
 	store := NewCheckpointStore()
 	crashJob := Job{ID: "job-5", Input: m1Fixture}
 	_, err := store.Run(crashJob, CrashAfterStep1)
