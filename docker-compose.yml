@@ -4,9 +4,42 @@ services:
     container_name: coldharbour-m7-postgres
     environment:
       POSTGRES_USER: coldharbour
-      POSTGRES_PASSWORD: coldharbour
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       POSTGRES_DB: coldharbour
-    ports:
-      - "5433:5432"
     volumes:
       - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./docker/certs:/certs:ro
+      - ./docker/pg_hba.conf:/pg_hba.conf:ro
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        cp /certs/server.key /tmp/server.key
+        cp /certs/server.crt /tmp/server.crt
+        chmod 600 /tmp/server.key
+        chown postgres:postgres /tmp/server.key /tmp/server.crt
+        exec docker-entrypoint.sh postgres -c ssl=on -c ssl_cert_file=/tmp/server.crt -c ssl_key_file=/tmp/server.key -c hba_file=/pg_hba.conf
+    ports:
+      - "5433:5432"
+  redis:
+    image: redis:7
+    container_name: coldharbour-m5-redis
+    command:
+      - redis-server
+      - --port
+      - "0"
+      - --tls-port
+      - "6379"
+      - --tls-cert-file
+      - /certs/server.crt
+      - --tls-key-file
+      - /certs/server.key
+      - --tls-ca-cert-file
+      - /certs/server.crt
+      - --tls-auth-clients
+      - "no"
+      - --requirepass
+      - ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+    ports:
+      - "6380:6379"
+    volumes:
+      - ./docker/certs:/certs:ro

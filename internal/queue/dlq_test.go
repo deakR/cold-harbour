@@ -21,7 +21,7 @@ func job5Checksum(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return journal.ChecksumOf(want)
+	return journal.ChecksumOf(redact.MapResult(want))
 }
 
 func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
@@ -206,7 +206,7 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 	}
 	store := journal.NewMemoryJournal()
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), store, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), testRegistry(), store, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
 		t.Error("emit after crash")
 	})
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
@@ -259,7 +259,7 @@ func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, keys sea
 	if len(streams) == 0 || len(streams[0].Messages) == 0 {
 		return errors.New("no message")
 	}
-	return dispatch(ctx, stream, hash, purge, streams[0].Messages[0], store, emit)
+	return dispatch(ctx, stream, hash, purge, testRegistry(), streams[0].Messages[0], store, emit)
 }
 
 func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, emit func(journal.JobResult), pred func() bool) {
@@ -269,7 +269,7 @@ func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, emit 
 	done := make(chan error, 1)
 	priv, receipts := testSigning(t)
 	go func() {
-		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), store, seal.NewMemoryKeyStore(), receipts, priv, emit)
+		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), testRegistry(), store, seal.NewMemoryKeyStore(), receipts, priv, emit)
 	}()
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {

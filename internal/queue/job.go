@@ -24,7 +24,9 @@ func processJob(job Job) journal.JobResult {
 	if err != nil {
 		panic(err)
 	}
-	return journal.Succeed(job.ID, redacted)
+	result := journal.Succeed(job.ID, redact.MapResult(redacted))
+	result.JobType = "redact"
+	return result
 }
 
 func runWorker(jobs <-chan Job, results chan<- journal.JobResult) {

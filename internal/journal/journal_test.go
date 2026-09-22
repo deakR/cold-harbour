@@ -26,7 +26,7 @@ func completedResult(t *testing.T, id string, result redact.RedactResult, create
 	m := newJobMachine()
 	m.pickup(created)
 	m.complete(done)
-	return JobResult{ID: id, Result: result, History: m.history()}
+	return JobResult{ID: id, JobType: "redact", Result: redact.MapResult(result), History: m.history()}
 }
 
 func failedResult(t *testing.T, id string, result redact.RedactResult, created, done time.Time) JobResult {
@@ -34,7 +34,7 @@ func failedResult(t *testing.T, id string, result redact.RedactResult, created, 
 	m := newJobMachine()
 	m.pickup(created)
 	m.fail(done)
-	return JobResult{ID: id, Result: result, History: m.history()}
+	return JobResult{ID: id, JobType: "redact", Result: redact.MapResult(result), History: m.history()}
 }
 
 func m1Result(t *testing.T) redact.RedactResult {
@@ -61,14 +61,14 @@ func TestDurableIDForRemapsUUIDShapedRedisID(t *testing.T) {
 }
 
 func TestChecksumOfJob5(t *testing.T) {
-	if got := ChecksumOf(m1Result(t)); got != job5Checksum {
+	if got := ChecksumOf(redact.MapResult(m1Result(t))); got != job5Checksum {
 		t.Fatalf("ChecksumOf(m1Fixture) = %s, want %s", got, job5Checksum)
 	}
 }
 
 func TestFormatJobLineSharesChecksumBytes(t *testing.T) {
 	want := m1Result(t)
-	line := FormatJobLine(JobResult{ID: "job-5", Result: want})
+	line := FormatJobLine(JobResult{ID: "job-5", Result: redact.MapResult(want)})
 	prefix := "job-5 "
 	if !strings.HasPrefix(line, prefix) {
 		t.Fatalf("formatJobLine = %q, want prefix %q", line, prefix)
@@ -118,7 +118,7 @@ func TestMemoryJournalIdempotentTimestamps(t *testing.T) {
 	if row.ID != job5ID() {
 		t.Fatalf("ID = %s, want %s", row.ID, job5ID())
 	}
-	if row.JobType != jobTypeRedact {
+	if row.JobType != "redact" {
 		t.Fatalf("JobType = %q, want redact", row.JobType)
 	}
 	if row.FinalState != COMPLETED {

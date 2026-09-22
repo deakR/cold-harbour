@@ -3,3 +3,4 @@
 .arena/
 references/
 controlplane/target/
+docker/certs/

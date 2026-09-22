@@ -8,8 +8,10 @@ import (
 
 	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/journal"
+	"coldharbour/internal/mask"
 	"coldharbour/internal/queue"
 	"coldharbour/internal/redact"
+	"coldharbour/internal/runner"
 	"coldharbour/internal/seal"
 )
 
@@ -48,11 +50,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	reg := runner.NewRegistry(redact.Runner{}, mask.Runner{})
 	stream := queue.OpenJobs(queue.RedisAddr())
 	if err := queue.PrepareGroup(context.Background(), stream, queue.DemoJobs); err != nil {
 		panic(err)
 	}
-	if err := queue.RunGroup(context.Background(), stream, cfg, store, keys, receipts, priv, func(result journal.JobResult) {
+	if err := queue.RunGroup(context.Background(), stream, cfg, reg, store, keys, receipts, priv, func(result journal.JobResult) {
 		fmt.Println(journal.FormatJobLine(result))
 		fmt.Println(result.History)
 	}); err != nil {
@@ -74,6 +77,6 @@ func printM4CheckpointDemo() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(journal.FormatJobLine(journal.JobResult{ID: "job-5", Result: resumed}))
+	fmt.Println(journal.FormatJobLine(journal.JobResult{ID: "job-5", Result: redact.MapResult(resumed)}))
 	fmt.Println(store.Step1Passes("job-5"))
 }

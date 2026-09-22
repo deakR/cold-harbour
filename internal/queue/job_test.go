@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"reflect"
 	"regexp"
 	"testing"
 
@@ -31,8 +32,8 @@ func TestRunWorker(t *testing.T) {
 		if err != nil {
 			t.Fatalf("RedactPII(%q) err = %v", DemoJobs[i].Input, err)
 		}
-		if got[i].Result != want {
-			t.Errorf("got[%d].Result = %+v, want %+v", i, got[i].Result, want)
+		if !reflect.DeepEqual(got[i].Result, redact.MapResult(want)) {
+			t.Errorf("got[%d].Result = %+v, want %+v", i, got[i].Result, redact.MapResult(want))
 		}
 	}
 }

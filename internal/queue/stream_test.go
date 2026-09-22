@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"coldharbour/internal/events"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/redact"
+	"coldharbour/internal/runner"
 	"coldharbour/internal/seal"
 
 	"github.com/alicebob/miniredis/v2"
@@ -27,6 +29,10 @@ func testSigning(t *testing.T) (ed25519.PrivateKey, seal.ReceiptStore) {
 		t.Fatal(err)
 	}
 	return priv, seal.NewMemoryReceiptStore()
+}
+
+func testRegistry() *runner.Registry {
+	return runner.NewRegistry(redact.Runner{})
 }
 
 
@@ -178,11 +184,12 @@ func TestStreamPicksUpSittingJob(t *testing.T) {
 	if got.ID != "job-cli" {
 		t.Fatalf("ID = %q, want %q", got.ID, "job-cli")
 	}
-	if got.Result != want {
-		t.Fatalf("Result = %+v, want %+v", got.Result, want)
+	wantMap := redact.MapResult(want)
+	if !reflect.DeepEqual(got.Result, wantMap) {
+		t.Fatalf("Result = %+v, want %+v", got.Result, wantMap)
 	}
-	if got.Result.RedactedText != "Email [EMAIL_REDACTED] about the lab report." {
-		t.Fatalf("RedactedText = %q, want Email [EMAIL_REDACTED] about the lab report.", got.Result.RedactedText)
+	if got.Result["redactedText"] != "Email [EMAIL_REDACTED] about the lab report." {
+		t.Fatalf("RedactedText = %q, want Email [EMAIL_REDACTED] about the lab report.", got.Result["redactedText"])
 	}
 }
 
@@ -279,7 +286,7 @@ func TestRunGroupRecoversViaAutoClaim(t *testing.T) {
 	store := journal.NewMemoryJournal()
 	keys := seal.NewMemoryKeyStore()
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, cfg1, store, keys, receipts, priv, func(journal.JobResult) {})
+	err := RunGroup(ctx, stream, cfg1, testRegistry(), store, keys, receipts, priv, func(journal.JobResult) {})
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
 		t.Fatalf("worker 1 err = %v, want ErrSimulatedCrash", err)
 	}
@@ -320,8 +327,9 @@ func TestRunGroupRecoversViaAutoClaim(t *testing.T) {
 	if got.ID != "crash-1" {
 		t.Fatalf("ID = %q, want crash-1", got.ID)
 	}
-	if got.Result != want {
-		t.Fatalf("Result = %+v, want %+v", got.Result, want)
+	wantMap := redact.MapResult(want)
+	if !reflect.DeepEqual(got.Result, wantMap) {
+		t.Fatalf("Result = %+v, want %+v", got.Result, wantMap)
 	}
 
 	exists, err := stream.rdb.Exists(ctx, memKey("crash-1")).Result()
@@ -347,8 +355,8 @@ func TestRunGroupRecoversViaAutoClaim(t *testing.T) {
 	if row.FinalState != journal.COMPLETED {
 		t.Fatalf("FinalState = %s, want COMPLETED", row.FinalState)
 	}
-	if row.Checksum != journal.ChecksumOf(want) {
-		t.Fatalf("Checksum = %s, want %s", row.Checksum, journal.ChecksumOf(want))
+	if row.Checksum != journal.ChecksumOf(wantMap) {
+		t.Fatalf("Checksum = %s, want %s", row.Checksum, journal.ChecksumOf(wantMap))
 	}
 }
 
@@ -468,7 +476,7 @@ func TestRunGroupRecordsThenEmitsThenAcks(t *testing.T) {
 	runCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	priv, receipts := testSigning(t)
-	err := RunGroup(runCtx, stream, testWorkerConfig("order"), store, seal.NewMemoryKeyStore(), receipts, priv, func(result journal.JobResult) {
+	err := RunGroup(runCtx, stream, testWorkerConfig("order"), testRegistry(), store, seal.NewMemoryKeyStore(), receipts, priv, func(result journal.JobResult) {
 		if result.ID != "job-cli" {
 			t.Errorf("emit ID = %q, want job-cli", result.ID)
 		}
@@ -509,7 +517,7 @@ func TestRunGroupNilJournalPanics(t *testing.T) {
 		}
 	}()
 	priv, receipts := testSigning(t)
-	_ = RunGroup(context.Background(), nil, testWorkerConfig("nil"), nil, nil, receipts, priv, func(journal.JobResult) {})
+	_ = RunGroup(context.Background(), nil, testWorkerConfig("nil"), testRegistry(), nil, nil, receipts, priv, func(journal.JobResult) {})
 }
 
 func TestRunGroupNilKeyStorePanics(t *testing.T) {
@@ -519,7 +527,7 @@ func TestRunGroupNilKeyStorePanics(t *testing.T) {
 		}
 	}()
 	priv, receipts := testSigning(t)
-	_ = RunGroup(context.Background(), nil, testWorkerConfig("nil-keys"), journal.NewMemoryJournal(), nil, receipts, priv, func(journal.JobResult) {})
+	_ = RunGroup(context.Background(), nil, testWorkerConfig("nil-keys"), testRegistry(), journal.NewMemoryJournal(), nil, receipts, priv, func(journal.JobResult) {})
 }
 
 func TestRecordErrorSkipsEmitAndAck(t *testing.T) {
@@ -534,7 +542,7 @@ func TestRecordErrorSkipsEmitAndAck(t *testing.T) {
 	forced := errors.New("forced record failure")
 	emitted := false
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, testWorkerConfig("rec"), errJournal{err: forced}, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("rec"), testRegistry(), errJournal{err: forced}, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
 		emitted = true
 	})
 	if !errors.Is(err, forced) {
@@ -571,8 +579,9 @@ func TestOutputsSurviveRedisFlushAll(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Result != want {
-		t.Fatalf("Result = %+v, want %+v", got.Result, want)
+	wantMap := redact.MapResult(want)
+	if !reflect.DeepEqual(got.Result, wantMap) {
+		t.Fatalf("Result = %+v, want %+v", got.Result, wantMap)
 	}
 	mr.FlushAll()
 	body, err := store.LoadOutput(ctx, "job-cli")
@@ -586,7 +595,7 @@ func TestOutputsSurviveRedisFlushAll(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if row.Checksum != journal.ChecksumOf(want) {
+	if row.Checksum != journal.ChecksumOf(wantMap) {
 		t.Fatalf("jobs.output_checksum after FLUSHALL = %s", row.Checksum)
 	}
 	if row.Checksum == body {
@@ -618,7 +627,7 @@ func TestSuccessfulJobDeletesMemHash(t *testing.T) {
 		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
 		ch := make(chan journal.JobResult, 1)
-		err := RunGroup(ctx, stream, testWorkerConfig("purge-ok"), journal.NewMemoryJournal(), keys, receipts, priv, func(r journal.JobResult) {
+		err := RunGroup(ctx, stream, testWorkerConfig("purge-ok"), testRegistry(), journal.NewMemoryJournal(), keys, receipts, priv, func(r journal.JobResult) {
 			ch <- r
 			cancel()
 		})
@@ -675,7 +684,7 @@ func TestCrashLeavesMemHash(t *testing.T) {
 		t.Fatal(err)
 	}
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, testWorkerConfig("crash-keep"), journal.NewMemoryJournal(), seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("crash-keep"), testRegistry(), journal.NewMemoryJournal(), seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
 		t.Error("emit after crash")
 	})
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
@@ -701,7 +710,7 @@ func runGroupOnce(t *testing.T, stream *jobStream, cfg WorkerConfig, store journ
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	got := make(chan journal.JobResult, 1)
-	err := RunGroup(ctx, stream, cfg, store, keys, receipts, priv, func(result journal.JobResult) {
+	err := RunGroup(ctx, stream, cfg, testRegistry(), store, keys, receipts, priv, func(result journal.JobResult) {
 		select {
 		case got <- result:
 		default:

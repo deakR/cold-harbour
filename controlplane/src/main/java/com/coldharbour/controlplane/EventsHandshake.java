@@ -22,6 +22,16 @@ public final class EventsHandshake implements HandshakeInterceptor {
 	public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
 			WebSocketHandler wsHandler, Map<String, Object> attributes) {
 		String raw = request.getHeaders().getFirst("X-API-Key");
+		if (raw == null || raw.isEmpty()) {
+			String query = request.getURI().getRawQuery();
+			if (query != null) {
+				for (String part : query.split("&")) {
+					if (part.startsWith("apiKey=")) {
+						raw = java.net.URLDecoder.decode(part.substring("apiKey=".length()), java.nio.charset.StandardCharsets.UTF_8);
+					}
+				}
+			}
+		}
 		Optional<ApiKeys.Principal> principal = apiKeys.authenticate(raw);
 		if (principal.isEmpty()) {
 			return false;

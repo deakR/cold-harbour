@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"coldharbour/internal/journal"
-	"coldharbour/internal/redact"
 	"coldharbour/internal/seal"
 
 	"github.com/redis/go-redis/v9"
@@ -67,7 +66,7 @@ func (p *purger) run(ctx context.Context, redisJobID string) error {
 }
 
 func (p *purger) signOutput(result *journal.JobResult) {
-	body := redact.MarshalResult(result.Result)
+	body := journal.BodyOf(result.Result)
 	pub := p.priv.Public().(ed25519.PublicKey)
 	result.Signature = seal.Sign(p.priv, body)
 	result.SigningKeyID = seal.SigningKeyID(pub)
