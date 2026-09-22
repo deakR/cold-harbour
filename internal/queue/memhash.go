@@ -1,10 +1,13 @@
-package main
+package queue
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
+
+	"coldharbour/internal/checkpoint"
+	"coldharbour/internal/redact"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -23,7 +26,7 @@ func memKey(jobID string) string {
 	return "job:" + jobID + ":mem"
 }
 
-func (m *memHash) load(ctx context.Context, jobID string) (*Checkpoint, error) {
+func (m *memHash) load(ctx context.Context, jobID string) (*checkpoint.Checkpoint, error) {
 	fields, err := m.rdb.HGetAll(ctx, memKey(jobID)).Result()
 	if err != nil {
 		return nil, err
@@ -43,18 +46,18 @@ func (m *memHash) load(ctx context.Context, jobID string) (*Checkpoint, error) {
 	if raw == "" {
 		return nil, fmt.Errorf("mem hash missing partial_result")
 	}
-	var partial RedactResult
+	var partial redact.RedactResult
 	if err := json.Unmarshal([]byte(raw), &partial); err != nil {
 		return nil, fmt.Errorf("mem hash partial_result: %w", err)
 	}
-	return &Checkpoint{
+	return &checkpoint.Checkpoint{
 		JobID:         jobID,
-		Step:          Step(n),
+		Step:          checkpoint.Step(n),
 		PartialResult: partial,
 	}, nil
 }
 
-func (m *memHash) save(ctx context.Context, cp Checkpoint) error {
+func (m *memHash) save(ctx context.Context, cp checkpoint.Checkpoint) error {
 	partial, err := json.Marshal(cp.PartialResult)
 	if err != nil {
 		return err
@@ -62,7 +65,7 @@ func (m *memHash) save(ctx context.Context, cp Checkpoint) error {
 	return m.rdb.HSet(ctx, memKey(cp.JobID), memFieldStep, int(cp.Step), memFieldPartial, string(partial)).Err()
 }
 
-func (m *memHash) saveStep1(ctx context.Context, cp Checkpoint) error {
+func (m *memHash) saveStep1(ctx context.Context, cp checkpoint.Checkpoint) error {
 	partial, err := json.Marshal(cp.PartialResult)
 	if err != nil {
 		return err

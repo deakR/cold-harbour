@@ -1,4 +1,4 @@
-package main
+package queue
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"coldharbour/internal/checkpoint"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -58,7 +60,7 @@ func parseJob(entryID StreamID, fields map[string]string) (Job, error) {
 	return Job{ID: id, Input: input}, nil
 }
 
-func redisAddr() string {
+func RedisAddr() string {
 	if addr := os.Getenv("REDIS_ADDR"); addr != "" {
 		return addr
 	}
@@ -69,12 +71,12 @@ type jobStream struct {
 	rdb *redis.Client
 }
 
-func openJobs(addr string) *jobStream {
+func OpenJobs(addr string) *jobStream {
 	return &jobStream{rdb: redis.NewClient(&redis.Options{Addr: addr})}
 }
 
 func (s *jobStream) Add(ctx context.Context, job Job) error {
-	return s.enqueue(ctx, job, CrashNever)
+	return s.enqueue(ctx, job, checkpoint.CrashNever)
 }
 
 func (s *jobStream) Len(ctx context.Context) (int64, error) {

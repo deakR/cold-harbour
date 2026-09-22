@@ -1,10 +1,12 @@
-package main
+package queue
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"strconv"
+
+	"coldharbour/internal/journal"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -47,13 +49,13 @@ func retryKey(jobID string) string {
 	return "retry:" + jobID
 }
 
-func (d *deadLetters) fail(ctx context.Context, c claimed, result JobResult, journal Journal) error {
+func (d *deadLetters) fail(ctx context.Context, c claimed, result journal.JobResult, store journal.Journal) error {
 	n, ok, err := d.peek(ctx, c.job.ID)
 	if err != nil {
 		return err
 	}
 	if ok && n >= 2 {
-		if err := journal.Record(ctx, result); err != nil {
+		if err := store.Record(ctx, result); err != nil {
 			return err
 		}
 	}
@@ -120,13 +122,17 @@ func luaInt(v any) (int, bool) {
 	case int64:
 		return int(n), true
 	case int:
-		return n, true
+		return int(n), true
 	case string:
 		parsed, err := strconv.Atoi(n)
 		return parsed, err == nil
 	default:
 		return 0, false
 	}
+}
+
+func Redrive(ctx context.Context, stream *jobStream) error {
+	return (&deadLetters{rdb: stream.rdb}).redrive(ctx)
 }
 
 func (d *deadLetters) redrive(ctx context.Context) error {

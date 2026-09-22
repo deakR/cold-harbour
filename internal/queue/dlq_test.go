@@ -1,4 +1,4 @@
-package main
+package queue
 
 import (
 	"context"
@@ -6,8 +6,21 @@ import (
 	"testing"
 	"time"
 
+	"coldharbour/internal/checkpoint"
+	"coldharbour/internal/journal"
+	"coldharbour/internal/redact"
+
 	"github.com/redis/go-redis/v9"
 )
+
+func job5Checksum(t *testing.T) string {
+	t.Helper()
+	want, err := redact.RedactPII(redact.M1Fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return journal.ChecksumOf(want)
+}
 
 func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 	_, stream := startStream(t)
@@ -15,33 +28,34 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	job := Job{ID: "job-5", Input: m1Fixture}
+	job := Job{ID: "job-5", Input: redact.M1Fixture}
 	if err := addFailJob(ctx, stream, job); err != nil {
 		t.Fatal(err)
 	}
-	journal := NewMemoryJournal()
+	store := journal.NewMemoryJournal()
+	wantChecksum := job5Checksum(t)
 
-	if err := consumeOne(t, stream, journal, nil); err != nil {
+	if err := consumeOne(t, stream, store, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetry(t, stream, job.ID, "1")
 	assertDLQLen(t, stream, 0)
 	assertPending(t, stream, 0)
-	if _, err := journal.Load(ctx, job.ID); !errors.Is(err, errUnknownStoredJob) {
-		t.Fatalf("Load after attempt 1 err = %v, want errUnknownStoredJob", err)
+	if _, err := store.Load(ctx, job.ID); !errors.Is(err, journal.ErrUnknownStoredJob) {
+		t.Fatalf("Load after attempt 1 err = %v, want ErrUnknownStoredJob", err)
 	}
 
-	if err := consumeOne(t, stream, journal, nil); err != nil {
+	if err := consumeOne(t, stream, store, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetry(t, stream, job.ID, "2")
 	assertDLQLen(t, stream, 0)
 	assertPending(t, stream, 0)
-	if _, err := journal.Load(ctx, job.ID); !errors.Is(err, errUnknownStoredJob) {
-		t.Fatalf("Load after attempt 2 err = %v, want errUnknownStoredJob", err)
+	if _, err := store.Load(ctx, job.ID); !errors.Is(err, journal.ErrUnknownStoredJob) {
+		t.Fatalf("Load after attempt 2 err = %v, want ErrUnknownStoredJob", err)
 	}
 
-	if err := consumeOne(t, stream, journal, nil); err != nil {
+	if err := consumeOne(t, stream, store, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetryGone(t, stream, job.ID)
@@ -49,46 +63,45 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 	assertPending(t, stream, 0)
 	assertMainLen(t, stream, 3)
 	assertStreamField(t, stream, dlqStreamKey, 0, "simulateFailure", "1")
-	row, err := journal.Load(ctx, job.ID)
+	row, err := store.Load(ctx, job.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if row.FinalState != FAILED {
+	if row.FinalState != journal.FAILED {
 		t.Fatalf("FinalState = %s, want FAILED", row.FinalState)
 	}
-	if row.Checksum != job5Checksum {
-		t.Fatalf("Checksum = %s, want %s", row.Checksum, job5Checksum)
+	if row.Checksum != wantChecksum {
+		t.Fatalf("Checksum = %s, want %s", row.Checksum, wantChecksum)
 	}
 
-	letters := &deadLetters{rdb: stream.rdb}
-	if err := letters.redrive(ctx); err != nil {
+	if err := Redrive(ctx, stream); err != nil {
 		t.Fatal(err)
 	}
 	assertDLQLen(t, stream, 1)
 	assertRetry(t, stream, job.ID, "0")
 	assertStreamField(t, stream, jobsStreamKey, 3, "simulateFailure", "1")
 
-	if err := consumeOne(t, stream, journal, nil); err != nil {
+	if err := consumeOne(t, stream, store, nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := letters.redrive(ctx); !errors.Is(err, errRetryLive) {
+	if err := Redrive(ctx, stream); !errors.Is(err, errRetryLive) {
 		t.Fatalf("redrive while retry is live err = %v, want errRetryLive", err)
 	}
 
-	if err := consumeOne(t, stream, journal, nil); err != nil {
+	if err := consumeOne(t, stream, store, nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := consumeOne(t, stream, journal, nil); err != nil {
+	if err := consumeOne(t, stream, store, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetryGone(t, stream, job.ID)
 	assertDLQLen(t, stream, 2)
 	assertPending(t, stream, 0)
-	row, err = journal.Load(ctx, job.ID)
+	row, err = store.Load(ctx, job.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if row.FinalState != FAILED || row.Checksum != job5Checksum {
+	if row.FinalState != journal.FAILED || row.Checksum != wantChecksum {
 		t.Fatalf("second bury row = %+v", row)
 	}
 }
@@ -99,12 +112,12 @@ func TestRunGroupBuriesWithoutEmit(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := addFailJob(ctx, stream, Job{ID: "job-5", Input: m1Fixture}); err != nil {
+	if err := addFailJob(ctx, stream, Job{ID: "job-5", Input: redact.M1Fixture}); err != nil {
 		t.Fatal(err)
 	}
-	journal := NewMemoryJournal()
+	store := journal.NewMemoryJournal()
 	emitted := false
-	runGroupUntil(t, stream, journal, func(JobResult) {
+	runGroupUntil(t, stream, store, func(journal.JobResult) {
 		emitted = true
 	}, func() bool {
 		n, err := stream.rdb.XLen(ctx, dlqStreamKey).Result()
@@ -120,15 +133,15 @@ func TestRunGroupBuriesWithoutEmit(t *testing.T) {
 	if emitted {
 		t.Fatal("emit ran on failure")
 	}
-	row, err := journal.Load(ctx, "job-5")
+	row, err := store.Load(ctx, "job-5")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if row.FinalState != FAILED {
+	if row.FinalState != journal.FAILED {
 		t.Fatalf("FinalState = %s, want FAILED", row.FinalState)
 	}
-	if row.Checksum != job5Checksum {
-		t.Fatalf("Checksum = %s, want %s", row.Checksum, job5Checksum)
+	if row.Checksum != job5Checksum(t) {
+		t.Fatalf("Checksum = %s, want %s", row.Checksum, job5Checksum(t))
 	}
 }
 
@@ -141,22 +154,22 @@ func TestReplayAtThreeBuriesAgain(t *testing.T) {
 	if err := stream.rdb.Set(ctx, retryKey("job-5"), 3, 0).Err(); err != nil {
 		t.Fatal(err)
 	}
-	if err := addFailJob(ctx, stream, Job{ID: "job-5", Input: m1Fixture}); err != nil {
+	if err := addFailJob(ctx, stream, Job{ID: "job-5", Input: redact.M1Fixture}); err != nil {
 		t.Fatal(err)
 	}
-	journal := NewMemoryJournal()
-	if err := consumeOne(t, stream, journal, nil); err != nil {
+	store := journal.NewMemoryJournal()
+	if err := consumeOne(t, stream, store, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertMainLen(t, stream, 1)
 	assertDLQLen(t, stream, 1)
 	assertPending(t, stream, 0)
 	assertRetryGone(t, stream, "job-5")
-	row, err := journal.Load(ctx, "job-5")
+	row, err := store.Load(ctx, "job-5")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if row.FinalState != FAILED {
+	if row.FinalState != journal.FAILED {
 		t.Fatalf("FinalState = %s, want FAILED", row.FinalState)
 	}
 }
@@ -171,22 +184,22 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 		Stream: jobsStreamKey,
 		Values: map[string]any{
 			"id":                  "crash-fail",
-			"input":               m1Fixture,
+			"input":               redact.M1Fixture,
 			"simulateCrashAtStep": "1",
 			"simulateFailure":     "1",
 		},
 	}).Err(); err != nil {
 		t.Fatal(err)
 	}
-	journal := NewMemoryJournal()
-	err := runGroup(ctx, stream, testWorkerConfig("crash-fail"), journal, func(JobResult) {
+	store := journal.NewMemoryJournal()
+	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), store, func(journal.JobResult) {
 		t.Error("emit after crash")
 	})
-	if !errors.Is(err, ErrSimulatedCrash) {
+	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
 		t.Fatalf("err = %v, want ErrSimulatedCrash", err)
 	}
-	if _, err := journal.Load(ctx, "crash-fail"); !errors.Is(err, errUnknownStoredJob) {
-		t.Fatalf("journal after crash = %v, want errUnknownStoredJob", err)
+	if _, err := store.Load(ctx, "crash-fail"); !errors.Is(err, journal.ErrUnknownStoredJob) {
+		t.Fatalf("journal after crash = %v, want ErrUnknownStoredJob", err)
 	}
 	assertDLQLen(t, stream, 0)
 	assertPending(t, stream, 1)
@@ -194,7 +207,7 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 
 func TestRedriveEmptyDLQ(t *testing.T) {
 	_, stream := startStream(t)
-	err := (&deadLetters{rdb: stream.rdb}).redrive(context.Background())
+	err := Redrive(context.Background(), stream)
 	if !errors.Is(err, errEmptyDLQ) {
 		t.Fatalf("err = %v, want errEmptyDLQ", err)
 	}
@@ -211,10 +224,10 @@ func addFailJob(ctx context.Context, stream *jobStream, job Job) error {
 	}).Err()
 }
 
-func consumeOne(t *testing.T, stream *jobStream, journal Journal, emit func(JobResult)) error {
+func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, emit func(journal.JobResult)) error {
 	t.Helper()
 	if emit == nil {
-		emit = func(JobResult) {}
+		emit = func(journal.JobResult) {}
 	}
 	ctx := context.Background()
 	hash := &memHash{rdb: stream.rdb}
@@ -231,16 +244,16 @@ func consumeOne(t *testing.T, stream *jobStream, journal Journal, emit func(JobR
 	if len(streams) == 0 || len(streams[0].Messages) == 0 {
 		return errors.New("no message")
 	}
-	return dispatch(ctx, stream, hash, streams[0].Messages[0], journal, emit)
+	return dispatch(ctx, stream, hash, streams[0].Messages[0], store, emit)
 }
 
-func runGroupUntil(t *testing.T, stream *jobStream, journal Journal, emit func(JobResult), pred func() bool) {
+func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, emit func(journal.JobResult), pred func() bool) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	done := make(chan error, 1)
 	go func() {
-		done <- runGroup(ctx, stream, testWorkerConfig("dlq"), journal, emit)
+		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), store, emit)
 	}()
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {

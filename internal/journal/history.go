@@ -1,21 +1,17 @@
-package main
+package journal
 
 import (
-	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
 	"time"
-)
 
-type Job struct {
-	ID    string
-	Input string
-}
+	"coldharbour/internal/redact"
+)
 
 type JobResult struct {
 	ID      string
-	Result  RedactResult
+	Result  redact.RedactResult
 	History History
 }
 
@@ -74,44 +70,20 @@ func (m *jobMachine) history() History {
 	return History{steps: slices.Clone(m.steps)}
 }
 
-const m1Fixture = `Contact jane.doe@example.com or (555) 123-4567 for details.
-SSN on file: 123-45-6789. Backup contact: john@company.org.
-Not a match: version 123-45 or year 1234-56-789.`
-
-var demoJobs = []Job{
-	{ID: "job-5", Input: m1Fixture},
-	{ID: "job-1", Input: "Email alice.nguyen@school.edu about the lab report."},
-	{ID: "job-4", Input: "Call 415-555-0199 before noon."},
-	{ID: "job-2", Input: "Employee SSN 987-65-4321 is on the form."},
-	{ID: "job-3", Input: "Reach +1 212 555 0100 or bob.smith@mail.net."},
-}
-
-func processJob(job Job) JobResult {
+func Succeed(id string, result redact.RedactResult) JobResult {
 	machine := newJobMachine()
 	machine.pickup(time.Now())
-	redacted, err := RedactPII(job.Input)
-	if err != nil {
-		panic(err)
-	}
 	machine.complete(time.Now())
-	return JobResult{ID: job.ID, Result: redacted, History: machine.history()}
+	return JobResult{ID: id, Result: result, History: machine.history()}
 }
 
-func runWorker(jobs <-chan Job, results chan<- JobResult) {
-	for job := range jobs {
-		results <- processJob(job)
-	}
-	close(results)
+func Fail(id string, result redact.RedactResult) JobResult {
+	machine := newJobMachine()
+	machine.pickup(time.Now())
+	machine.fail(time.Now())
+	return JobResult{ID: id, Result: result, History: machine.history()}
 }
 
-func marshalResult(result RedactResult) []byte {
-	b, err := json.Marshal(result)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-func formatJobLine(result JobResult) string {
-	return result.ID + " " + string(marshalResult(result.Result))
+func FormatJobLine(result JobResult) string {
+	return result.ID + " " + string(redact.MarshalResult(result.Result))
 }
