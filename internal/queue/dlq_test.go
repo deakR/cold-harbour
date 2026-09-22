@@ -205,6 +205,73 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 	assertPending(t, stream, 1)
 }
 
+func TestPoisonJobIsBuriedAndWorkerContinues(t *testing.T) {
+	_, stream := startStream(t)
+	ctx := context.Background()
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.rdb.XAdd(ctx, &redis.XAddArgs{
+		Stream: jobsStreamKey,
+		Values: map[string]any{
+			"id":       "poison-1",
+			"input":    "x",
+			"job_type": "nope",
+		},
+	}).Err(); err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.Add(ctx, Job{ID: "ok-1", Input: redact.M1Fixture}); err != nil {
+		t.Fatal(err)
+	}
+	store := journal.NewMemoryJournal()
+	keys := seal.NewMemoryKeyStore()
+	priv, receipts := testSigning(t)
+	runCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	done := make(chan error, 1)
+	emitted := make(chan string, 1)
+	go func() {
+		done <- RunGroup(runCtx, stream, testWorkerConfig("poison"), testRegistry(), store, keys, receipts, priv, func(result journal.JobResult) {
+			emitted <- result.ID
+		})
+	}()
+	select {
+	case id := <-emitted:
+		if id != "ok-1" {
+			t.Fatalf("emitted %q, want ok-1", id)
+		}
+	case err := <-done:
+		t.Fatalf("RunGroup returned before ok-1: %v", err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout waiting for ok-1")
+	}
+	cancel()
+	<-done
+
+	row, err := store.Load(ctx, "poison-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if row.FinalState != journal.FAILED {
+		t.Fatalf("poison FinalState = %s, want FAILED", row.FinalState)
+	}
+	ok, err := store.Load(ctx, "ok-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok.FinalState != journal.COMPLETED {
+		t.Fatalf("ok FinalState = %s, want COMPLETED", ok.FinalState)
+	}
+	assertDLQLen(t, stream, 1)
+	assertStreamField(t, stream, dlqStreamKey, 0, "id", "poison-1")
+	assertNoStreamField(t, stream, dlqStreamKey, 0, "input")
+	assertMainLen(t, stream, 0)
+	if keys.Has(journal.DurableIDFor("poison-1")) {
+		t.Fatal("poison job created a key")
+	}
+}
+
 func TestCompletedJobLeavesNoStreamEntry(t *testing.T) {
 	_, stream := startStream(t)
 	ctx := context.Background()

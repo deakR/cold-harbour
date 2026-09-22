@@ -19,6 +19,21 @@ import (
 
 const workerGroup = "worker-group"
 
+type infraError struct {
+	err error
+}
+
+func (e infraError) Error() string {
+	if e.err == nil {
+		return "infrastructure"
+	}
+	return e.err.Error()
+}
+
+func (e infraError) Unwrap() error {
+	return e.err
+}
+
 type claimed struct {
 	entry  StreamID
 	job    Job
@@ -187,27 +202,29 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 	if err != nil {
 		return err
 	}
-	if st == nil {
-		_, loadErr := store.Load(ctx, c.job.ID)
-		if loadErr == nil {
-			return stream.finish(context.WithoutCancel(ctx), c.entry)
+		if st == nil {
+			_, loadErr := store.Load(ctx, c.job.ID)
+			if loadErr == nil {
+				return stream.finish(context.WithoutCancel(ctx), c.entry)
+			}
+			if !errors.Is(loadErr, journal.ErrUnknownStoredJob) {
+				return loadErr
+			}
 		}
-		if !errors.Is(loadErr, journal.ErrUnknownStoredJob) {
-			return loadErr
-		}
-		if _, err := hash.keys.Ensure(ctx, journal.DurableIDFor(c.job.ID)); err != nil {
-			return err
-		}
-	}
 
-	jobType := c.fields["job_type"]
-	if jobType == "" {
-		jobType = "redact"
-	}
-	jr, ok := reg.Get(jobType)
-	if !ok {
-		return fmt.Errorf("unknown job_type %q", jobType)
-	}
+		jobType := c.fields["job_type"]
+		if jobType == "" {
+			jobType = "redact"
+		}
+		jr, ok := reg.Get(jobType)
+		if !ok {
+			return (&deadLetters{rdb: stream.rdb}).bury(ctx, c, jobType, "unknown job_type", store, purge)
+		}
+		if st == nil {
+			if _, err := hash.keys.Ensure(ctx, journal.DurableIDFor(c.job.ID)); err != nil {
+				return err
+			}
+		}
 
 	cp := runner.NewCheckpointRecorder(
 		func() (int, map[string]any, bool) {
@@ -225,7 +242,7 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 				err = hash.save(ctx, next)
 			}
 			if err != nil {
-				return err
+				return infraError{err: err}
 			}
 			st = &next
 			if step == 1 {
@@ -235,7 +252,7 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 					JobID:    c.job.ID,
 					Status:   string(journal.RUNNING),
 				}); err != nil {
-					return err
+					return infraError{err: err}
 				}
 				if c.crash == checkpoint.CrashAfterStep1 {
 					return checkpoint.ErrSimulatedCrash
@@ -247,7 +264,14 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 
 	out, err := jr.Run(ctx, jobInput(c.job.Input), cp)
 	if err != nil {
-		return err
+		if errors.Is(err, checkpoint.ErrSimulatedCrash) {
+			return err
+		}
+		var infra infraError
+		if errors.As(err, &infra) {
+			return err
+		}
+		return (&deadLetters{rdb: stream.rdb}).bury(ctx, c, jr.JobType(), "runner failed", store, purge)
 	}
 
 	if c.fail {
