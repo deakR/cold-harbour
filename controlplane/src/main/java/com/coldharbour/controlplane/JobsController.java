@@ -1,5 +1,6 @@
 package com.coldharbour.controlplane;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -49,13 +50,39 @@ public class JobsController {
 				"INSERT INTO job_accepts (redis_job_id, tenant_id, accepted_at) VALUES (?, ?, now())",
 				jobId, tenantId
 		);
-		MapRecord<String, String, String> record = StreamRecords.string(Map.of(
-				"id", jobId,
-				"input", input,
-				"tenant_id", tenantId.toString()
-		)).withStreamKey(JOBS_STREAM);
+		Map<String, String> fields = new HashMap<>();
+		fields.put("id", jobId);
+		fields.put("input", input);
+		fields.put("tenant_id", tenantId.toString());
+		String jobType = body.get("jobType");
+		if (jobType != null && !jobType.isEmpty()) {
+			fields.put("job_type", jobType);
+		}
+		MapRecord<String, String, String> record = StreamRecords.string(fields).withStreamKey(JOBS_STREAM);
 		redis.opsForStream().add(record);
 		return ResponseEntity.ok(Map.of("jobId", jobId, "status", "QUEUED"));
+	}
+
+	@GetMapping("/jobs")
+	public ResponseEntity<?> list(HttpServletRequest req) {
+		UUID tenantId = (UUID) req.getAttribute(ApiKeyFilter.ATTR_TENANT);
+		var rows = jdbc.query("""
+				SELECT a.redis_job_id, a.accepted_at, o.final_state
+				FROM job_accepts a
+				LEFT JOIN outputs o ON o.redis_job_id = a.redis_job_id AND o.tenant_id = a.tenant_id
+				WHERE a.tenant_id = ?
+				ORDER BY a.accepted_at DESC
+				""", (rs, rowNum) -> {
+			String state = rs.getString("final_state");
+			if (state == null || state.isEmpty()) {
+				state = "QUEUED";
+			}
+			return Map.of(
+					"jobId", rs.getString("redis_job_id"),
+					"acceptedAt", rs.getTimestamp("accepted_at").toInstant().toString(),
+					"status", state);
+		}, tenantId);
+		return ResponseEntity.ok(rows);
 	}
 
 	@GetMapping("/jobs/{id}")
@@ -63,11 +90,14 @@ public class JobsController {
 		UUID tenantId = (UUID) req.getAttribute(ApiKeyFilter.ATTR_TENANT);
 
 		try {
-			return jdbc.queryForObject(
-					"SELECT final_state, body FROM outputs WHERE redis_job_id = ? AND tenant_id = ?",
-					(rs, rowNum) -> terminal(id, rs.getString("final_state"), rs.getString("body")),
-					id, tenantId
-			);
+			return jdbc.queryForObject("""
+					SELECT o.final_state, o.body, j.output_signature, j.signing_key_id
+					FROM outputs o
+					LEFT JOIN jobs j ON j.id = ? AND j.tenant_id = o.tenant_id
+					WHERE o.redis_job_id = ? AND o.tenant_id = ?
+					""", (rs, rowNum) -> terminal(id, rs.getString("final_state"), rs.getString("body"),
+					rs.getBytes("output_signature"), rs.getString("signing_key_id")),
+					DurableID.forRedisJob(id), id, tenantId);
 		} catch (EmptyResultDataAccessException ignored) {
 		}
 
@@ -102,17 +132,20 @@ public class JobsController {
 		return ResponseEntity.ok(Map.of("jobId", id, "status", "QUEUED"));
 	}
 
-	private ResponseEntity<?> terminal(String id, String finalState, String body) {
+	private ResponseEntity<?> terminal(String id, String finalState, String body, byte[] signature, String signingKeyId) {
 		JsonNode result;
 		try {
 			result = mapper.readTree(body);
 		} catch (JsonProcessingException e) {
 			throw new IllegalStateException("outputs.body is not JSON", e);
 		}
+		String sig = signature == null ? "" : java.util.Base64.getEncoder().encodeToString(signature);
 		return ResponseEntity.ok(Map.of(
 				"jobId", id,
 				"status", finalState,
-				"result", result
+				"result", result,
+				"signature", sig,
+				"signingKeyId", signingKeyId == null ? "" : signingKeyId
 		));
 	}
 }

@@ -32,6 +32,10 @@ public final class ApiKeyFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
 			FilterChain filterChain) throws ServletException, IOException {
 		String raw = request.getHeader("X-API-Key");
+		if ((raw == null || raw.isEmpty()) && request.getRequestURI() != null
+				&& request.getRequestURI().startsWith("/ws/")) {
+			raw = request.getParameter("apiKey");
+		}
 		Optional<ApiKeys.Principal> principal = apiKeys.authenticate(raw);
 		if (principal.isEmpty()) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

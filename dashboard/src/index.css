@@ -1,0 +1,6 @@
+body { font-family: sans-serif; margin: 2rem; }
+label { display: block; margin: 0.5rem 0; }
+input, textarea, select { display: block; width: 100%; max-width: 40rem; }
+table { border-collapse: collapse; margin-top: 1rem; }
+td, th { border: 1px solid #ccc; padding: 0.4rem; }
+tr { cursor: pointer; }
