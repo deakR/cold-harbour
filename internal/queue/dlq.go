@@ -93,7 +93,12 @@ func (d *deadLetters) fail(ctx context.Context, c claimed, result journal.JobRes
 		return err
 	}
 	if kind == "retry" {
+		jobsRetried.Inc()
 		fmt.Printf("attempt %d %s\n", attempt, c.job.ID)
+	}
+	if kind == "bury" {
+		jobsFailed.Inc()
+		jobsBuried.Inc()
 	}
 	return nil
 }
@@ -137,7 +142,12 @@ func (d *deadLetters) bury(ctx context.Context, c claimed, jobType, reason strin
 		return err
 	}
 	_, _, err := d.settle(ctx, c, true)
-	return err
+	if err != nil {
+		return err
+	}
+	jobsFailed.Inc()
+	jobsBuried.Inc()
+	return nil
 }
 
 func (d *deadLetters) settle(ctx context.Context, c claimed, force bool) (string, int, error) {
@@ -190,4 +200,3 @@ func luaInt(v any) (int, bool) {
 		return 0, false
 	}
 }
-

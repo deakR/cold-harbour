@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/events"
@@ -226,34 +227,36 @@ func jobInput(raw string) map[string]any {
 }
 
 func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, c claimed, store journal.Journal, emit func(journal.JobResult), hooks Hooks) error {
+	started := time.Now()
+	defer observeJob(started)
 	applyHooks(&c, hooks)
 	st, err := hash.load(ctx, c.job.ID)
 	if err != nil {
 		return err
 	}
-		if st == nil {
-			_, loadErr := store.Load(ctx, c.job.ID)
-			if loadErr == nil {
-				return stream.finish(context.WithoutCancel(ctx), c.entry)
-			}
-			if !errors.Is(loadErr, journal.ErrUnknownStoredJob) {
-				return loadErr
-			}
+	if st == nil {
+		_, loadErr := store.Load(ctx, c.job.ID)
+		if loadErr == nil {
+			return stream.finish(context.WithoutCancel(ctx), c.entry)
 		}
+		if !errors.Is(loadErr, journal.ErrUnknownStoredJob) {
+			return loadErr
+		}
+	}
 
-		jobType := c.fields["job_type"]
-		if jobType == "" {
-			jobType = "redact"
+	jobType := c.fields["job_type"]
+	if jobType == "" {
+		jobType = "redact"
+	}
+	jr, ok := reg.Get(jobType)
+	if !ok {
+		return (&deadLetters{rdb: stream.rdb}).bury(ctx, c, jobType, "unknown job_type", store, purge)
+	}
+	if st == nil {
+		if _, err := hash.keys.Ensure(ctx, journal.DurableIDFor(c.job.ID)); err != nil {
+			return err
 		}
-		jr, ok := reg.Get(jobType)
-		if !ok {
-			return (&deadLetters{rdb: stream.rdb}).bury(ctx, c, jobType, "unknown job_type", store, purge)
-		}
-		if st == nil {
-			if _, err := hash.keys.Ensure(ctx, journal.DurableIDFor(c.job.ID)); err != nil {
-				return err
-			}
-		}
+	}
 
 	cp := runner.NewCheckpointRecorder(
 		func() (int, map[string]any, bool) {
@@ -329,5 +332,6 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 		return err
 	}
 	emit(result)
+	jobsCompleted.Inc()
 	return stream.finish(context.WithoutCancel(ctx), c.entry)
 }

@@ -47,7 +47,6 @@ func testDeps(store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptSt
 	}
 }
 
-
 func TestParseStreamIDRejectsSpecials(t *testing.T) {
 	for _, s := range []string{"$", "*", "+", "-", "", "abc", "1", "1-2-3", "1-", "-1"} {
 		if _, err := ParseStreamID(s); err == nil {

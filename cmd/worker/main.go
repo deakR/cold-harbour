@@ -43,6 +43,11 @@ func main() {
 	if err := queue.PrepareGroup(context.Background(), stream); err != nil {
 		log.Fatalf("worker: prepare group: %v", err)
 	}
+	go func() {
+		if err := queue.ServeMetrics(":9100"); err != nil {
+			log.Printf("worker: metrics: %v", err)
+		}
+	}()
 	if err := queue.RunGroup(context.Background(), stream, cfg, queue.Deps{
 		Registry:   reg,
 		Journal:    store,
