@@ -100,6 +100,20 @@ func TestParseClaim(t *testing.T) {
 	if c.crash != CrashNever {
 		t.Fatalf("crash = %v, want CrashNever", c.crash)
 	}
+
+	c, err = parseClaim(entry, map[string]string{"id": "fail-1", "input": "hello", "simulateFailure": "1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !c.fail {
+		t.Fatal("fail = false, want true")
+	}
+	if c.job != (Job{ID: "fail-1", Input: "hello"}) {
+		t.Fatalf("job = %+v", c.job)
+	}
+	if c.fields["simulateFailure"] != "1" {
+		t.Fatalf("fields = %#v, want simulateFailure=1", c.fields)
+	}
 }
 
 func TestStreamPicksUpSittingJob(t *testing.T) {

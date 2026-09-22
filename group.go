@@ -21,9 +21,11 @@ const (
 )
 
 type claimed struct {
-	entry StreamID
-	job   Job
-	crash CrashPoint
+	entry  StreamID
+	job    Job
+	crash  CrashPoint
+	fail   bool
+	fields map[string]string
 }
 
 func parseClaim(entry StreamID, fields map[string]string) (claimed, error) {
@@ -35,7 +37,13 @@ func parseClaim(entry StreamID, fields map[string]string) (claimed, error) {
 	if fields["simulateCrashAtStep"] == "1" {
 		crash = CrashAfterStep1
 	}
-	return claimed{entry: entry, job: job, crash: crash}, nil
+	return claimed{
+		entry:  entry,
+		job:    job,
+		crash:  crash,
+		fail:   fields["simulateFailure"] == "1",
+		fields: fields,
+	}, nil
 }
 
 func deliveryOf(cp *Checkpoint) (deliveryState, error) {
@@ -198,6 +206,11 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, jo
 
 	machine := newJobMachine()
 	machine.pickup(time.Now())
+	if c.fail {
+		machine.fail(time.Now())
+		result := JobResult{ID: c.job.ID, Result: cp.PartialResult, History: machine.history()}
+		return (&deadLetters{rdb: stream.rdb}).fail(context.WithoutCancel(ctx), c, result, journal)
+	}
 	machine.complete(time.Now())
 	result := JobResult{ID: c.job.ID, Result: cp.PartialResult, History: machine.history()}
 	if err := journal.Record(ctx, result); err != nil {
