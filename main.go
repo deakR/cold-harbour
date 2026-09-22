@@ -8,6 +8,14 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "redrive" {
+		stream := openJobs(redisAddr())
+		if err := (&deadLetters{rdb: stream.rdb}).redrive(context.Background()); err != nil {
+			panic(err)
+		}
+		return
+	}
+
 	printM4CheckpointDemo()
 
 	cfg, err := loadWorkerConfig()
