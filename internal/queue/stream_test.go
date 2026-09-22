@@ -12,6 +12,7 @@ import (
 	"coldharbour/internal/events"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/redact"
+	"coldharbour/internal/seal"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
@@ -158,7 +159,7 @@ func TestStreamPicksUpSittingJob(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := runGroupOnce(t, stream, testWorkerConfig("sit"), journal.NewMemoryJournal())
+	got, err := runGroupOnce(t, stream, testWorkerConfig("sit"), journal.NewMemoryJournal(), seal.NewMemoryKeyStore())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,7 +221,7 @@ func TestRunGroupSkipsBadEntry(t *testing.T) {
 	}
 
 	store := journal.NewMemoryJournal()
-	got, err := runGroupOnce(t, stream, testWorkerConfig("skip"), store)
+	got, err := runGroupOnce(t, stream, testWorkerConfig("skip"), store, seal.NewMemoryKeyStore())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -264,12 +265,25 @@ func TestRunGroupRecoversViaAutoClaim(t *testing.T) {
 	}
 
 	store := journal.NewMemoryJournal()
-	err := RunGroup(ctx, stream, cfg1, store, func(journal.JobResult) {})
+	keys := seal.NewMemoryKeyStore()
+	err := RunGroup(ctx, stream, cfg1, store, keys, func(journal.JobResult) {})
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
 		t.Fatalf("worker 1 err = %v, want ErrSimulatedCrash", err)
 	}
 	if _, err := store.Load(ctx, "crash-1"); !errors.Is(err, journal.ErrUnknownStoredJob) {
 		t.Fatalf("Load after crash err = %v, want ErrUnknownStoredJob", err)
+	}
+
+	rawPartial, err := stream.rdb.HGet(ctx, memKey("crash-1"), memFieldPartial).Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if json.Valid([]byte(rawPartial)) {
+		t.Fatalf("partial_result after crash is JSON: %s", rawPartial)
+	}
+	var asJSON redact.RedactResult
+	if err := json.Unmarshal([]byte(rawPartial), &asJSON); err == nil {
+		t.Fatalf("partial_result unmarshaled as plaintext: %+v", asJSON)
 	}
 
 	pending, err := stream.rdb.XPending(ctx, jobsStreamKey, workerGroup).Result()
@@ -282,7 +296,7 @@ func TestRunGroupRecoversViaAutoClaim(t *testing.T) {
 
 	mr.SetTime(t0.Add(cfg1.Idle))
 
-	got, err := runGroupOnce(t, stream, cfg2, store)
+	got, err := runGroupOnce(t, stream, cfg2, store, keys)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +388,7 @@ func TestSuccessfulJobPublishesCompletedEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := runGroupOnce(t, stream, testWorkerConfig("evt"), journal.NewMemoryJournal())
+	got, err := runGroupOnce(t, stream, testWorkerConfig("evt"), journal.NewMemoryJournal(), seal.NewMemoryKeyStore())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -447,7 +461,7 @@ func TestRunGroupRecordsThenEmitsThenAcks(t *testing.T) {
 	emitSawPending := false
 	runCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
-	err := RunGroup(runCtx, stream, testWorkerConfig("order"), store, func(result journal.JobResult) {
+	err := RunGroup(runCtx, stream, testWorkerConfig("order"), store, seal.NewMemoryKeyStore(), func(result journal.JobResult) {
 		if result.ID != "job-cli" {
 			t.Errorf("emit ID = %q, want job-cli", result.ID)
 		}
@@ -487,7 +501,16 @@ func TestRunGroupNilJournalPanics(t *testing.T) {
 			t.Fatal("runGroup(nil journal) did not panic")
 		}
 	}()
-	_ = RunGroup(context.Background(), nil, testWorkerConfig("nil"), nil, func(journal.JobResult) {})
+	_ = RunGroup(context.Background(), nil, testWorkerConfig("nil"), nil, nil, func(journal.JobResult) {})
+}
+
+func TestRunGroupNilKeyStorePanics(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("runGroup(nil keys) did not panic")
+		}
+	}()
+	_ = RunGroup(context.Background(), nil, testWorkerConfig("nil-keys"), journal.NewMemoryJournal(), nil, func(journal.JobResult) {})
 }
 
 func TestRecordErrorSkipsEmitAndAck(t *testing.T) {
@@ -501,7 +524,7 @@ func TestRecordErrorSkipsEmitAndAck(t *testing.T) {
 	}
 	forced := errors.New("forced record failure")
 	emitted := false
-	err := RunGroup(ctx, stream, testWorkerConfig("rec"), errJournal{err: forced}, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("rec"), errJournal{err: forced}, seal.NewMemoryKeyStore(), func(journal.JobResult) {
 		emitted = true
 	})
 	if !errors.Is(err, forced) {
@@ -530,7 +553,7 @@ func TestOutputsSurviveRedisFlushAll(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
-	got, err := runGroupOnce(t, stream, testWorkerConfig("flush"), store)
+	got, err := runGroupOnce(t, stream, testWorkerConfig("flush"), store, seal.NewMemoryKeyStore())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -569,12 +592,12 @@ func (j errJournal) Load(context.Context, string) (journal.StoredJob, error) {
 	return journal.StoredJob{}, j.err
 }
 
-func runGroupOnce(t *testing.T, stream *jobStream, cfg WorkerConfig, store journal.Journal) (journal.JobResult, error) {
+func runGroupOnce(t *testing.T, stream *jobStream, cfg WorkerConfig, store journal.Journal, keys seal.KeyStore) (journal.JobResult, error) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	got := make(chan journal.JobResult, 1)
-	err := RunGroup(ctx, stream, cfg, store, func(result journal.JobResult) {
+	err := RunGroup(ctx, stream, cfg, store, keys, func(result journal.JobResult) {
 		select {
 		case got <- result:
 		default:

@@ -10,6 +10,7 @@ import (
 	"coldharbour/internal/events"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/redact"
+	"coldharbour/internal/seal"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -102,14 +103,17 @@ func PrepareGroup(ctx context.Context, stream *jobStream, jobs []Job) error {
 	return seedIfEmpty(ctx, stream, jobs)
 }
 
-func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store journal.Journal, emit func(journal.JobResult)) error {
+func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store journal.Journal, keys seal.KeyStore, emit func(journal.JobResult)) error {
 	if store == nil {
 		panic("nil journal")
+	}
+	if keys == nil {
+		panic("nil key store")
 	}
 	if err := cfg.valid(); err != nil {
 		return err
 	}
-	hash := &memHash{rdb: stream.rdb}
+	hash := &memHash{rdb: stream.rdb, keys: keys}
 	for {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -188,6 +192,9 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, st
 	}
 
 	if state == deliveryNew {
+		if _, err := hash.keys.Ensure(ctx, journal.DurableIDFor(c.job.ID)); err != nil {
+			return err
+		}
 		partial := redact.ApplyClassWindow(redact.RedactResult{RedactedText: c.job.Input}, 0)
 		next := checkpoint.Checkpoint{JobID: c.job.ID, Step: checkpoint.StepEmailsAndPhones, PartialResult: partial}
 		if err := hash.saveStep1(ctx, next); err != nil {

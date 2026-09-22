@@ -35,6 +35,21 @@ CREATE TABLE job_accepts (
     tenant_id UUID NOT NULL REFERENCES tenants(id)
 );
 
+CREATE TABLE job_keys (
+    job_id UUID PRIMARY KEY,
+    key_material BYTEA,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    destroyed_at TIMESTAMPTZ
+);
+
+CREATE TABLE purge_receipts (
+    job_id UUID PRIMARY KEY,
+    redis_job_id TEXT NOT NULL,
+    purged_at TIMESTAMPTZ NOT NULL,
+    signature BYTEA NOT NULL,
+    signing_key_id TEXT NOT NULL
+);
+
 INSERT INTO tenants (id, name) VALUES
     ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'tenant-a'),
     ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'tenant-b');

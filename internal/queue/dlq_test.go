@@ -9,6 +9,7 @@ import (
 	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/redact"
+	"coldharbour/internal/seal"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -33,9 +34,10 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
+	keys := seal.NewMemoryKeyStore()
 	wantChecksum := job5Checksum(t)
 
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetry(t, stream, job.ID, "1")
@@ -45,7 +47,7 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 		t.Fatalf("Load after attempt 1 err = %v, want ErrUnknownStoredJob", err)
 	}
 
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetry(t, stream, job.ID, "2")
@@ -55,7 +57,7 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 		t.Fatalf("Load after attempt 2 err = %v, want ErrUnknownStoredJob", err)
 	}
 
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetryGone(t, stream, job.ID)
@@ -81,17 +83,17 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 	assertRetry(t, stream, job.ID, "0")
 	assertStreamField(t, stream, jobsStreamKey, 3, "simulateFailure", "1")
 
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, nil); err != nil {
 		t.Fatal(err)
 	}
 	if err := Redrive(ctx, stream); !errors.Is(err, errRetryLive) {
 		t.Fatalf("redrive while retry is live err = %v, want errRetryLive", err)
 	}
 
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetryGone(t, stream, job.ID)
@@ -158,7 +160,7 @@ func TestReplayAtThreeBuriesAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	if err := consumeOne(t, stream, store, seal.NewMemoryKeyStore(), nil); err != nil {
 		t.Fatal(err)
 	}
 	assertMainLen(t, stream, 1)
@@ -192,7 +194,7 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
-	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), store, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), store, seal.NewMemoryKeyStore(), func(journal.JobResult) {
 		t.Error("emit after crash")
 	})
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
@@ -224,13 +226,13 @@ func addFailJob(ctx context.Context, stream *jobStream, job Job) error {
 	}).Err()
 }
 
-func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, emit func(journal.JobResult)) error {
+func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, keys seal.KeyStore, emit func(journal.JobResult)) error {
 	t.Helper()
 	if emit == nil {
 		emit = func(journal.JobResult) {}
 	}
 	ctx := context.Background()
-	hash := &memHash{rdb: stream.rdb}
+	hash := &memHash{rdb: stream.rdb, keys: keys}
 	streams, err := stream.rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
 		Group:    workerGroup,
 		Consumer: "dlq-test",
@@ -253,7 +255,7 @@ func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, emit 
 	defer cancel()
 	done := make(chan error, 1)
 	go func() {
-		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), store, emit)
+		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), store, seal.NewMemoryKeyStore(), emit)
 	}()
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {
