@@ -79,7 +79,7 @@ You need Docker, Go 1.25, Java 21, and Maven (the `mvnw` wrapper is checked in).
 
 ### Endpoints
 
-All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing or revoked key returns `401`. A tenant that requests a job it did not create receives `403`.
+All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing or revoked key returns `401`. A tenant that requests a job it did not create receives `404`, the same as for a job that does not exist.
 
 | Method and path | What it does |
 | --- | --- |

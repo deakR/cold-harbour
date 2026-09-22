@@ -40,7 +40,7 @@ public class DeliveryController {
 			HttpServletRequest req) {
 		UUID tenantId = (UUID) req.getAttribute(ApiKeyFilter.ATTR_TENANT);
 		if (!owns(id, tenantId)) {
-			return missingOrForbidden(id);
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 		String expiresRaw = body == null ? null : body.get("expiresAt");
 		String viewsRaw = body == null ? null : body.get("maxViews");
@@ -125,17 +125,6 @@ public class DeliveryController {
 			return true;
 		}
 		return false;
-	}
-
-	private ResponseEntity<?> missingOrForbidden(String jobId) {
-		Integer any = jdbc.query(
-				"SELECT 1 FROM job_accepts WHERE redis_job_id = ?",
-				rs -> rs.next() ? 1 : null,
-				jobId);
-		if (any == null) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		}
-		return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 	}
 
 	private JsonNode readBody(String body) {

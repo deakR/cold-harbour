@@ -2,10 +2,12 @@ package com.coldharbour.controlplane;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -28,6 +30,9 @@ public class JobsController {
 
 	private static final String JOBS_STREAM = "coldharbour:jobs";
 
+	// Keep in step with runner.NewRegistry in cmd/worker/main.go.
+	private static final Set<String> JOB_TYPES = Set.of("redact", "mask");
+
 	private final JdbcTemplate jdbc;
 	private final StringRedisTemplate redis;
 	private final ObjectMapper mapper;
@@ -45,6 +50,10 @@ public class JobsController {
 		if (input == null || input.isEmpty()) {
 			return ResponseEntity.badRequest().body(Map.of("error", "input is required"));
 		}
+		String jobType = body.get("jobType");
+		if (jobType != null && !jobType.isEmpty() && !JOB_TYPES.contains(jobType)) {
+			return ResponseEntity.badRequest().body(Map.of("error", "unknown jobType"));
+		}
 		if (!PostLimit.allow(tenantId)) {
 			return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
 		}
@@ -57,12 +66,21 @@ public class JobsController {
 		fields.put("id", jobId);
 		fields.put("input", input);
 		fields.put("tenant_id", tenantId.toString());
-		String jobType = body.get("jobType");
 		if (jobType != null && !jobType.isEmpty()) {
 			fields.put("job_type", jobType);
 		}
 		MapRecord<String, String, String> record = StreamRecords.string(fields).withStreamKey(JOBS_STREAM);
-		redis.opsForStream().add(record);
+		RecordId added;
+		try {
+			added = redis.opsForStream().add(record);
+		} catch (RuntimeException ex) {
+			jdbc.update("DELETE FROM job_accepts WHERE redis_job_id = ?", jobId);
+			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "queue unavailable"));
+		}
+		if (added == null) {
+			jdbc.update("DELETE FROM job_accepts WHERE redis_job_id = ?", jobId);
+			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "queue unavailable"));
+		}
 		return ResponseEntity.ok(Map.of("jobId", jobId, "status", "QUEUED"));
 	}
 
@@ -110,7 +128,7 @@ public class JobsController {
 					UUID.class,
 					id
 			);
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		} catch (EmptyResultDataAccessException ignored) {
 		}
 
@@ -125,7 +143,7 @@ public class JobsController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 		if (acceptTenant == null || !tenantId.equals(acceptTenant)) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 
 		Object step = redis.opsForHash().get("job:" + id + ":mem", "step");
