@@ -79,6 +79,24 @@ func TestParseJob(t *testing.T) {
 	if _, err := parseJob(entry, map[string]string{"id": "x", "input": ""}); !errors.Is(err, errMissingInput) {
 		t.Fatalf("empty input err = %v, want errMissingInput", err)
 	}
+
+	job, err = parseJob(entry, map[string]string{
+		"id": "job-t", "input": "hello", "tenant_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.TenantID != "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" {
+		t.Fatalf("TenantID = %q, want seeded tenant-a", job.TenantID)
+	}
+
+	job, err = parseJob(entry, map[string]string{"id": "job-t", "input": "hello"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.TenantID != "" {
+		t.Fatalf("TenantID = %q, want empty when tenant_id absent", job.TenantID)
+	}
 }
 
 func TestParseClaim(t *testing.T) {

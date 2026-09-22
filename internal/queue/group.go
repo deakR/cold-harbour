@@ -78,6 +78,9 @@ func (s *jobStream) enqueue(ctx context.Context, job Job, crash checkpoint.Crash
 	if job.ID != "" {
 		values["id"] = job.ID
 	}
+	if job.TenantID != "" {
+		values["tenant_id"] = job.TenantID
+	}
 	if crash == checkpoint.CrashAfterStep1 {
 		values["simulateCrashAtStep"] = "1"
 	}
@@ -209,9 +212,11 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, st
 
 	if c.fail {
 		result := journal.Fail(c.job.ID, cp.PartialResult)
+		result.TenantID = c.job.TenantID
 		return (&deadLetters{rdb: stream.rdb}).fail(context.WithoutCancel(ctx), c, result, store)
 	}
 	result := journal.Succeed(c.job.ID, cp.PartialResult)
+	result.TenantID = c.job.TenantID
 	if err := store.Record(ctx, result); err != nil {
 		return err
 	}
