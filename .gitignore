@@ -2,3 +2,4 @@
 *.exe
 .arena/
 references/
+controlplane/target/
