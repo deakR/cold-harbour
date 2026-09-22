@@ -19,7 +19,9 @@ CREATE TABLE jobs (
     output_checksum VARCHAR(64),
     created_at TIMESTAMPTZ NOT NULL,
     completed_at TIMESTAMPTZ NOT NULL,
-    tenant_id UUID NOT NULL REFERENCES tenants(id)
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    output_signature BYTEA,
+    signing_key_id TEXT
 );
 
 CREATE TABLE outputs (

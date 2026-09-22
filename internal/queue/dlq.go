@@ -56,6 +56,7 @@ func (d *deadLetters) fail(ctx context.Context, c claimed, result journal.JobRes
 		return err
 	}
 	if ok && n >= 2 {
+		purge.signOutput(&result)
 		if err := store.Record(ctx, result); err != nil {
 			return err
 		}

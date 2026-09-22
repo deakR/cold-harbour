@@ -18,6 +18,8 @@ func main() {
 	switch os.Args[1] {
 	case "receipt":
 		os.Exit(runReceipt(os.Args[2:]))
+	case "output":
+		os.Exit(runOutput(os.Args[2:]))
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n", os.Args[1])
 		os.Exit(2)
@@ -59,6 +61,40 @@ func runReceipt(args []string) int {
 		return 1
 	}
 	if !seal.Verify(pub, msg, sig) {
+		return 1
+	}
+	return 0
+}
+
+func runOutput(args []string) int {
+	fs := flag.NewFlagSet("output", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	bodyPath := fs.String("body", "", "canonical output JSON file")
+	sigB64 := fs.String("sig", "", "base64 Ed25519 signature")
+	pubB64 := fs.String("pub", "", "base64 Ed25519 public key")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if *bodyPath == "" || *sigB64 == "" || *pubB64 == "" {
+		fmt.Fprintln(os.Stderr, "output requires --body --sig --pub")
+		return 2
+	}
+	body, err := os.ReadFile(*bodyPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	sig, err := base64.StdEncoding.DecodeString(*sigB64)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "invalid --sig")
+		return 1
+	}
+	pub, err := seal.ParsePublicKey(*pubB64)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "invalid --pub")
+		return 1
+	}
+	if !seal.Verify(pub, body, sig) {
 		return 1
 	}
 	return 0

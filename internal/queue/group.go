@@ -249,6 +249,7 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 	}
 	result := journal.Succeed(c.job.ID, cp.PartialResult)
 	result.TenantID = c.job.TenantID
+	purge.signOutput(&result)
 	if err := store.Record(ctx, result); err != nil {
 		return err
 	}
