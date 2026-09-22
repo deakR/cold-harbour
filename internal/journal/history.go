@@ -10,10 +10,12 @@ import (
 )
 
 type JobResult struct {
-	ID       string
-	TenantID string
-	Result   redact.RedactResult
-	History  History
+	ID           string
+	TenantID     string
+	Result       redact.RedactResult
+	History      History
+	Signature    []byte
+	SigningKeyID string
 }
 
 type JobState string

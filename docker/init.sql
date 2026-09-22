@@ -19,7 +19,9 @@ CREATE TABLE jobs (
     output_checksum VARCHAR(64),
     created_at TIMESTAMPTZ NOT NULL,
     completed_at TIMESTAMPTZ NOT NULL,
-    tenant_id UUID NOT NULL REFERENCES tenants(id)
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    output_signature BYTEA,
+    signing_key_id TEXT
 );
 
 CREATE TABLE outputs (
@@ -33,6 +35,36 @@ CREATE TABLE job_accepts (
     redis_job_id TEXT PRIMARY KEY,
     accepted_at TIMESTAMPTZ NOT NULL,
     tenant_id UUID NOT NULL REFERENCES tenants(id)
+);
+
+CREATE TABLE job_keys (
+    job_id UUID PRIMARY KEY,
+    key_material BYTEA,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    destroyed_at TIMESTAMPTZ
+);
+
+CREATE TABLE purge_receipts (
+    job_id UUID PRIMARY KEY,
+    redis_job_id TEXT NOT NULL,
+    purged_at TIMESTAMPTZ NOT NULL,
+    signature BYTEA NOT NULL,
+    signing_key_id TEXT NOT NULL
+);
+
+CREATE TABLE delivery_links (
+    token_hash VARCHAR(64) PRIMARY KEY,
+    redis_job_id TEXT NOT NULL,
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    expires_at TIMESTAMPTZ NOT NULL,
+    max_views INT NOT NULL,
+    view_count INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE delivery_link_accesses (
+    id BIGSERIAL PRIMARY KEY,
+    token_hash VARCHAR(64) NOT NULL,
+    accessed_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 INSERT INTO tenants (id, name) VALUES

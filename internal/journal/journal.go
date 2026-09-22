@@ -202,11 +202,19 @@ func (j *pgJournal) Record(ctx context.Context, result JobResult) error {
 		return err
 	}
 
+	var sig any
+	if len(result.Signature) > 0 {
+		sig = result.Signature
+	}
+	var signingKeyID any
+	if result.SigningKeyID != "" {
+		signingKeyID = result.SigningKeyID
+	}
 	res, err := tx.ExecContext(ctx, `
-		INSERT INTO jobs (id, job_type, final_state, output_checksum, created_at, completed_at, tenant_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO jobs (id, job_type, final_state, output_checksum, created_at, completed_at, tenant_id, output_signature, signing_key_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (id) DO NOTHING
-	`, row.ID, row.JobType, string(row.FinalState), row.Checksum, row.CreatedAt, row.CompletedAt, result.TenantID)
+	`, row.ID, row.JobType, string(row.FinalState), row.Checksum, row.CreatedAt, row.CompletedAt, result.TenantID, sig, signingKeyID)
 	if err != nil {
 		return err
 	}

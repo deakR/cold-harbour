@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"crypto/ed25519"
 	"errors"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/redact"
+	"coldharbour/internal/seal"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -33,9 +35,11 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
+	keys := seal.NewMemoryKeyStore()
+	priv, receipts := testSigning(t)
 	wantChecksum := job5Checksum(t)
 
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, receipts, priv, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetry(t, stream, job.ID, "1")
@@ -44,8 +48,13 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 	if _, err := store.Load(ctx, job.ID); !errors.Is(err, journal.ErrUnknownStoredJob) {
 		t.Fatalf("Load after attempt 1 err = %v, want ErrUnknownStoredJob", err)
 	}
+	if exists, err := stream.rdb.Exists(ctx, memKey(job.ID)).Result(); err != nil {
+		t.Fatal(err)
+	} else if exists != 1 {
+		t.Fatalf("mem after attempt 1 exists=%d, want 1", exists)
+	}
 
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, receipts, priv, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetry(t, stream, job.ID, "2")
@@ -54,8 +63,13 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 	if _, err := store.Load(ctx, job.ID); !errors.Is(err, journal.ErrUnknownStoredJob) {
 		t.Fatalf("Load after attempt 2 err = %v, want ErrUnknownStoredJob", err)
 	}
+	if exists, err := stream.rdb.Exists(ctx, memKey(job.ID)).Result(); err != nil {
+		t.Fatal(err)
+	} else if exists != 1 {
+		t.Fatalf("mem after attempt 2 exists=%d, want 1", exists)
+	}
 
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, receipts, priv, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertRetryGone(t, stream, job.ID)
@@ -73,6 +87,16 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 	if row.Checksum != wantChecksum {
 		t.Fatalf("Checksum = %s, want %s", row.Checksum, wantChecksum)
 	}
+	if exists, err := stream.rdb.Exists(ctx, memKey(job.ID)).Result(); err != nil {
+		t.Fatal(err)
+	} else if exists != 0 {
+		t.Fatalf("mem after bury exists=%d, want 0", exists)
+	}
+	if _, ok, err := receipts.Get(ctx, journal.DurableIDFor(job.ID)); err != nil {
+		t.Fatal(err)
+	} else if !ok {
+		t.Fatal("missing purge receipt after bury")
+	}
 
 	if err := Redrive(ctx, stream); err != nil {
 		t.Fatal(err)
@@ -81,28 +105,16 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 	assertRetry(t, stream, job.ID, "0")
 	assertStreamField(t, stream, jobsStreamKey, 3, "simulateFailure", "1")
 
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	// Empty mem + journaled FAILED: XACK without re-redacting or minting a key.
+	if err := consumeOne(t, stream, store, keys, receipts, priv, nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := Redrive(ctx, stream); !errors.Is(err, errRetryLive) {
-		t.Fatalf("redrive while retry is live err = %v, want errRetryLive", err)
-	}
-
-	if err := consumeOne(t, stream, store, nil); err != nil {
-		t.Fatal(err)
-	}
-	if err := consumeOne(t, stream, store, nil); err != nil {
-		t.Fatal(err)
-	}
-	assertRetryGone(t, stream, job.ID)
-	assertDLQLen(t, stream, 2)
 	assertPending(t, stream, 0)
-	row, err = store.Load(ctx, job.ID)
-	if err != nil {
+	assertDLQLen(t, stream, 1)
+	if exists, err := stream.rdb.Exists(ctx, memKey(job.ID)).Result(); err != nil {
 		t.Fatal(err)
-	}
-	if row.FinalState != journal.FAILED || row.Checksum != wantChecksum {
-		t.Fatalf("second bury row = %+v", row)
+	} else if exists != 0 {
+		t.Fatalf("mem after journaled reclaim exists=%d, want 0", exists)
 	}
 }
 
@@ -158,7 +170,8 @@ func TestReplayAtThreeBuriesAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
-	if err := consumeOne(t, stream, store, nil); err != nil {
+	priv, receipts := testSigning(t)
+	if err := consumeOne(t, stream, store, seal.NewMemoryKeyStore(), receipts, priv, nil); err != nil {
 		t.Fatal(err)
 	}
 	assertMainLen(t, stream, 1)
@@ -192,7 +205,8 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
-	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), store, func(journal.JobResult) {
+	priv, receipts := testSigning(t)
+	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), store, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
 		t.Error("emit after crash")
 	})
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
@@ -224,13 +238,14 @@ func addFailJob(ctx context.Context, stream *jobStream, job Job) error {
 	}).Err()
 }
 
-func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, emit func(journal.JobResult)) error {
+func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult)) error {
 	t.Helper()
 	if emit == nil {
 		emit = func(journal.JobResult) {}
 	}
 	ctx := context.Background()
-	hash := &memHash{rdb: stream.rdb}
+	hash := &memHash{rdb: stream.rdb, keys: keys}
+	purge := &purger{rdb: stream.rdb, keys: keys, receipts: receipts, priv: priv}
 	streams, err := stream.rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
 		Group:    workerGroup,
 		Consumer: "dlq-test",
@@ -244,7 +259,7 @@ func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, emit fun
 	if len(streams) == 0 || len(streams[0].Messages) == 0 {
 		return errors.New("no message")
 	}
-	return dispatch(ctx, stream, hash, streams[0].Messages[0], store, emit)
+	return dispatch(ctx, stream, hash, purge, streams[0].Messages[0], store, emit)
 }
 
 func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, emit func(journal.JobResult), pred func() bool) {
@@ -252,8 +267,9 @@ func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, emit 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	done := make(chan error, 1)
+	priv, receipts := testSigning(t)
 	go func() {
-		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), store, emit)
+		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), store, seal.NewMemoryKeyStore(), receipts, priv, emit)
 	}()
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {

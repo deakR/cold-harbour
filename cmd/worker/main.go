@@ -10,6 +10,7 @@ import (
 	"coldharbour/internal/journal"
 	"coldharbour/internal/queue"
 	"coldharbour/internal/redact"
+	"coldharbour/internal/seal"
 )
 
 func main() {
@@ -27,16 +28,31 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	store, err := journal.OpenJournal(journal.PostgresDSN())
+	dsn := journal.PostgresDSN()
+	store, err := journal.OpenJournal(dsn)
 	if err != nil {
 		panic(err)
 	}
 	defer store.Close()
+	keys, err := seal.OpenPostgresKeyStore(dsn)
+	if err != nil {
+		panic(err)
+	}
+	defer keys.Close()
+	receipts, err := seal.OpenPostgresReceiptStore(dsn)
+	if err != nil {
+		panic(err)
+	}
+	defer receipts.Close()
+	priv, err := seal.LoadSigningKey()
+	if err != nil {
+		panic(err)
+	}
 	stream := queue.OpenJobs(queue.RedisAddr())
 	if err := queue.PrepareGroup(context.Background(), stream, queue.DemoJobs); err != nil {
 		panic(err)
 	}
-	if err := queue.RunGroup(context.Background(), stream, cfg, store, func(result journal.JobResult) {
+	if err := queue.RunGroup(context.Background(), stream, cfg, store, keys, receipts, priv, func(result journal.JobResult) {
 		fmt.Println(journal.FormatJobLine(result))
 		fmt.Println(result.History)
 	}); err != nil {
