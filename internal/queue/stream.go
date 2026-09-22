@@ -57,7 +57,7 @@ func parseJob(entryID StreamID, fields map[string]string) (Job, error) {
 	if id == "" {
 		id = entryID.String()
 	}
-	return Job{ID: id, Input: input}, nil
+	return Job{ID: id, Input: input, TenantID: fields["tenant_id"]}, nil
 }
 
 func RedisAddr() string {

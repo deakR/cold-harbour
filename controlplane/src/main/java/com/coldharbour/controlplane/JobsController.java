@@ -20,6 +20,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 public class JobsController {
 
@@ -36,46 +38,68 @@ public class JobsController {
 	}
 
 	@PostMapping("/jobs")
-	public ResponseEntity<?> post(@RequestBody Map<String, String> body) {
+	public ResponseEntity<?> post(@RequestBody Map<String, String> body, HttpServletRequest req) {
+		UUID tenantId = (UUID) req.getAttribute(ApiKeyFilter.ATTR_TENANT);
 		String input = body == null ? null : body.get("input");
 		if (input == null || input.isEmpty()) {
 			return ResponseEntity.badRequest().body(Map.of("error", "input is required"));
 		}
 		String jobId = UUID.randomUUID().toString();
-		jdbc.update("INSERT INTO job_accepts (redis_job_id, accepted_at) VALUES (?, now())", jobId);
+		jdbc.update(
+				"INSERT INTO job_accepts (redis_job_id, tenant_id, accepted_at) VALUES (?, ?, now())",
+				jobId, tenantId
+		);
 		MapRecord<String, String, String> record = StreamRecords.string(Map.of(
 				"id", jobId,
-				"input", input
+				"input", input,
+				"tenant_id", tenantId.toString()
 		)).withStreamKey(JOBS_STREAM);
 		redis.opsForStream().add(record);
 		return ResponseEntity.ok(Map.of("jobId", jobId, "status", "QUEUED"));
 	}
 
 	@GetMapping("/jobs/{id}")
-	public ResponseEntity<?> get(@PathVariable String id) {
+	public ResponseEntity<?> get(@PathVariable String id, HttpServletRequest req) {
+		UUID tenantId = (UUID) req.getAttribute(ApiKeyFilter.ATTR_TENANT);
+
 		try {
 			return jdbc.queryForObject(
-					"SELECT final_state, body FROM outputs WHERE redis_job_id = ?",
+					"SELECT final_state, body FROM outputs WHERE redis_job_id = ? AND tenant_id = ?",
 					(rs, rowNum) -> terminal(id, rs.getString("final_state"), rs.getString("body")),
+					id, tenantId
+			);
+		} catch (EmptyResultDataAccessException ignored) {
+		}
+
+		try {
+			jdbc.queryForObject(
+					"SELECT tenant_id FROM outputs WHERE redis_job_id = ?",
+					UUID.class,
+					id
+			);
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+		} catch (EmptyResultDataAccessException ignored) {
+		}
+
+		UUID acceptTenant;
+		try {
+			acceptTenant = jdbc.queryForObject(
+					"SELECT tenant_id FROM job_accepts WHERE redis_job_id = ?",
+					UUID.class,
 					id
 			);
 		} catch (EmptyResultDataAccessException ignored) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
+		if (acceptTenant == null || !tenantId.equals(acceptTenant)) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		}
 
 		Object step = redis.opsForHash().get("job:" + id + ":mem", "step");
 		if (step != null && !step.toString().isEmpty()) {
 			return ResponseEntity.ok(Map.of("jobId", id, "status", "RUNNING"));
 		}
-
-		Integer accepted = jdbc.query(
-				"SELECT 1 FROM job_accepts WHERE redis_job_id = ?",
-				rs -> rs.next() ? 1 : null,
-				id
-		);
-		if (accepted != null) {
-			return ResponseEntity.ok(Map.of("jobId", id, "status", "QUEUED"));
-		}
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		return ResponseEntity.ok(Map.of("jobId", id, "status", "QUEUED"));
 	}
 
 	private ResponseEntity<?> terminal(String id, String finalState, String body) {

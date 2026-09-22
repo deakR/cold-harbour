@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"coldharbour/internal/checkpoint"
+	"coldharbour/internal/events"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/redact"
 
@@ -77,6 +78,9 @@ func (s *jobStream) enqueue(ctx context.Context, job Job, crash checkpoint.Crash
 	values := map[string]any{"input": job.Input}
 	if job.ID != "" {
 		values["id"] = job.ID
+	}
+	if job.TenantID != "" {
+		values["tenant_id"] = job.TenantID
 	}
 	if crash == checkpoint.CrashAfterStep1 {
 		values["simulateCrashAtStep"] = "1"
@@ -190,6 +194,13 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, st
 			return err
 		}
 		fmt.Println("checkpoint", journal.FormatJobLine(journal.JobResult{ID: c.job.ID, Result: partial}))
+		if err := events.Publish(ctx, stream.rdb, events.JobEvent{
+			TenantID: c.job.TenantID,
+			JobID:    c.job.ID,
+			Status:   string(journal.RUNNING),
+		}); err != nil {
+			return err
+		}
 		if c.crash == checkpoint.CrashAfterStep1 {
 			return checkpoint.ErrSimulatedCrash
 		}
@@ -209,10 +220,19 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, st
 
 	if c.fail {
 		result := journal.Fail(c.job.ID, cp.PartialResult)
+		result.TenantID = c.job.TenantID
 		return (&deadLetters{rdb: stream.rdb}).fail(context.WithoutCancel(ctx), c, result, store)
 	}
 	result := journal.Succeed(c.job.ID, cp.PartialResult)
+	result.TenantID = c.job.TenantID
 	if err := store.Record(ctx, result); err != nil {
+		return err
+	}
+	if err := events.Publish(ctx, stream.rdb, events.JobEvent{
+		TenantID: result.TenantID,
+		JobID:    result.ID,
+		Status:   string(journal.COMPLETED),
+	}); err != nil {
 		return err
 	}
 	emit(result)

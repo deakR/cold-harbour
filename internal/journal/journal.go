@@ -24,6 +24,7 @@ var (
 	errJournalConflict  = errors.New("durable row exists with a different checksum or final_state")
 	ErrUnknownStoredJob = errors.New("no durable row for job")
 	errMissingDSN       = errors.New("POSTGRES_DSN is required")
+	errMissingTenant    = errors.New("tenant_id is required")
 )
 
 var jobNamespace = uuid.NewSHA1(uuid.NameSpaceDNS, []byte("coldharbour.jobs"))
@@ -45,6 +46,7 @@ type StoredJob struct {
 type storedOutput struct {
 	FinalState JobState
 	Body       string
+	TenantID   string
 }
 
 type MemoryJournal struct {
@@ -150,7 +152,7 @@ func (j *MemoryJournal) Record(_ context.Context, result JobResult) error {
 	}
 	existing, ok := j.rows[row.ID]
 	if !ok {
-		j.outputs[result.ID] = storedOutput{FinalState: row.FinalState, Body: body}
+		j.outputs[result.ID] = storedOutput{FinalState: row.FinalState, Body: body, TenantID: result.TenantID}
 		j.rows[row.ID] = row
 		return nil
 	}
@@ -178,6 +180,9 @@ func (j *MemoryJournal) LoadOutput(_ context.Context, redisJobID string) (string
 }
 
 func (j *pgJournal) Record(ctx context.Context, result JobResult) error {
+	if result.TenantID == "" {
+		return errMissingTenant
+	}
 	row, err := parseTerminal(result)
 	if err != nil {
 		return err
@@ -190,18 +195,18 @@ func (j *pgJournal) Record(ctx context.Context, result JobResult) error {
 	defer func() { _ = tx.Rollback() }()
 
 	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO outputs (redis_job_id, final_state, body)
-		VALUES ($1, $2, $3)
+		INSERT INTO outputs (redis_job_id, final_state, body, tenant_id)
+		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (redis_job_id) DO NOTHING
-	`, result.ID, string(row.FinalState), body); err != nil {
+	`, result.ID, string(row.FinalState), body, result.TenantID); err != nil {
 		return err
 	}
 
 	res, err := tx.ExecContext(ctx, `
-		INSERT INTO jobs (id, job_type, final_state, output_checksum, created_at, completed_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO jobs (id, job_type, final_state, output_checksum, created_at, completed_at, tenant_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (id) DO NOTHING
-	`, row.ID, row.JobType, string(row.FinalState), row.Checksum, row.CreatedAt, row.CompletedAt)
+	`, row.ID, row.JobType, string(row.FinalState), row.Checksum, row.CreatedAt, row.CompletedAt, result.TenantID)
 	if err != nil {
 		return err
 	}

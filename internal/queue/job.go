@@ -6,8 +6,9 @@ import (
 )
 
 type Job struct {
-	ID    string
-	Input string
+	ID       string
+	Input    string
+	TenantID string
 }
 
 var DemoJobs = []Job{

@@ -246,6 +246,7 @@ func TestPostgresJournalOptional(t *testing.T) {
 	done := time.Date(2026, 1, 1, 0, 0, 1, 0, time.UTC)
 	redisID := "job-live-" + t.Name()
 	jr := completedResult(t, redisID, want, created, done)
+	jr.TenantID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 	if err := j.Record(ctx, jr); err != nil {
 		t.Fatal(err)
 	}
