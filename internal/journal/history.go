@@ -5,14 +5,13 @@ import (
 	"slices"
 	"strings"
 	"time"
-
-	"coldharbour/internal/redact"
 )
 
 type JobResult struct {
 	ID           string
 	TenantID     string
-	Result       redact.RedactResult
+	JobType      string
+	Result       map[string]any
 	History      History
 	Signature    []byte
 	SigningKeyID string
@@ -73,14 +72,14 @@ func (m *jobMachine) history() History {
 	return History{steps: slices.Clone(m.steps)}
 }
 
-func Succeed(id string, result redact.RedactResult) JobResult {
+func Succeed(id string, result map[string]any) JobResult {
 	machine := newJobMachine()
 	machine.pickup(time.Now())
 	machine.complete(time.Now())
 	return JobResult{ID: id, Result: result, History: machine.history()}
 }
 
-func Fail(id string, result redact.RedactResult) JobResult {
+func Fail(id string, result map[string]any) JobResult {
 	machine := newJobMachine()
 	machine.pickup(time.Now())
 	machine.fail(time.Now())
@@ -88,5 +87,5 @@ func Fail(id string, result redact.RedactResult) JobResult {
 }
 
 func FormatJobLine(result JobResult) string {
-	return result.ID + " " + string(redact.MarshalResult(result.Result))
+	return result.ID + " " + string(BodyOf(result.Result))
 }

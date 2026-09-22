@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"os"
 	"sync"
@@ -15,8 +16,6 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
-
-const jobTypeRedact = "redact"
 
 var (
 	errNotTerminal      = errors.New("journal records only COMPLETED or FAILED")
@@ -93,8 +92,26 @@ func DurableIDFor(jobID string) uuid.UUID {
 	return uuid.NewSHA1(jobNamespace, []byte(jobID))
 }
 
-func ChecksumOf(result redact.RedactResult) string {
-	sum := sha256.Sum256(redact.MarshalResult(result))
+// BodyOf returns the durable JSON body for a runner output map.
+// Redact-shaped maps rematerialize through redact.MarshalResult so bytes match
+// the typed encoder (map key order from encoding/json would otherwise diverge).
+func BodyOf(result map[string]any) []byte {
+	b, err := json.Marshal(result)
+	if err != nil {
+		panic(err)
+	}
+	if _, ok := result["redactedText"]; !ok {
+		return b
+	}
+	var rr redact.RedactResult
+	if err := json.Unmarshal(b, &rr); err != nil {
+		return b
+	}
+	return redact.MarshalResult(rr)
+}
+
+func ChecksumOf(result map[string]any) string {
+	sum := sha256.Sum256(BodyOf(result))
 	return hex.EncodeToString(sum[:])
 }
 
@@ -119,9 +136,13 @@ func parseTerminal(result JobResult) (StoredJob, error) {
 	if !foundPickup {
 		return StoredJob{}, errMissingPickup
 	}
+	jobType := result.JobType
+	if jobType == "" {
+		jobType = "redact"
+	}
 	return StoredJob{
 		ID:          DurableIDFor(result.ID),
-		JobType:     jobTypeRedact,
+		JobType:     jobType,
 		FinalState:  last.To,
 		Checksum:    ChecksumOf(result.Result),
 		CreatedAt:   created,
@@ -141,7 +162,7 @@ func (j *MemoryJournal) Record(_ context.Context, result JobResult) error {
 	if err != nil {
 		return err
 	}
-	body := string(redact.MarshalResult(result.Result))
+	body := string(BodyOf(result.Result))
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	if j.rows == nil {
@@ -187,7 +208,7 @@ func (j *pgJournal) Record(ctx context.Context, result JobResult) error {
 	if err != nil {
 		return err
 	}
-	body := string(redact.MarshalResult(result.Result))
+	body := string(BodyOf(result.Result))
 	tx, err := j.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err

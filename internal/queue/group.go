@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"crypto/ed25519"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -10,21 +11,13 @@ import (
 	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/events"
 	"coldharbour/internal/journal"
-	"coldharbour/internal/redact"
+	"coldharbour/internal/runner"
 	"coldharbour/internal/seal"
 
 	"github.com/redis/go-redis/v9"
 )
 
 const workerGroup = "worker-group"
-
-type deliveryState int
-
-const (
-	deliveryNew deliveryState = iota
-	deliveryStep1Saved
-	deliveryDone
-)
 
 type claimed struct {
 	entry  StreamID
@@ -50,22 +43,6 @@ func parseClaim(entry StreamID, fields map[string]string) (claimed, error) {
 		fail:   fields["simulateFailure"] == "1",
 		fields: fields,
 	}, nil
-}
-
-func deliveryOf(cp *checkpoint.Checkpoint) (deliveryState, error) {
-	if cp == nil {
-		return deliveryNew, nil
-	}
-	switch cp.Step {
-	case 0:
-		return deliveryNew, nil
-	case checkpoint.StepEmailsAndPhones:
-		return deliveryStep1Saved, nil
-	case checkpoint.StepSSNs:
-		return deliveryDone, nil
-	default:
-		return 0, fmt.Errorf("unknown checkpoint step %d", cp.Step)
-	}
 }
 
 func (s *jobStream) ensureGroup(ctx context.Context) error {
@@ -104,7 +81,7 @@ func PrepareGroup(ctx context.Context, stream *jobStream, jobs []Job) error {
 	return seedIfEmpty(ctx, stream, jobs)
 }
 
-func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult)) error {
+func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, reg *runner.Registry, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult)) error {
 	if store == nil {
 		panic("nil journal")
 	}
@@ -116,6 +93,9 @@ func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store jo
 	}
 	if len(priv) != ed25519.PrivateKeySize {
 		panic("nil signing key")
+	}
+	if reg == nil {
+		panic("nil registry")
 	}
 	if err := cfg.valid(); err != nil {
 		return err
@@ -140,7 +120,7 @@ func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store jo
 			return err
 		}
 		for _, msg := range stolen {
-			if err := dispatch(ctx, stream, hash, purge, msg, store, emit); err != nil {
+			if err := dispatch(ctx, stream, hash, purge, reg, msg, store, emit); err != nil {
 				return err
 			}
 		}
@@ -161,7 +141,7 @@ func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store jo
 		}
 		for _, xs := range streams {
 			for _, msg := range xs.Messages {
-				if err := dispatch(ctx, stream, hash, purge, msg, store, emit); err != nil {
+				if err := dispatch(ctx, stream, hash, purge, reg, msg, store, emit); err != nil {
 					return err
 				}
 			}
@@ -174,7 +154,7 @@ func isReadTimeout(err error) bool {
 	return errors.As(err, &to) && to.Timeout()
 }
 
-func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, msg redis.XMessage, store journal.Journal, emit func(journal.JobResult)) error {
+func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, msg redis.XMessage, store journal.Journal, emit func(journal.JobResult)) error {
 	id, err := ParseStreamID(msg.ID)
 	if err != nil {
 		return err
@@ -186,15 +166,23 @@ func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purg
 	if err != nil {
 		return err
 	}
-	return handle(ctx, stream, hash, purge, c, store, emit)
+	return handle(ctx, stream, hash, purge, reg, c, store, emit)
 }
 
-func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, c claimed, store journal.Journal, emit func(journal.JobResult)) error {
-	cp, err := hash.load(ctx, c.job.ID)
+func jobInput(raw string) map[string]any {
+	var input map[string]any
+	if err := json.Unmarshal([]byte(raw), &input); err == nil && input != nil {
+		return input
+	}
+	return map[string]any{"input": raw}
+}
+
+func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, c claimed, store journal.Journal, emit func(journal.JobResult)) error {
+	st, err := hash.load(ctx, c.job.ID)
 	if err != nil {
 		return err
 	}
-	if cp == nil {
+	if st == nil {
 		_, loadErr := store.Load(ctx, c.job.ID)
 		if loadErr == nil {
 			return stream.ack(context.WithoutCancel(ctx), c.entry)
@@ -202,53 +190,70 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 		if !errors.Is(loadErr, journal.ErrUnknownStoredJob) {
 			return loadErr
 		}
+		if _, err := hash.keys.Ensure(ctx, journal.DurableIDFor(c.job.ID)); err != nil {
+			return err
+		}
 	}
-	state, err := deliveryOf(cp)
+
+	jobType := c.fields["job_type"]
+	if jobType == "" {
+		jobType = "redact"
+	}
+	jr, ok := reg.Get(jobType)
+	if !ok {
+		return fmt.Errorf("unknown job_type %q", jobType)
+	}
+
+	cp := runner.NewCheckpointRecorder(
+		func() (int, map[string]any, bool) {
+			if st == nil {
+				return 0, nil, false
+			}
+			return st.Step, st.Partial, true
+		},
+		func(step int, partial map[string]any) error {
+			next := memState{JobID: c.job.ID, Step: step, Partial: partial}
+			var err error
+			if step == 1 {
+				err = hash.saveStep1(ctx, next)
+			} else {
+				err = hash.save(ctx, next)
+			}
+			if err != nil {
+				return err
+			}
+			st = &next
+			if step == 1 {
+				fmt.Println("checkpoint", journal.FormatJobLine(journal.JobResult{ID: c.job.ID, Result: partial}))
+				if err := events.Publish(ctx, stream.rdb, events.JobEvent{
+					TenantID: c.job.TenantID,
+					JobID:    c.job.ID,
+					Status:   string(journal.RUNNING),
+				}); err != nil {
+					return err
+				}
+				if c.crash == checkpoint.CrashAfterStep1 {
+					return checkpoint.ErrSimulatedCrash
+				}
+			}
+			return nil
+		},
+	)
+
+	out, err := jr.Run(ctx, jobInput(c.job.Input), cp)
 	if err != nil {
 		return err
 	}
 
-	if state == deliveryNew {
-		if _, err := hash.keys.Ensure(ctx, journal.DurableIDFor(c.job.ID)); err != nil {
-			return err
-		}
-		partial := redact.ApplyClassWindow(redact.RedactResult{RedactedText: c.job.Input}, 0)
-		next := checkpoint.Checkpoint{JobID: c.job.ID, Step: checkpoint.StepEmailsAndPhones, PartialResult: partial}
-		if err := hash.saveStep1(ctx, next); err != nil {
-			return err
-		}
-		fmt.Println("checkpoint", journal.FormatJobLine(journal.JobResult{ID: c.job.ID, Result: partial}))
-		if err := events.Publish(ctx, stream.rdb, events.JobEvent{
-			TenantID: c.job.TenantID,
-			JobID:    c.job.ID,
-			Status:   string(journal.RUNNING),
-		}); err != nil {
-			return err
-		}
-		if c.crash == checkpoint.CrashAfterStep1 {
-			return checkpoint.ErrSimulatedCrash
-		}
-		cp = &next
-		state = deliveryStep1Saved
-	}
-
-	if state == deliveryStep1Saved {
-		done := redact.ApplyClassWindow(cp.PartialResult, 1)
-		next := checkpoint.Checkpoint{JobID: c.job.ID, Step: checkpoint.StepSSNs, PartialResult: done}
-		if err := hash.save(ctx, next); err != nil {
-			return err
-		}
-		cp = &next
-		state = deliveryDone
-	}
-
 	if c.fail {
-		result := journal.Fail(c.job.ID, cp.PartialResult)
+		result := journal.Fail(c.job.ID, out)
 		result.TenantID = c.job.TenantID
+		result.JobType = jr.JobType()
 		return (&deadLetters{rdb: stream.rdb}).fail(context.WithoutCancel(ctx), c, result, store, purge)
 	}
-	result := journal.Succeed(c.job.ID, cp.PartialResult)
+	result := journal.Succeed(c.job.ID, out)
 	result.TenantID = c.job.TenantID
+	result.JobType = jr.JobType()
 	purge.signOutput(&result)
 	if err := store.Record(ctx, result); err != nil {
 		return err
