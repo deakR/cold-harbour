@@ -47,17 +47,26 @@ func parseClaim(entry StreamID, fields map[string]string) (claimed, error) {
 	if err != nil {
 		return claimed{}, err
 	}
-	crash := checkpoint.CrashNever
-	if fields["simulateCrashAtStep"] == "1" {
-		crash = checkpoint.CrashAfterStep1
-	}
 	return claimed{
 		entry:  entry,
 		job:    job,
-		crash:  crash,
-		fail:   fields["simulateFailure"] == "1",
+		crash:  checkpoint.CrashNever,
 		fields: fields,
 	}, nil
+}
+
+type Hooks struct {
+	CrashAfterStep1 func(jobID string) bool
+	Fail            func(jobID string) bool
+}
+
+func applyHooks(c *claimed, hooks Hooks) {
+	if hooks.CrashAfterStep1 != nil && hooks.CrashAfterStep1(c.job.ID) {
+		c.crash = checkpoint.CrashAfterStep1
+	}
+	if hooks.Fail != nil && hooks.Fail(c.job.ID) {
+		c.fail = true
+	}
 }
 
 func (s *jobStream) ensureGroup(ctx context.Context) error {
@@ -68,16 +77,13 @@ func (s *jobStream) ensureGroup(ctx context.Context) error {
 	return nil
 }
 
-func (s *jobStream) enqueue(ctx context.Context, job Job, crash checkpoint.CrashPoint) error {
+func (s *jobStream) enqueue(ctx context.Context, job Job) error {
 	values := map[string]any{"input": job.Input}
 	if job.ID != "" {
 		values["id"] = job.ID
 	}
 	if job.TenantID != "" {
 		values["tenant_id"] = job.TenantID
-	}
-	if crash == checkpoint.CrashAfterStep1 {
-		values["simulateCrashAtStep"] = "1"
 	}
 	return s.rdb.XAdd(ctx, &redis.XAddArgs{
 		Stream: jobsStreamKey,
@@ -98,7 +104,7 @@ func PrepareGroup(ctx context.Context, stream *jobStream) error {
 	return stream.ensureGroup(ctx)
 }
 
-func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, reg *runner.Registry, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult)) error {
+func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, reg *runner.Registry, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult), hooks Hooks) error {
 	if store == nil {
 		panic("nil journal")
 	}
@@ -137,7 +143,7 @@ func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, reg *run
 			return err
 		}
 		for _, msg := range stolen {
-			if err := dispatch(ctx, stream, hash, purge, reg, msg, store, emit); err != nil {
+			if err := dispatch(ctx, stream, hash, purge, reg, msg, store, emit, hooks); err != nil {
 				return err
 			}
 		}
@@ -158,7 +164,7 @@ func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, reg *run
 		}
 		for _, xs := range streams {
 			for _, msg := range xs.Messages {
-				if err := dispatch(ctx, stream, hash, purge, reg, msg, store, emit); err != nil {
+				if err := dispatch(ctx, stream, hash, purge, reg, msg, store, emit, hooks); err != nil {
 					return err
 				}
 			}
@@ -171,7 +177,7 @@ func isReadTimeout(err error) bool {
 	return errors.As(err, &to) && to.Timeout()
 }
 
-func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, msg redis.XMessage, store journal.Journal, emit func(journal.JobResult)) error {
+func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, msg redis.XMessage, store journal.Journal, emit func(journal.JobResult), hooks Hooks) error {
 	id, err := ParseStreamID(msg.ID)
 	if err != nil {
 		return err
@@ -183,7 +189,7 @@ func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purg
 	if err != nil {
 		return err
 	}
-	return handle(ctx, stream, hash, purge, reg, c, store, emit)
+	return handle(ctx, stream, hash, purge, reg, c, store, emit, hooks)
 }
 
 func jobInput(raw string) map[string]any {
@@ -194,7 +200,8 @@ func jobInput(raw string) map[string]any {
 	return map[string]any{"input": raw}
 }
 
-func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, c claimed, store journal.Journal, emit func(journal.JobResult)) error {
+func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, c claimed, store journal.Journal, emit func(journal.JobResult), hooks Hooks) error {
+	applyHooks(&c, hooks)
 	st, err := hash.load(ctx, c.job.ID)
 	if err != nil {
 		return err

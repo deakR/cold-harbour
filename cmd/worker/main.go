@@ -2,12 +2,9 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
-	"os"
 
-	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/mask"
 	"coldharbour/internal/queue"
@@ -49,10 +46,7 @@ func main() {
 	if err := queue.RunGroup(context.Background(), stream, cfg, reg, store, keys, receipts, priv, func(result journal.JobResult) {
 		fmt.Println(journal.FormatJobLine(result))
 		fmt.Println(result.History)
-	}); err != nil {
-		if errors.Is(err, checkpoint.ErrSimulatedCrash) {
-			os.Exit(1)
-		}
+	}, queue.Hooks{}); err != nil {
 		log.Fatalf("worker: run: %v", err)
 	}
 }

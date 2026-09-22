@@ -10,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"coldharbour/internal/checkpoint"
-
 	"github.com/redis/go-redis/v9"
 )
 
@@ -97,7 +95,7 @@ func OpenJobs(addr string) *jobStream {
 }
 
 func (s *jobStream) Add(ctx context.Context, job Job) error {
-	return s.enqueue(ctx, job, checkpoint.CrashNever)
+	return s.enqueue(ctx, job)
 }
 
 func (s *jobStream) Len(ctx context.Context) (int64, error) {
