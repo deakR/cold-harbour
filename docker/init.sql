@@ -52,6 +52,21 @@ CREATE TABLE purge_receipts (
     signing_key_id TEXT NOT NULL
 );
 
+CREATE TABLE delivery_links (
+    token_hash VARCHAR(64) PRIMARY KEY,
+    redis_job_id TEXT NOT NULL,
+    tenant_id UUID NOT NULL REFERENCES tenants(id),
+    expires_at TIMESTAMPTZ NOT NULL,
+    max_views INT NOT NULL,
+    view_count INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE delivery_link_accesses (
+    id BIGSERIAL PRIMARY KEY,
+    token_hash VARCHAR(64) NOT NULL,
+    accessed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 INSERT INTO tenants (id, name) VALUES
     ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'tenant-a'),
     ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'tenant-b');
