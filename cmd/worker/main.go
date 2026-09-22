@@ -43,10 +43,17 @@ func main() {
 	if err := queue.PrepareGroup(context.Background(), stream); err != nil {
 		log.Fatalf("worker: prepare group: %v", err)
 	}
-	if err := queue.RunGroup(context.Background(), stream, cfg, reg, store, keys, receipts, priv, func(result journal.JobResult) {
-		fmt.Println(journal.FormatJobLine(result))
-		fmt.Println(result.History)
-	}, queue.Hooks{}); err != nil {
+	if err := queue.RunGroup(context.Background(), stream, cfg, queue.Deps{
+		Registry:   reg,
+		Journal:    store,
+		Keys:       keys,
+		Receipts:   receipts,
+		SigningKey: priv,
+		Emit: func(result journal.JobResult) {
+			fmt.Println(journal.FormatJobLine(result))
+			fmt.Println(result.History)
+		},
+	}); err != nil {
 		log.Fatalf("worker: run: %v", err)
 	}
 }

@@ -35,6 +35,18 @@ func testRegistry() *runner.Registry {
 	return runner.NewRegistry(redact.Runner{})
 }
 
+func testDeps(store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult), hooks Hooks) Deps {
+	return Deps{
+		Registry:   testRegistry(),
+		Journal:    store,
+		Keys:       keys,
+		Receipts:   receipts,
+		SigningKey: priv,
+		Emit:       emit,
+		Hooks:      hooks,
+	}
+}
+
 
 func TestParseStreamIDRejectsSpecials(t *testing.T) {
 	for _, s := range []string{"$", "*", "+", "-", "", "abc", "1", "1-2-3", "1-", "-1"} {
@@ -286,7 +298,7 @@ func TestRunGroupRecoversViaAutoClaim(t *testing.T) {
 	store := journal.NewMemoryJournal()
 	keys := seal.NewMemoryKeyStore()
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, cfg1, testRegistry(), store, keys, receipts, priv, func(journal.JobResult) {}, Hooks{CrashAfterStep1: func(id string) bool { return id == "crash-1" }})
+	err := RunGroup(ctx, stream, cfg1, testDeps(store, keys, receipts, priv, func(journal.JobResult) {}, Hooks{CrashAfterStep1: func(id string) bool { return id == "crash-1" }}))
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
 		t.Fatalf("worker 1 err = %v, want ErrSimulatedCrash", err)
 	}
@@ -476,7 +488,7 @@ func TestRunGroupRecordsThenEmitsThenAcks(t *testing.T) {
 	runCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	priv, receipts := testSigning(t)
-	err := RunGroup(runCtx, stream, testWorkerConfig("order"), testRegistry(), store, seal.NewMemoryKeyStore(), receipts, priv, func(result journal.JobResult) {
+	err := RunGroup(runCtx, stream, testWorkerConfig("order"), testDeps(store, seal.NewMemoryKeyStore(), receipts, priv, func(result journal.JobResult) {
 		if result.ID != "job-cli" {
 			t.Errorf("emit ID = %q, want job-cli", result.ID)
 		}
@@ -494,7 +506,7 @@ func TestRunGroupRecordsThenEmitsThenAcks(t *testing.T) {
 			emitSawPending = true
 		}
 		cancel()
-	}, Hooks{})
+	}, Hooks{}))
 	if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatal(err)
 	}
@@ -510,24 +522,30 @@ func TestRunGroupRecordsThenEmitsThenAcks(t *testing.T) {
 	}
 }
 
-func TestRunGroupNilJournalPanics(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Fatal("runGroup(nil journal) did not panic")
-		}
-	}()
+func TestRunGroupNilJournalReturnsError(t *testing.T) {
 	priv, receipts := testSigning(t)
-	_ = RunGroup(context.Background(), nil, testWorkerConfig("nil"), testRegistry(), nil, nil, receipts, priv, func(journal.JobResult) {}, Hooks{})
+	err := RunGroup(context.Background(), nil, testWorkerConfig("nil"), Deps{
+		Registry:   testRegistry(),
+		Keys:       seal.NewMemoryKeyStore(),
+		Receipts:   receipts,
+		SigningKey: priv,
+	})
+	if err == nil || !strings.Contains(err.Error(), "Journal") {
+		t.Fatalf("err = %v, want Journal", err)
+	}
 }
 
-func TestRunGroupNilKeyStorePanics(t *testing.T) {
-	defer func() {
-		if recover() == nil {
-			t.Fatal("runGroup(nil keys) did not panic")
-		}
-	}()
+func TestRunGroupNilKeyStoreReturnsError(t *testing.T) {
 	priv, receipts := testSigning(t)
-	_ = RunGroup(context.Background(), nil, testWorkerConfig("nil-keys"), testRegistry(), journal.NewMemoryJournal(), nil, receipts, priv, func(journal.JobResult) {}, Hooks{})
+	err := RunGroup(context.Background(), nil, testWorkerConfig("nil-keys"), Deps{
+		Registry:   testRegistry(),
+		Journal:    journal.NewMemoryJournal(),
+		Receipts:   receipts,
+		SigningKey: priv,
+	})
+	if err == nil || !strings.Contains(err.Error(), "Keys") {
+		t.Fatalf("err = %v, want Keys", err)
+	}
 }
 
 func TestRecordErrorSkipsEmitAndAck(t *testing.T) {
@@ -542,9 +560,9 @@ func TestRecordErrorSkipsEmitAndAck(t *testing.T) {
 	forced := errors.New("forced record failure")
 	emitted := false
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, testWorkerConfig("rec"), testRegistry(), errJournal{err: forced}, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("rec"), testDeps(errJournal{err: forced}, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
 		emitted = true
-	}, Hooks{})
+	}, Hooks{}))
 	if !errors.Is(err, forced) {
 		t.Fatalf("err = %v, want forced record failure", err)
 	}
@@ -627,10 +645,10 @@ func TestSuccessfulJobDeletesMemHash(t *testing.T) {
 		ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
 		ch := make(chan journal.JobResult, 1)
-		err := RunGroup(ctx, stream, testWorkerConfig("purge-ok"), testRegistry(), journal.NewMemoryJournal(), keys, receipts, priv, func(r journal.JobResult) {
+		err := RunGroup(ctx, stream, testWorkerConfig("purge-ok"), testDeps(journal.NewMemoryJournal(), keys, receipts, priv, func(r journal.JobResult) {
 			ch <- r
 			cancel()
-		}, Hooks{})
+		}, Hooks{}))
 		if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 			return journal.JobResult{}, err
 		}
@@ -684,9 +702,9 @@ func TestCrashLeavesMemHash(t *testing.T) {
 		t.Fatal(err)
 	}
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, testWorkerConfig("crash-keep"), testRegistry(), journal.NewMemoryJournal(), seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("crash-keep"), testDeps(journal.NewMemoryJournal(), seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
 		t.Error("emit after crash")
-	}, Hooks{CrashAfterStep1: func(id string) bool { return id == "crash-keep" }})
+	}, Hooks{CrashAfterStep1: func(id string) bool { return id == "crash-keep" }}))
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
 		t.Fatalf("err = %v, want ErrSimulatedCrash", err)
 	}
@@ -710,13 +728,13 @@ func runGroupOnce(t *testing.T, stream *jobStream, cfg WorkerConfig, store journ
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	got := make(chan journal.JobResult, 1)
-	err := RunGroup(ctx, stream, cfg, testRegistry(), store, keys, receipts, priv, func(result journal.JobResult) {
+	err := RunGroup(ctx, stream, cfg, testDeps(store, keys, receipts, priv, func(result journal.JobResult) {
 		select {
 		case got <- result:
 		default:
 		}
 		cancel()
-	}, Hooks{})
+	}, Hooks{}))
 	if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 		return journal.JobResult{}, err
 	}

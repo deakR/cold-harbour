@@ -183,12 +183,12 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 	}
 	store := journal.NewMemoryJournal()
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), testRegistry(), store, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), testDeps(store, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
 		t.Error("emit after crash")
 	}, Hooks{
 		CrashAfterStep1: func(id string) bool { return id == "crash-fail" },
 		Fail:            func(id string) bool { return id == "crash-fail" },
-	})
+	}))
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
 		t.Fatalf("err = %v, want ErrSimulatedCrash", err)
 	}
@@ -226,9 +226,9 @@ func TestPoisonJobIsBuriedAndWorkerContinues(t *testing.T) {
 	done := make(chan error, 1)
 	emitted := make(chan string, 1)
 	go func() {
-		done <- RunGroup(runCtx, stream, testWorkerConfig("poison"), testRegistry(), store, keys, receipts, priv, func(result journal.JobResult) {
+		done <- RunGroup(runCtx, stream, testWorkerConfig("poison"), testDeps(store, keys, receipts, priv, func(result journal.JobResult) {
 			emitted <- result.ID
-		}, Hooks{})
+		}, Hooks{}))
 	}()
 	select {
 	case id := <-emitted:
@@ -344,7 +344,7 @@ func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, emit 
 	done := make(chan error, 1)
 	priv, receipts := testSigning(t)
 	go func() {
-		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), testRegistry(), store, seal.NewMemoryKeyStore(), receipts, priv, emit, hooks)
+		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), testDeps(store, seal.NewMemoryKeyStore(), receipts, priv, emit, hooks))
 	}()
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {

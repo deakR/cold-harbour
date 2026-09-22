@@ -104,25 +104,50 @@ func PrepareGroup(ctx context.Context, stream *jobStream) error {
 	return stream.ensureGroup(ctx)
 }
 
-func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, reg *runner.Registry, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult), hooks Hooks) error {
-	if store == nil {
-		panic("nil journal")
+type Deps struct {
+	Registry   *runner.Registry
+	Journal    journal.Journal
+	Keys       seal.KeyStore
+	Receipts   seal.ReceiptStore
+	SigningKey ed25519.PrivateKey
+	Emit       func(journal.JobResult)
+	Hooks      Hooks
+}
+
+func (d Deps) ready() error {
+	switch {
+	case d.Journal == nil:
+		return errors.New("queue: Journal is required")
+	case d.Keys == nil:
+		return errors.New("queue: Keys is required")
+	case d.Receipts == nil:
+		return errors.New("queue: Receipts is required")
+	case len(d.SigningKey) != ed25519.PrivateKeySize:
+		return errors.New("queue: SigningKey is required")
+	case d.Registry == nil:
+		return errors.New("queue: Registry is required")
+	default:
+		return nil
 	}
-	if keys == nil {
-		panic("nil key store")
-	}
-	if receipts == nil {
-		panic("nil receipt store")
-	}
-	if len(priv) != ed25519.PrivateKeySize {
-		panic("nil signing key")
-	}
-	if reg == nil {
-		panic("nil registry")
+}
+
+func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, deps Deps) error {
+	if err := deps.ready(); err != nil {
+		return err
 	}
 	if err := cfg.valid(); err != nil {
 		return err
 	}
+	reg := deps.Registry
+	store := deps.Journal
+	keys := deps.Keys
+	receipts := deps.Receipts
+	priv := deps.SigningKey
+	emit := deps.Emit
+	if emit == nil {
+		emit = func(journal.JobResult) {}
+	}
+	hooks := deps.Hooks
 	hash := &memHash{rdb: stream.rdb, keys: keys}
 	purge := &purger{rdb: stream.rdb, keys: keys, receipts: receipts, priv: priv}
 	for {
