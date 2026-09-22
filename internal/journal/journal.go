@@ -1,4 +1,4 @@
-package main
+package journal
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"coldharbour/internal/redact"
+
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -20,7 +22,7 @@ var (
 	errNotTerminal      = errors.New("journal records only COMPLETED or FAILED")
 	errMissingPickup    = errors.New("terminal history has no CREATED to RUNNING pickup")
 	errJournalConflict  = errors.New("durable row exists with a different checksum or final_state")
-	errUnknownStoredJob = errors.New("no durable row for job")
+	ErrUnknownStoredJob = errors.New("no durable row for job")
 	errMissingDSN       = errors.New("POSTGRES_DSN is required")
 )
 
@@ -40,9 +42,15 @@ type StoredJob struct {
 	CompletedAt time.Time
 }
 
+type storedOutput struct {
+	FinalState JobState
+	Body       string
+}
+
 type MemoryJournal struct {
-	mu   sync.Mutex
-	rows map[uuid.UUID]StoredJob
+	mu      sync.Mutex
+	rows    map[uuid.UUID]StoredJob
+	outputs map[string]storedOutput
 }
 
 type pgJournal struct {
@@ -50,10 +58,13 @@ type pgJournal struct {
 }
 
 func NewMemoryJournal() *MemoryJournal {
-	return &MemoryJournal{rows: make(map[uuid.UUID]StoredJob)}
+	return &MemoryJournal{
+		rows:    make(map[uuid.UUID]StoredJob),
+		outputs: make(map[string]storedOutput),
+	}
 }
 
-func postgresDSN() string {
+func PostgresDSN() string {
 	return os.Getenv("POSTGRES_DSN")
 }
 
@@ -80,8 +91,8 @@ func DurableIDFor(jobID string) uuid.UUID {
 	return uuid.NewSHA1(jobNamespace, []byte(jobID))
 }
 
-func ChecksumOf(result RedactResult) string {
-	sum := sha256.Sum256(marshalResult(result))
+func ChecksumOf(result redact.RedactResult) string {
+	sum := sha256.Sum256(redact.MarshalResult(result))
 	return hex.EncodeToString(sum[:])
 }
 
@@ -128,13 +139,18 @@ func (j *MemoryJournal) Record(_ context.Context, result JobResult) error {
 	if err != nil {
 		return err
 	}
+	body := string(redact.MarshalResult(result.Result))
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	if j.rows == nil {
 		j.rows = make(map[uuid.UUID]StoredJob)
 	}
+	if j.outputs == nil {
+		j.outputs = make(map[string]storedOutput)
+	}
 	existing, ok := j.rows[row.ID]
 	if !ok {
+		j.outputs[result.ID] = storedOutput{FinalState: row.FinalState, Body: body}
 		j.rows[row.ID] = row
 		return nil
 	}
@@ -146,9 +162,19 @@ func (j *MemoryJournal) Load(_ context.Context, redisJobID string) (StoredJob, e
 	defer j.mu.Unlock()
 	row, ok := j.rows[DurableIDFor(redisJobID)]
 	if !ok {
-		return StoredJob{}, errUnknownStoredJob
+		return StoredJob{}, ErrUnknownStoredJob
 	}
 	return row, nil
+}
+
+func (j *MemoryJournal) LoadOutput(_ context.Context, redisJobID string) (string, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	out, ok := j.outputs[redisJobID]
+	if !ok {
+		return "", ErrUnknownStoredJob
+	}
+	return out.Body, nil
 }
 
 func (j *pgJournal) Record(ctx context.Context, result JobResult) error {
@@ -156,7 +182,22 @@ func (j *pgJournal) Record(ctx context.Context, result JobResult) error {
 	if err != nil {
 		return err
 	}
-	res, err := j.db.ExecContext(ctx, `
+	body := string(redact.MarshalResult(result.Result))
+	tx, err := j.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO outputs (redis_job_id, final_state, body)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (redis_job_id) DO NOTHING
+	`, result.ID, string(row.FinalState), body); err != nil {
+		return err
+	}
+
+	res, err := tx.ExecContext(ctx, `
 		INSERT INTO jobs (id, job_type, final_state, output_checksum, created_at, completed_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (id) DO NOTHING
@@ -169,16 +210,19 @@ func (j *pgJournal) Record(ctx context.Context, result JobResult) error {
 		return err
 	}
 	if n == 1 {
-		return nil
+		return tx.Commit()
 	}
 	var checksum, finalState string
-	err = j.db.QueryRowContext(ctx, `
+	err = tx.QueryRowContext(ctx, `
 		SELECT output_checksum, final_state FROM jobs WHERE id = $1
 	`, row.ID).Scan(&checksum, &finalState)
 	if err != nil {
 		return err
 	}
-	return acceptExisting(StoredJob{Checksum: checksum, FinalState: JobState(finalState)}, row)
+	if err := acceptExisting(StoredJob{Checksum: checksum, FinalState: JobState(finalState)}, row); err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 func (j *pgJournal) Load(ctx context.Context, redisJobID string) (StoredJob, error) {
@@ -190,7 +234,7 @@ func (j *pgJournal) Load(ctx context.Context, redisJobID string) (StoredJob, err
 		FROM jobs WHERE id = $1
 	`, id).Scan(&row.ID, &row.JobType, &finalState, &row.Checksum, &row.CreatedAt, &row.CompletedAt)
 	if errors.Is(err, sql.ErrNoRows) {
-		return StoredJob{}, errUnknownStoredJob
+		return StoredJob{}, ErrUnknownStoredJob
 	}
 	if err != nil {
 		return StoredJob{}, err

@@ -1,0 +1,63 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+
+	"coldharbour/internal/checkpoint"
+	"coldharbour/internal/journal"
+	"coldharbour/internal/queue"
+	"coldharbour/internal/redact"
+)
+
+func main() {
+	if len(os.Args) > 1 && os.Args[1] == "redrive" {
+		stream := queue.OpenJobs(queue.RedisAddr())
+		if err := queue.Redrive(context.Background(), stream); err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	printM4CheckpointDemo()
+
+	cfg, err := queue.LoadWorkerConfig()
+	if err != nil {
+		panic(err)
+	}
+	store, err := journal.OpenJournal(journal.PostgresDSN())
+	if err != nil {
+		panic(err)
+	}
+	defer store.Close()
+	stream := queue.OpenJobs(queue.RedisAddr())
+	if err := queue.PrepareGroup(context.Background(), stream, queue.DemoJobs); err != nil {
+		panic(err)
+	}
+	if err := queue.RunGroup(context.Background(), stream, cfg, store, func(result journal.JobResult) {
+		fmt.Println(journal.FormatJobLine(result))
+		fmt.Println(result.History)
+	}); err != nil {
+		if errors.Is(err, checkpoint.ErrSimulatedCrash) {
+			os.Exit(1)
+		}
+		panic(err)
+	}
+}
+
+func printM4CheckpointDemo() {
+	store := checkpoint.NewCheckpointStore()
+	_, err := store.Run("job-5", redact.M1Fixture, checkpoint.CrashAfterStep1)
+	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
+		panic(err)
+	}
+	fmt.Println(err)
+	resumed, err := store.Resume("job-5")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(journal.FormatJobLine(journal.JobResult{ID: "job-5", Result: resumed}))
+	fmt.Println(store.Step1Passes("job-5"))
+}

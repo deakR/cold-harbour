@@ -1,4 +1,4 @@
-package main
+package journal
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"coldharbour/internal/redact"
+
 	"github.com/google/uuid"
 )
 
@@ -19,7 +21,7 @@ func job5ID() uuid.UUID {
 	return uuid.MustParse("fcf585ea-56d9-53a7-bd00-6e2560611dc2")
 }
 
-func completedResult(t *testing.T, id string, result RedactResult, created, done time.Time) JobResult {
+func completedResult(t *testing.T, id string, result redact.RedactResult, created, done time.Time) JobResult {
 	t.Helper()
 	m := newJobMachine()
 	m.pickup(created)
@@ -27,7 +29,7 @@ func completedResult(t *testing.T, id string, result RedactResult, created, done
 	return JobResult{ID: id, Result: result, History: m.history()}
 }
 
-func failedResult(t *testing.T, id string, result RedactResult, created, done time.Time) JobResult {
+func failedResult(t *testing.T, id string, result redact.RedactResult, created, done time.Time) JobResult {
 	t.Helper()
 	m := newJobMachine()
 	m.pickup(created)
@@ -35,9 +37,9 @@ func failedResult(t *testing.T, id string, result RedactResult, created, done ti
 	return JobResult{ID: id, Result: result, History: m.history()}
 }
 
-func m1Result(t *testing.T) RedactResult {
+func m1Result(t *testing.T) redact.RedactResult {
 	t.Helper()
-	want, err := RedactPII(m1Fixture)
+	want, err := redact.RedactPII(redact.M1Fixture)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +68,7 @@ func TestChecksumOfJob5(t *testing.T) {
 
 func TestFormatJobLineSharesChecksumBytes(t *testing.T) {
 	want := m1Result(t)
-	line := formatJobLine(JobResult{ID: "job-5", Result: want})
+	line := FormatJobLine(JobResult{ID: "job-5", Result: want})
 	prefix := "job-5 "
 	if !strings.HasPrefix(line, prefix) {
 		t.Fatalf("formatJobLine = %q, want prefix %q", line, prefix)
@@ -181,8 +183,43 @@ func TestMemoryJournalFailedStoresChecksum(t *testing.T) {
 
 func TestMemoryJournalLoadUnknown(t *testing.T) {
 	_, err := NewMemoryJournal().Load(context.Background(), "job-5")
-	if !errors.Is(err, errUnknownStoredJob) {
-		t.Fatalf("err = %v, want errUnknownStoredJob", err)
+	if !errors.Is(err, ErrUnknownStoredJob) {
+		t.Fatalf("err = %v, want ErrUnknownStoredJob", err)
+	}
+}
+
+func TestMemoryJournalWritesExactOutputBody(t *testing.T) {
+	ctx := context.Background()
+	j := NewMemoryJournal()
+	want := m1Result(t)
+	created := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	done := time.Date(2020, 1, 1, 0, 0, 1, 0, time.UTC)
+	if err := j.Record(ctx, completedResult(t, "job-5", want, created, done)); err != nil {
+		t.Fatal(err)
+	}
+	out, ok := j.outputs["job-5"]
+	if !ok {
+		t.Fatal("missing outputs row for job-5")
+	}
+	if out.FinalState != COMPLETED {
+		t.Fatalf("outputs final_state = %s, want COMPLETED", out.FinalState)
+	}
+	body := string(redact.MarshalResult(want))
+	if out.Body != body {
+		t.Fatalf("outputs body = %q, want exact MarshalResult bytes %q", out.Body, body)
+	}
+	if out.Body == job5Checksum {
+		t.Fatal("outputs.body stored the checksum instead of MarshalResult bytes")
+	}
+	row, err := j.Load(ctx, "job-5")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if row.Checksum != job5Checksum {
+		t.Fatalf("jobs checksum = %s, want SHA-256 %s", row.Checksum, job5Checksum)
+	}
+	if row.Checksum == body {
+		t.Fatal("jobs.output_checksum stored the JSON body")
 	}
 }
 
@@ -227,5 +264,21 @@ func TestPostgresJournalOptional(t *testing.T) {
 	}
 	if row.FinalState != COMPLETED {
 		t.Fatalf("FinalState = %s, want COMPLETED", row.FinalState)
+	}
+	var body, finalState string
+	if err := j.db.QueryRowContext(ctx, `
+		SELECT body, final_state FROM outputs WHERE redis_job_id = $1
+	`, redisID).Scan(&body, &finalState); err != nil {
+		t.Fatal(err)
+	}
+	wantBody := string(redact.MarshalResult(want))
+	if body != wantBody {
+		t.Fatalf("outputs.body = %q, want %q", body, wantBody)
+	}
+	if finalState != string(COMPLETED) {
+		t.Fatalf("outputs.final_state = %s, want COMPLETED", finalState)
+	}
+	if row.Checksum == body {
+		t.Fatal("jobs.output_checksum stored the JSON body")
 	}
 }

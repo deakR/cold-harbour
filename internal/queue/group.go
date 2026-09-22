@@ -1,11 +1,14 @@
-package main
+package queue
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"strings"
-	"time"
+
+	"coldharbour/internal/checkpoint"
+	"coldharbour/internal/journal"
+	"coldharbour/internal/redact"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -23,7 +26,7 @@ const (
 type claimed struct {
 	entry  StreamID
 	job    Job
-	crash  CrashPoint
+	crash  checkpoint.CrashPoint
 	fail   bool
 	fields map[string]string
 }
@@ -33,9 +36,9 @@ func parseClaim(entry StreamID, fields map[string]string) (claimed, error) {
 	if err != nil {
 		return claimed{}, err
 	}
-	crash := CrashNever
+	crash := checkpoint.CrashNever
 	if fields["simulateCrashAtStep"] == "1" {
-		crash = CrashAfterStep1
+		crash = checkpoint.CrashAfterStep1
 	}
 	return claimed{
 		entry:  entry,
@@ -46,16 +49,16 @@ func parseClaim(entry StreamID, fields map[string]string) (claimed, error) {
 	}, nil
 }
 
-func deliveryOf(cp *Checkpoint) (deliveryState, error) {
+func deliveryOf(cp *checkpoint.Checkpoint) (deliveryState, error) {
 	if cp == nil {
 		return deliveryNew, nil
 	}
 	switch cp.Step {
 	case 0:
 		return deliveryNew, nil
-	case StepEmailsAndPhones:
+	case checkpoint.StepEmailsAndPhones:
 		return deliveryStep1Saved, nil
-	case StepSSNs:
+	case checkpoint.StepSSNs:
 		return deliveryDone, nil
 	default:
 		return 0, fmt.Errorf("unknown checkpoint step %d", cp.Step)
@@ -70,12 +73,12 @@ func (s *jobStream) ensureGroup(ctx context.Context) error {
 	return nil
 }
 
-func (s *jobStream) enqueue(ctx context.Context, job Job, crash CrashPoint) error {
+func (s *jobStream) enqueue(ctx context.Context, job Job, crash checkpoint.CrashPoint) error {
 	values := map[string]any{"input": job.Input}
 	if job.ID != "" {
 		values["id"] = job.ID
 	}
-	if crash == CrashAfterStep1 {
+	if crash == checkpoint.CrashAfterStep1 {
 		values["simulateCrashAtStep"] = "1"
 	}
 	return s.rdb.XAdd(ctx, &redis.XAddArgs{
@@ -88,15 +91,15 @@ func (s *jobStream) ack(ctx context.Context, id StreamID) error {
 	return s.rdb.XAck(ctx, jobsStreamKey, workerGroup, id.String()).Err()
 }
 
-func prepareGroup(ctx context.Context, stream *jobStream, jobs []Job) error {
+func PrepareGroup(ctx context.Context, stream *jobStream, jobs []Job) error {
 	if err := stream.ensureGroup(ctx); err != nil {
 		return err
 	}
 	return seedIfEmpty(ctx, stream, jobs)
 }
 
-func runGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, journal Journal, emit func(JobResult)) error {
-	if journal == nil {
+func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store journal.Journal, emit func(journal.JobResult)) error {
+	if store == nil {
 		panic("nil journal")
 	}
 	if err := cfg.valid(); err != nil {
@@ -121,7 +124,7 @@ func runGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, journal 
 			return err
 		}
 		for _, msg := range stolen {
-			if err := dispatch(ctx, stream, hash, msg, journal, emit); err != nil {
+			if err := dispatch(ctx, stream, hash, msg, store, emit); err != nil {
 				return err
 			}
 		}
@@ -142,7 +145,7 @@ func runGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, journal 
 		}
 		for _, xs := range streams {
 			for _, msg := range xs.Messages {
-				if err := dispatch(ctx, stream, hash, msg, journal, emit); err != nil {
+				if err := dispatch(ctx, stream, hash, msg, store, emit); err != nil {
 					return err
 				}
 			}
@@ -155,7 +158,7 @@ func isReadTimeout(err error) bool {
 	return errors.As(err, &to) && to.Timeout()
 }
 
-func dispatch(ctx context.Context, stream *jobStream, hash *memHash, msg redis.XMessage, journal Journal, emit func(JobResult)) error {
+func dispatch(ctx context.Context, stream *jobStream, hash *memHash, msg redis.XMessage, store journal.Journal, emit func(journal.JobResult)) error {
 	id, err := ParseStreamID(msg.ID)
 	if err != nil {
 		return err
@@ -167,10 +170,10 @@ func dispatch(ctx context.Context, stream *jobStream, hash *memHash, msg redis.X
 	if err != nil {
 		return err
 	}
-	return handle(ctx, stream, hash, c, journal, emit)
+	return handle(ctx, stream, hash, c, store, emit)
 }
 
-func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, journal Journal, emit func(JobResult)) error {
+func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, store journal.Journal, emit func(journal.JobResult)) error {
 	cp, err := hash.load(ctx, c.job.ID)
 	if err != nil {
 		return err
@@ -181,22 +184,22 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, jo
 	}
 
 	if state == deliveryNew {
-		partial := applyClassWindow(RedactResult{RedactedText: c.job.Input}, stepWindows[0])
-		next := Checkpoint{JobID: c.job.ID, Step: StepEmailsAndPhones, PartialResult: partial}
+		partial := redact.ApplyClassWindow(redact.RedactResult{RedactedText: c.job.Input}, 0)
+		next := checkpoint.Checkpoint{JobID: c.job.ID, Step: checkpoint.StepEmailsAndPhones, PartialResult: partial}
 		if err := hash.saveStep1(ctx, next); err != nil {
 			return err
 		}
-		fmt.Println("checkpoint", formatJobLine(JobResult{ID: c.job.ID, Result: partial}))
-		if c.crash == CrashAfterStep1 {
-			return ErrSimulatedCrash
+		fmt.Println("checkpoint", journal.FormatJobLine(journal.JobResult{ID: c.job.ID, Result: partial}))
+		if c.crash == checkpoint.CrashAfterStep1 {
+			return checkpoint.ErrSimulatedCrash
 		}
 		cp = &next
 		state = deliveryStep1Saved
 	}
 
 	if state == deliveryStep1Saved {
-		done := applyClassWindow(cp.PartialResult, stepWindows[1])
-		next := Checkpoint{JobID: c.job.ID, Step: StepSSNs, PartialResult: done}
+		done := redact.ApplyClassWindow(cp.PartialResult, 1)
+		next := checkpoint.Checkpoint{JobID: c.job.ID, Step: checkpoint.StepSSNs, PartialResult: done}
 		if err := hash.save(ctx, next); err != nil {
 			return err
 		}
@@ -204,16 +207,12 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, jo
 		state = deliveryDone
 	}
 
-	machine := newJobMachine()
-	machine.pickup(time.Now())
 	if c.fail {
-		machine.fail(time.Now())
-		result := JobResult{ID: c.job.ID, Result: cp.PartialResult, History: machine.history()}
-		return (&deadLetters{rdb: stream.rdb}).fail(context.WithoutCancel(ctx), c, result, journal)
+		result := journal.Fail(c.job.ID, cp.PartialResult)
+		return (&deadLetters{rdb: stream.rdb}).fail(context.WithoutCancel(ctx), c, result, store)
 	}
-	machine.complete(time.Now())
-	result := JobResult{ID: c.job.ID, Result: cp.PartialResult, History: machine.history()}
-	if err := journal.Record(ctx, result); err != nil {
+	result := journal.Succeed(c.job.ID, cp.PartialResult)
+	if err := store.Record(ctx, result); err != nil {
 		return err
 	}
 	emit(result)

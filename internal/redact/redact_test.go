@@ -1,4 +1,4 @@
-package main
+package redact
 
 import (
 	"strings"
@@ -6,11 +6,7 @@ import (
 )
 
 func TestRedactPII(t *testing.T) {
-	const fixture = `Contact jane.doe@example.com or (555) 123-4567 for details.
-SSN on file: 123-45-6789. Backup contact: john@company.org.
-Not a match: version 123-45 or year 1234-56-789.`
-
-	got, err := RedactPII(fixture)
+	got, err := RedactPII(M1Fixture)
 	if err != nil {
 		t.Fatalf("err = %v, want nil", err)
 	}

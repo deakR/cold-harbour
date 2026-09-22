@@ -1,32 +1,35 @@
-package main
+package queue
 
 import (
 	"regexp"
 	"testing"
+
+	"coldharbour/internal/journal"
+	"coldharbour/internal/redact"
 )
 
 func TestRunWorker(t *testing.T) {
-	jobs := make(chan Job, len(demoJobs))
-	results := make(chan JobResult)
+	jobs := make(chan Job, len(DemoJobs))
+	results := make(chan journal.JobResult)
 	go runWorker(jobs, results)
-	for _, job := range demoJobs {
+	for _, job := range DemoJobs {
 		jobs <- job
 	}
 	close(jobs)
-	var got []JobResult
+	var got []journal.JobResult
 	for result := range results {
 		got = append(got, result)
 	}
 	if len(got) != 5 {
 		t.Fatalf("got %d results, want 5", len(got))
 	}
-	for i := range demoJobs {
-		if got[i].ID != demoJobs[i].ID {
-			t.Errorf("got[%d].ID = %q, want %q", i, got[i].ID, demoJobs[i].ID)
+	for i := range DemoJobs {
+		if got[i].ID != DemoJobs[i].ID {
+			t.Errorf("got[%d].ID = %q, want %q", i, got[i].ID, DemoJobs[i].ID)
 		}
-		want, err := RedactPII(demoJobs[i].Input)
+		want, err := redact.RedactPII(DemoJobs[i].Input)
 		if err != nil {
-			t.Fatalf("RedactPII(%q) err = %v", demoJobs[i].Input, err)
+			t.Fatalf("RedactPII(%q) err = %v", DemoJobs[i].Input, err)
 		}
 		if got[i].Result != want {
 			t.Errorf("got[%d].Result = %+v, want %+v", i, got[i].Result, want)
@@ -35,14 +38,14 @@ func TestRunWorker(t *testing.T) {
 }
 
 func TestRunWorkerHistory(t *testing.T) {
-	jobs := make(chan Job, len(demoJobs))
-	results := make(chan JobResult)
+	jobs := make(chan Job, len(DemoJobs))
+	results := make(chan journal.JobResult)
 	go runWorker(jobs, results)
-	for _, job := range demoJobs {
+	for _, job := range DemoJobs {
 		jobs <- job
 	}
 	close(jobs)
-	var got []JobResult
+	var got []journal.JobResult
 	for result := range results {
 		got = append(got, result)
 	}
@@ -55,10 +58,10 @@ func TestRunWorkerHistory(t *testing.T) {
 		if len(edges) != 2 {
 			t.Fatalf("got[%d] history len = %d, want 2", i, len(edges))
 		}
-		if edges[0].From != CREATED || edges[0].To != RUNNING {
+		if edges[0].From != journal.CREATED || edges[0].To != journal.RUNNING {
 			t.Fatalf("got[%d] first edge = %s→%s, want CREATED→RUNNING", i, edges[0].From, edges[0].To)
 		}
-		if edges[1].From != RUNNING || edges[1].To != COMPLETED {
+		if edges[1].From != journal.RUNNING || edges[1].To != journal.COMPLETED {
 			t.Fatalf("got[%d] second edge = %s→%s, want RUNNING→COMPLETED", i, edges[1].From, edges[1].To)
 		}
 		if edges[0].At.IsZero() || edges[1].At.IsZero() {

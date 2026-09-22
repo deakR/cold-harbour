@@ -1,4 +1,4 @@
-package main
+package queue
 
 import (
 	"errors"
@@ -37,7 +37,7 @@ func testWorkerConfig(consumer string) WorkerConfig {
 	}
 }
 
-func loadWorkerConfig() (WorkerConfig, error) {
+func LoadWorkerConfig() (WorkerConfig, error) {
 	return loadWorkerConfigFrom(os.Args[1:], os.Getenv)
 }
 
