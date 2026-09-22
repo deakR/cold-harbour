@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"coldharbour/internal/events"
 	"coldharbour/internal/journal"
 
 	"github.com/redis/go-redis/v9"
@@ -56,6 +57,13 @@ func (d *deadLetters) fail(ctx context.Context, c claimed, result journal.JobRes
 	}
 	if ok && n >= 2 {
 		if err := store.Record(ctx, result); err != nil {
+			return err
+		}
+		if err := events.Publish(ctx, d.rdb, events.JobEvent{
+			TenantID: result.TenantID,
+			JobID:    result.ID,
+			Status:   string(journal.FAILED),
+		}); err != nil {
 			return err
 		}
 	}

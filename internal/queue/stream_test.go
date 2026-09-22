@@ -2,11 +2,14 @@ package queue
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
 	"coldharbour/internal/checkpoint"
+	"coldharbour/internal/events"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/redact"
 
@@ -348,6 +351,77 @@ func TestRedisAddr(t *testing.T) {
 	t.Setenv("REDIS_ADDR", "10.0.0.1:6380")
 	if got := RedisAddr(); got != "10.0.0.1:6380" {
 		t.Fatalf("redisAddr() = %q, want 10.0.0.1:6380", got)
+	}
+}
+
+func TestSuccessfulJobPublishesCompletedEvent(t *testing.T) {
+	_, stream := startStream(t)
+	ctx := context.Background()
+	tenant := "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+	jobID := "job-evt"
+
+	sub := stream.rdb.Subscribe(ctx, events.Channel)
+	t.Cleanup(func() { _ = sub.Close() })
+	if _, err := sub.Receive(ctx); err != nil {
+		t.Fatal(err)
+	}
+	msgCh := sub.Channel()
+
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.Add(ctx, Job{ID: jobID, Input: "Email a@b.com x", TenantID: tenant}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := runGroupOnce(t, stream, testWorkerConfig("evt"), journal.NewMemoryJournal())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != jobID {
+		t.Fatalf("ID = %q, want %s", got.ID, jobID)
+	}
+
+	var completedPayloads []string
+	deadline := time.After(2 * time.Second)
+loop:
+	for {
+		select {
+		case msg := <-msgCh:
+			var e events.JobEvent
+			if err := json.Unmarshal([]byte(msg.Payload), &e); err != nil {
+				t.Fatalf("unmarshal %q: %v", msg.Payload, err)
+			}
+			if e.Status == string(journal.COMPLETED) {
+				completedPayloads = append(completedPayloads, msg.Payload)
+			}
+			if len(completedPayloads) > 0 {
+				select {
+				case extra := <-msgCh:
+					var e2 events.JobEvent
+					if err := json.Unmarshal([]byte(extra.Payload), &e2); err != nil {
+						t.Fatalf("unmarshal %q: %v", extra.Payload, err)
+					}
+					if e2.Status == string(journal.COMPLETED) {
+						completedPayloads = append(completedPayloads, extra.Payload)
+					}
+				case <-time.After(50 * time.Millisecond):
+				}
+				break loop
+			}
+		case <-deadline:
+			break loop
+		}
+	}
+	if len(completedPayloads) != 1 {
+		t.Fatalf("COMPLETED events = %d, want 1; got %v", len(completedPayloads), completedPayloads)
+	}
+	payload := completedPayloads[0]
+	if !strings.Contains(payload, tenant) {
+		t.Fatalf("payload %s missing tenant id %s", payload, tenant)
+	}
+	if !strings.Contains(payload, jobID) {
+		t.Fatalf("payload %s missing job id %s", payload, jobID)
 	}
 }
 
