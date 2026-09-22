@@ -730,3 +730,47 @@ func runGroupOnce(t *testing.T, stream *jobStream, cfg WorkerConfig, store journ
 		return journal.JobResult{}, errors.New("runGroup returned without emit")
 	}
 }
+
+func TestPrepareGroupLeavesStreamEmpty(t *testing.T) {
+	_, stream := startStream(t)
+	ctx := context.Background()
+	if err := PrepareGroup(ctx, stream); err != nil {
+		t.Fatal(err)
+	}
+	n, err := stream.Len(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 0 {
+		t.Fatalf("XLEN = %d, want 0", n)
+	}
+	groups, err := stream.rdb.XInfoGroups(ctx, jobsStreamKey).Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, group := range groups {
+		if group.Name == workerGroup {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("worker-group was not created")
+	}
+}
+
+func seedIfEmpty(ctx context.Context, stream *jobStream, jobs []Job) error {
+	n, err := stream.Len(ctx)
+	if err != nil {
+		return err
+	}
+	if n != 0 {
+		return nil
+	}
+	for _, job := range jobs {
+		if err := stream.Add(ctx, job); err != nil {
+			return err
+		}
+	}
+	return nil
+}

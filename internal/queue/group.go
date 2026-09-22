@@ -94,11 +94,8 @@ func (s *jobStream) finish(ctx context.Context, id StreamID) error {
 	return err
 }
 
-func PrepareGroup(ctx context.Context, stream *jobStream, jobs []Job) error {
-	if err := stream.ensureGroup(ctx); err != nil {
-		return err
-	}
-	return seedIfEmpty(ctx, stream, jobs)
+func PrepareGroup(ctx context.Context, stream *jobStream) error {
+	return stream.ensureGroup(ctx)
 }
 
 func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, reg *runner.Registry, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult)) error {

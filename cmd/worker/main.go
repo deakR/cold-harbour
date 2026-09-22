@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 
 	"coldharbour/internal/checkpoint"
@@ -16,36 +17,34 @@ import (
 )
 
 func main() {
-	printM4CheckpointDemo()
-
 	cfg, err := queue.LoadWorkerConfig()
 	if err != nil {
-		panic(err)
+		log.Fatalf("worker: load config: %v", err)
 	}
 	dsn := journal.PostgresDSN()
 	store, err := journal.OpenJournal(dsn)
 	if err != nil {
-		panic(err)
+		log.Fatalf("worker: open journal: %v", err)
 	}
 	defer store.Close()
 	keys, err := seal.OpenPostgresKeyStore(dsn)
 	if err != nil {
-		panic(err)
+		log.Fatalf("worker: open key store: %v", err)
 	}
 	defer keys.Close()
 	receipts, err := seal.OpenPostgresReceiptStore(dsn)
 	if err != nil {
-		panic(err)
+		log.Fatalf("worker: open receipt store: %v", err)
 	}
 	defer receipts.Close()
 	priv, err := seal.LoadSigningKey()
 	if err != nil {
-		panic(err)
+		log.Fatalf("worker: load signing key: %v", err)
 	}
 	reg := runner.NewRegistry(redact.Runner{}, mask.Runner{})
 	stream := queue.OpenJobs(queue.RedisAddr())
-	if err := queue.PrepareGroup(context.Background(), stream, queue.DemoJobs); err != nil {
-		panic(err)
+	if err := queue.PrepareGroup(context.Background(), stream); err != nil {
+		log.Fatalf("worker: prepare group: %v", err)
 	}
 	if err := queue.RunGroup(context.Background(), stream, cfg, reg, store, keys, receipts, priv, func(result journal.JobResult) {
 		fmt.Println(journal.FormatJobLine(result))
@@ -54,21 +53,6 @@ func main() {
 		if errors.Is(err, checkpoint.ErrSimulatedCrash) {
 			os.Exit(1)
 		}
-		panic(err)
+		log.Fatalf("worker: run: %v", err)
 	}
-}
-
-func printM4CheckpointDemo() {
-	store := checkpoint.NewCheckpointStore()
-	_, err := store.Run("job-5", redact.M1Fixture, checkpoint.CrashAfterStep1)
-	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
-		panic(err)
-	}
-	fmt.Println(err)
-	resumed, err := store.Resume("job-5")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(journal.FormatJobLine(journal.JobResult{ID: "job-5", Result: redact.MapResult(resumed)}))
-	fmt.Println(store.Step1Passes("job-5"))
 }

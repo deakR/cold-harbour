@@ -104,22 +104,6 @@ func (s *jobStream) Len(ctx context.Context) (int64, error) {
 	return s.rdb.XLen(ctx, jobsStreamKey).Result()
 }
 
-func seedIfEmpty(ctx context.Context, stream *jobStream, jobs []Job) error {
-	n, err := stream.Len(ctx)
-	if err != nil {
-		return err
-	}
-	if n != 0 {
-		return nil
-	}
-	for _, job := range jobs {
-		if err := stream.Add(ctx, job); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func valuesToFields(values map[string]any) map[string]string {
 	fields := make(map[string]string, len(values))
 	for k, v := range values {

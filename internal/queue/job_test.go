@@ -9,11 +9,19 @@ import (
 	"coldharbour/internal/redact"
 )
 
+var demoJobs = []Job{
+	{ID: "job-5", Input: redact.M1Fixture},
+	{ID: "job-1", Input: "Email alice.nguyen@school.edu about the lab report."},
+	{ID: "job-4", Input: "Call 415-555-0199 before noon."},
+	{ID: "job-2", Input: "Employee SSN 987-65-4321 is on the form."},
+	{ID: "job-3", Input: "Reach +1 212 555 0100 or bob.smith@mail.net."},
+}
+
 func TestRunWorker(t *testing.T) {
-	jobs := make(chan Job, len(DemoJobs))
+	jobs := make(chan Job, len(demoJobs))
 	results := make(chan journal.JobResult)
 	go runWorker(jobs, results)
-	for _, job := range DemoJobs {
+	for _, job := range demoJobs {
 		jobs <- job
 	}
 	close(jobs)
@@ -24,13 +32,13 @@ func TestRunWorker(t *testing.T) {
 	if len(got) != 5 {
 		t.Fatalf("got %d results, want 5", len(got))
 	}
-	for i := range DemoJobs {
-		if got[i].ID != DemoJobs[i].ID {
-			t.Errorf("got[%d].ID = %q, want %q", i, got[i].ID, DemoJobs[i].ID)
+	for i := range demoJobs {
+		if got[i].ID != demoJobs[i].ID {
+			t.Errorf("got[%d].ID = %q, want %q", i, got[i].ID, demoJobs[i].ID)
 		}
-		want, err := redact.RedactPII(DemoJobs[i].Input)
+		want, err := redact.RedactPII(demoJobs[i].Input)
 		if err != nil {
-			t.Fatalf("RedactPII(%q) err = %v", DemoJobs[i].Input, err)
+			t.Fatalf("RedactPII(%q) err = %v", demoJobs[i].Input, err)
 		}
 		if !reflect.DeepEqual(got[i].Result, redact.MapResult(want)) {
 			t.Errorf("got[%d].Result = %+v, want %+v", i, got[i].Result, redact.MapResult(want))
@@ -39,10 +47,10 @@ func TestRunWorker(t *testing.T) {
 }
 
 func TestRunWorkerHistory(t *testing.T) {
-	jobs := make(chan Job, len(DemoJobs))
+	jobs := make(chan Job, len(demoJobs))
 	results := make(chan journal.JobResult)
 	go runWorker(jobs, results)
-	for _, job := range DemoJobs {
+	for _, job := range demoJobs {
 		jobs <- job
 	}
 	close(jobs)
