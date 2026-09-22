@@ -8,6 +8,7 @@ import (
 
 	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/journal"
+	"coldharbour/internal/mask"
 	"coldharbour/internal/queue"
 	"coldharbour/internal/redact"
 	"coldharbour/internal/runner"
@@ -49,7 +50,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	reg := runner.NewRegistry(redact.Runner{})
+	reg := runner.NewRegistry(redact.Runner{}, mask.Runner{})
 	stream := queue.OpenJobs(queue.RedisAddr())
 	if err := queue.PrepareGroup(context.Background(), stream, queue.DemoJobs); err != nil {
 		panic(err)
