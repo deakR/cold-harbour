@@ -50,13 +50,16 @@ func retryKey(jobID string) string {
 	return "retry:" + jobID
 }
 
-func (d *deadLetters) fail(ctx context.Context, c claimed, result journal.JobResult, store journal.Journal) error {
+func (d *deadLetters) fail(ctx context.Context, c claimed, result journal.JobResult, store journal.Journal, purge *purger) error {
 	n, ok, err := d.peek(ctx, c.job.ID)
 	if err != nil {
 		return err
 	}
 	if ok && n >= 2 {
 		if err := store.Record(ctx, result); err != nil {
+			return err
+		}
+		if err := purge.run(ctx, c.job.ID); err != nil {
 			return err
 		}
 		if err := events.Publish(ctx, d.rdb, events.JobEvent{

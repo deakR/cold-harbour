@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"crypto/ed25519"
 	"errors"
 	"fmt"
 	"strings"
@@ -103,17 +104,24 @@ func PrepareGroup(ctx context.Context, stream *jobStream, jobs []Job) error {
 	return seedIfEmpty(ctx, stream, jobs)
 }
 
-func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store journal.Journal, keys seal.KeyStore, emit func(journal.JobResult)) error {
+func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult)) error {
 	if store == nil {
 		panic("nil journal")
 	}
 	if keys == nil {
 		panic("nil key store")
 	}
+	if receipts == nil {
+		panic("nil receipt store")
+	}
+	if len(priv) != ed25519.PrivateKeySize {
+		panic("nil signing key")
+	}
 	if err := cfg.valid(); err != nil {
 		return err
 	}
 	hash := &memHash{rdb: stream.rdb, keys: keys}
+	purge := &purger{rdb: stream.rdb, keys: keys, receipts: receipts, priv: priv}
 	for {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -132,7 +140,7 @@ func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store jo
 			return err
 		}
 		for _, msg := range stolen {
-			if err := dispatch(ctx, stream, hash, msg, store, emit); err != nil {
+			if err := dispatch(ctx, stream, hash, purge, msg, store, emit); err != nil {
 				return err
 			}
 		}
@@ -153,7 +161,7 @@ func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, store jo
 		}
 		for _, xs := range streams {
 			for _, msg := range xs.Messages {
-				if err := dispatch(ctx, stream, hash, msg, store, emit); err != nil {
+				if err := dispatch(ctx, stream, hash, purge, msg, store, emit); err != nil {
 					return err
 				}
 			}
@@ -166,7 +174,7 @@ func isReadTimeout(err error) bool {
 	return errors.As(err, &to) && to.Timeout()
 }
 
-func dispatch(ctx context.Context, stream *jobStream, hash *memHash, msg redis.XMessage, store journal.Journal, emit func(journal.JobResult)) error {
+func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, msg redis.XMessage, store journal.Journal, emit func(journal.JobResult)) error {
 	id, err := ParseStreamID(msg.ID)
 	if err != nil {
 		return err
@@ -178,13 +186,22 @@ func dispatch(ctx context.Context, stream *jobStream, hash *memHash, msg redis.X
 	if err != nil {
 		return err
 	}
-	return handle(ctx, stream, hash, c, store, emit)
+	return handle(ctx, stream, hash, purge, c, store, emit)
 }
 
-func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, store journal.Journal, emit func(journal.JobResult)) error {
+func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, c claimed, store journal.Journal, emit func(journal.JobResult)) error {
 	cp, err := hash.load(ctx, c.job.ID)
 	if err != nil {
 		return err
+	}
+	if cp == nil {
+		_, loadErr := store.Load(ctx, c.job.ID)
+		if loadErr == nil {
+			return stream.ack(context.WithoutCancel(ctx), c.entry)
+		}
+		if !errors.Is(loadErr, journal.ErrUnknownStoredJob) {
+			return loadErr
+		}
 	}
 	state, err := deliveryOf(cp)
 	if err != nil {
@@ -228,11 +245,14 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, c claimed, st
 	if c.fail {
 		result := journal.Fail(c.job.ID, cp.PartialResult)
 		result.TenantID = c.job.TenantID
-		return (&deadLetters{rdb: stream.rdb}).fail(context.WithoutCancel(ctx), c, result, store)
+		return (&deadLetters{rdb: stream.rdb}).fail(context.WithoutCancel(ctx), c, result, store, purge)
 	}
 	result := journal.Succeed(c.job.ID, cp.PartialResult)
 	result.TenantID = c.job.TenantID
 	if err := store.Record(ctx, result); err != nil {
+		return err
+	}
+	if err := purge.run(ctx, c.job.ID); err != nil {
 		return err
 	}
 	if err := events.Publish(ctx, stream.rdb, events.JobEvent{
