@@ -70,8 +70,13 @@ func (s *jobStream) enqueue(ctx context.Context, job Job, crash checkpoint.Crash
 	}).Err()
 }
 
-func (s *jobStream) ack(ctx context.Context, id StreamID) error {
-	return s.rdb.XAck(ctx, jobsStreamKey, workerGroup, id.String()).Err()
+func (s *jobStream) finish(ctx context.Context, id StreamID) error {
+	_, err := s.rdb.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		pipe.XAck(ctx, jobsStreamKey, workerGroup, id.String())
+		pipe.XDel(ctx, jobsStreamKey, id.String())
+		return nil
+	})
+	return err
 }
 
 func PrepareGroup(ctx context.Context, stream *jobStream, jobs []Job) error {
@@ -161,7 +166,7 @@ func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purg
 	}
 	c, err := parseClaim(id, valuesToFields(msg.Values))
 	if errors.Is(err, errMissingInput) {
-		return stream.ack(context.WithoutCancel(ctx), id)
+		return stream.finish(context.WithoutCancel(ctx), id)
 	}
 	if err != nil {
 		return err
@@ -185,7 +190,7 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 	if st == nil {
 		_, loadErr := store.Load(ctx, c.job.ID)
 		if loadErr == nil {
-			return stream.ack(context.WithoutCancel(ctx), c.entry)
+			return stream.finish(context.WithoutCancel(ctx), c.entry)
 		}
 		if !errors.Is(loadErr, journal.ErrUnknownStoredJob) {
 			return loadErr
@@ -269,5 +274,5 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 		return err
 	}
 	emit(result)
-	return stream.ack(context.WithoutCancel(ctx), c.entry)
+	return stream.finish(context.WithoutCancel(ctx), c.entry)
 }

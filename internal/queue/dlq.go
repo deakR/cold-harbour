@@ -14,11 +14,7 @@ import (
 
 const dlqStreamKey = "coldharbour:jobs:dlq"
 
-var (
-	errEmptyDLQ  = errors.New("dlq is empty")
-	errRetryLive = errors.New("retry key is live")
-	errSettle    = errors.New("settle returned an unexpected value")
-)
+var errSettle = errors.New("settle returned an unexpected value")
 
 const settleScript = `
 local key = KEYS[1]
@@ -34,10 +30,23 @@ end
 if n < 3 then
   redis.call('XADD', main, '*', unpack(ARGV, 3))
   redis.call('XACK', main, group, entry)
+  redis.call('XDEL', main, entry)
   return {'retry', n}
 end
-redis.call('XADD', dlq, '*', unpack(ARGV, 3))
+local fields = {}
+local i = 3
+while i + 1 <= #ARGV do
+  if ARGV[i] ~= 'input' then
+    fields[#fields + 1] = ARGV[i]
+    fields[#fields + 1] = ARGV[i + 1]
+  end
+  i = i + 2
+end
+if #fields > 0 then
+  redis.call('XADD', dlq, '*', unpack(fields))
+end
 redis.call('XACK', main, group, entry)
+redis.call('XDEL', main, entry)
 redis.call('DEL', key)
 return {'bury', n}
 `
@@ -143,47 +152,3 @@ func luaInt(v any) (int, bool) {
 	}
 }
 
-func Redrive(ctx context.Context, stream *jobStream) error {
-	return (&deadLetters{rdb: stream.rdb}).redrive(ctx)
-}
-
-func (d *deadLetters) redrive(ctx context.Context) error {
-	entries, err := d.rdb.XRangeN(ctx, dlqStreamKey, "-", "+", 1).Result()
-	if err != nil {
-		return err
-	}
-	if len(entries) == 0 {
-		return errEmptyDLQ
-	}
-	fields := valuesToFields(entries[0].Values)
-	entryID, err := ParseStreamID(entries[0].ID)
-	if err != nil {
-		return err
-	}
-	job, err := parseJob(entryID, fields)
-	if err != nil {
-		return err
-	}
-	jobID := job.ID
-	set, err := d.rdb.SetNX(ctx, retryKey(jobID), 0, 0).Result()
-	if err != nil {
-		return err
-	}
-	if !set {
-		raw, err := d.rdb.Get(ctx, retryKey(jobID)).Result()
-		if err != nil {
-			return err
-		}
-		if raw != "0" {
-			return errRetryLive
-		}
-	}
-	values := make(map[string]any, len(fields))
-	for k, v := range fields {
-		values[k] = v
-	}
-	return d.rdb.XAdd(ctx, &redis.XAddArgs{
-		Stream: jobsStreamKey,
-		Values: values,
-	}).Err()
-}

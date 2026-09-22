@@ -16,14 +16,6 @@ import (
 )
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "redrive" {
-		stream := queue.OpenJobs(queue.RedisAddr())
-		if err := queue.Redrive(context.Background(), stream); err != nil {
-			panic(err)
-		}
-		return
-	}
-
 	printM4CheckpointDemo()
 
 	cfg, err := queue.LoadWorkerConfig()
