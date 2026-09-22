@@ -35,6 +35,7 @@ class JobsControllerTest {
 
 	private JdbcTemplate jdbc;
 	private StringRedisTemplate redis;
+	private PostLimit limit;
 	private JobsController jobs;
 	private DeliveryController delivery;
 
@@ -42,8 +43,10 @@ class JobsControllerTest {
 	void setUp() {
 		jdbc = mock(JdbcTemplate.class);
 		redis = mock(StringRedisTemplate.class);
+		limit = mock(PostLimit.class);
+		when(limit.allow(any())).thenReturn(true);
 		ObjectMapper mapper = new ObjectMapper();
-		jobs = new JobsController(jdbc, redis, mapper);
+		jobs = new JobsController(jdbc, redis, mapper, limit);
 		delivery = new DeliveryController(jdbc, mapper);
 	}
 

@@ -36,11 +36,13 @@ public class JobsController {
 	private final JdbcTemplate jdbc;
 	private final StringRedisTemplate redis;
 	private final ObjectMapper mapper;
+	private final PostLimit limit;
 
-	public JobsController(JdbcTemplate jdbc, StringRedisTemplate redis, ObjectMapper mapper) {
+	public JobsController(JdbcTemplate jdbc, StringRedisTemplate redis, ObjectMapper mapper, PostLimit limit) {
 		this.jdbc = jdbc;
 		this.redis = redis;
 		this.mapper = mapper;
+		this.limit = limit;
 	}
 
 	@PostMapping("/jobs")
@@ -54,7 +56,7 @@ public class JobsController {
 		if (jobType != null && !jobType.isEmpty() && !JOB_TYPES.contains(jobType)) {
 			return ResponseEntity.badRequest().body(Map.of("error", "unknown jobType"));
 		}
-		if (!PostLimit.allow(tenantId)) {
+		if (!limit.allow(tenantId)) {
 			return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
 		}
 		String jobId = UUID.randomUUID().toString();
