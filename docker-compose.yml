@@ -43,3 +43,32 @@ services:
       - "6380:6379"
     volumes:
       - ./docker/certs:/certs:ro
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      POSTGRES_DSN: postgres://coldharbour:${POSTGRES_PASSWORD}@postgres:5432/coldharbour?sslmode=require
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_TLS: "1"
+      REDIS_CA: /certs/server.crt
+      SIGNING_KEY: ${SIGNING_KEY:?set SIGNING_KEY}
+    volumes:
+      - ./docker/certs:/certs:ro
+  controlplane:
+    build:
+      context: ./controlplane
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      POSTGRES_DSN: postgres://coldharbour:${POSTGRES_PASSWORD}@postgres:5432/coldharbour?sslmode=require
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_TLS: "1"
+    ports:
+      - "8081:8080"
