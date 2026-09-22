@@ -79,7 +79,7 @@ public class DeliveryController {
 		}
 		jdbc.update("INSERT INTO delivery_link_accesses (token_hash) VALUES (?)", hash);
 		Map<String, Object> row = jdbc.queryForMap(
-				"SELECT o.body, j.output_signature, j.signing_key_id FROM outputs o JOIN jobs j ON j.tenant_id = o.tenant_id AND j.id = ? WHERE o.redis_job_id = ?",
+				"SELECT o.tenant_id, o.body, j.output_signature, j.signing_key_id FROM outputs o JOIN jobs j ON j.tenant_id = o.tenant_id AND j.id = ? WHERE o.redis_job_id = ?",
 				DurableID.forRedisJob(jobId), jobId);
 		JsonNode result = readBody((String) row.get("body"));
 		String signature = "";
@@ -88,8 +88,10 @@ public class DeliveryController {
 			signature = java.util.Base64.getEncoder().encodeToString(sig);
 		}
 		Object keyId = row.get("signing_key_id");
+		Object tenant = row.get("tenant_id");
 		return ResponseEntity.ok(Map.of(
 				"result", result,
+				"tenantId", tenant == null ? "" : tenant.toString(),
 				"signature", signature,
 				"signingKeyId", keyId == null ? "" : keyId.toString()));
 	}

@@ -98,7 +98,7 @@ public class JobsController {
 					FROM outputs o
 					LEFT JOIN jobs j ON j.id = ? AND j.tenant_id = o.tenant_id
 					WHERE o.redis_job_id = ? AND o.tenant_id = ?
-					""", (rs, rowNum) -> terminal(id, rs.getString("final_state"), rs.getString("body"),
+					""", (rs, rowNum) -> terminal(id, tenantId, rs.getString("final_state"), rs.getString("body"),
 					rs.getBytes("output_signature"), rs.getString("signing_key_id")),
 					DurableID.forRedisJob(id), id, tenantId);
 		} catch (EmptyResultDataAccessException ignored) {
@@ -135,7 +135,7 @@ public class JobsController {
 		return ResponseEntity.ok(Map.of("jobId", id, "status", "QUEUED"));
 	}
 
-	private ResponseEntity<?> terminal(String id, String finalState, String body, byte[] signature, String signingKeyId) {
+	private ResponseEntity<?> terminal(String id, UUID tenantID, String finalState, String body, byte[] signature, String signingKeyId) {
 		JsonNode result;
 		try {
 			result = mapper.readTree(body);
@@ -147,6 +147,7 @@ public class JobsController {
 				"jobId", id,
 				"status", finalState,
 				"result", result,
+				"tenantId", tenantID.toString(),
 				"signature", sig,
 				"signingKeyId", signingKeyId == null ? "" : signingKeyId
 		));

@@ -109,7 +109,7 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | Path | Contents |
 | --- | --- |
 | `cmd/worker` | The worker process. Reads `coldharbour:jobs`, runs the registered job type, signs and journals the result, then purges the key. |
-| `cmd/verify` | A standalone checker. `verify output --body --sig --pub` checks a signed job result. `verify receipt --job-id --purged-at --sig --pub` checks a purge receipt. Neither subcommand touches Redis or Postgres. |
+| `cmd/verify` | A standalone checker. `verify output --body --job-id --tenant-id --sig --pub` checks a signed job result. `verify receipt --job-id --purged-at --sig --pub` checks a purge receipt. Neither subcommand touches Redis or Postgres. |
 | `internal/redact` | The `redact` job type: the three regular expressions and the `RedactPII` function they implement. |
 | `internal/mask` | The `mask` job type: replaces named fields in a JSON document. Added to prove the job-type registry needs no changes to add a job. |
 | `internal/runner` | The `JobRunner` interface and the registry that looks up a job type by name. |

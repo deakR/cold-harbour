@@ -32,7 +32,15 @@ func PurgeMessage(jobID string, purgedAt time.Time) ([]byte, error) {
 	})
 }
 
-// SigningKeyID is hex of the first 8 bytes of the Ed25519 public key.
+// OutputMessage is the canonical signed bytes for a job result.
+// jobID is the Redis id. body is the durable JSON from journal.BodyOf.
+func OutputMessage(jobID, tenantID string, body []byte) ([]byte, error) {
+	return json.Marshal(struct {
+		JobID    string `json:"jobId"`
+		TenantID string `json:"tenantId"`
+		Body     string `json:"body"`
+	}{jobID, tenantID, string(body)})
+}
 func SigningKeyID(pub ed25519.PublicKey) string {
 	if len(pub) < 8 {
 		return ""

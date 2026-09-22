@@ -71,7 +71,9 @@ func (d *deadLetters) fail(ctx context.Context, c claimed, result journal.JobRes
 		return err
 	}
 	if ok && n >= 2 {
-		purge.signOutput(&result)
+		if err := purge.signOutput(&result); err != nil {
+			return err
+		}
 		if err := store.Record(ctx, result); err != nil {
 			return err
 		}
@@ -118,7 +120,9 @@ func (d *deadLetters) bury(ctx context.Context, c claimed, jobType, reason strin
 	result := journal.Fail(c.job.ID, map[string]any{"error": reason})
 	result.TenantID = c.job.TenantID
 	result.JobType = jobType
-	purge.signOutput(&result)
+	if err := purge.signOutput(&result); err != nil {
+		return err
+	}
 	if err := store.Record(ctx, result); err != nil {
 		return err
 	}
