@@ -19,7 +19,21 @@ public class Connections {
 		int split = addr.lastIndexOf(':');
 		String host = split > 0 ? addr.substring(0, split) : addr;
 		int port = split > 0 ? Integer.parseInt(addr.substring(split + 1)) : 6379;
-		return new LettuceConnectionFactory(host, port);
+		org.springframework.data.redis.connection.RedisStandaloneConfiguration standalone =
+				new org.springframework.data.redis.connection.RedisStandaloneConfiguration(host, port);
+		String password = System.getenv("REDIS_PASSWORD");
+		if (password != null && !password.isBlank()) {
+			standalone.setPassword(password);
+		}
+		if (!"1".equals(System.getenv("REDIS_TLS"))) {
+			return new LettuceConnectionFactory(standalone);
+		}
+		org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration client =
+				org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration.builder()
+						.useSsl()
+						.disablePeerVerification()
+						.build();
+		return new LettuceConnectionFactory(standalone, client);
 	}
 
 	@Bean
@@ -49,7 +63,11 @@ public class Connections {
 			path = path.substring(1);
 		}
 		int port = uri.getPort() == -1 ? 5432 : uri.getPort();
-		ds.setJdbcUrl("jdbc:postgresql://" + uri.getHost() + ":" + port + "/" + path);
+		String jdbc = "jdbc:postgresql://" + uri.getHost() + ":" + port + "/" + path;
+		if (uri.getQuery() != null && !uri.getQuery().isBlank()) {
+			jdbc = jdbc + "?" + uri.getQuery();
+		}
+		ds.setJdbcUrl(jdbc);
 		ds.addDataSourceProperty("options", "-c TimeZone=UTC");
 		return ds;
 	}

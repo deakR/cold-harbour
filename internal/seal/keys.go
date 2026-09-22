@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -104,11 +103,15 @@ func (s *pgKeyStore) Ensure(ctx context.Context, durableID uuid.UUID) ([32]byte,
 	if _, err := rand.Read(candidate); err != nil {
 		return [32]byte{}, err
 	}
-	_, err := s.db.ExecContext(ctx, `
+	stored, err := wrapKey(ctx, candidate)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	_, err = s.db.ExecContext(ctx, `
 		INSERT INTO job_keys (job_id, key_material)
 		VALUES ($1, $2)
 		ON CONFLICT (job_id) DO NOTHING
-	`, durableID, candidate)
+	`, durableID, stored)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -122,11 +125,12 @@ func (s *pgKeyStore) Ensure(ctx context.Context, durableID uuid.UUID) ([32]byte,
 	if material == nil {
 		return [32]byte{}, errKeyDestroyed
 	}
-	if len(material) != 32 {
-		return [32]byte{}, fmt.Errorf("%w: got %d", errKeyWrongLength, len(material))
+	plain, err := unwrapKey(ctx, material)
+	if err != nil {
+		return [32]byte{}, err
 	}
 	var key [32]byte
-	copy(key[:], material)
+	copy(key[:], plain)
 	return key, nil
 }
 

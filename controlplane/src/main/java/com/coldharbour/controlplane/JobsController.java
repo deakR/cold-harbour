@@ -45,6 +45,9 @@ public class JobsController {
 		if (input == null || input.isEmpty()) {
 			return ResponseEntity.badRequest().body(Map.of("error", "input is required"));
 		}
+		if (!PostLimit.allow(tenantId)) {
+			return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+		}
 		String jobId = UUID.randomUUID().toString();
 		jdbc.update(
 				"INSERT INTO job_accepts (redis_job_id, tenant_id, accepted_at) VALUES (?, ?, now())",

@@ -2,6 +2,8 @@ package queue
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"os"
@@ -72,7 +74,26 @@ type jobStream struct {
 }
 
 func OpenJobs(addr string) *jobStream {
-	return &jobStream{rdb: redis.NewClient(&redis.Options{Addr: addr})}
+	opt := &redis.Options{Addr: addr}
+	if pw := os.Getenv("REDIS_PASSWORD"); pw != "" {
+		opt.Password = pw
+	}
+	if os.Getenv("REDIS_TLS") == "1" {
+		cfg := &tls.Config{MinVersion: tls.VersionTLS12}
+		if caPath := os.Getenv("REDIS_CA"); caPath != "" {
+			pem, err := os.ReadFile(caPath)
+			if err != nil {
+				panic(err)
+			}
+			pool := x509.NewCertPool()
+			if !pool.AppendCertsFromPEM(pem) {
+				panic("REDIS_CA is not a PEM certificate")
+			}
+			cfg.RootCAs = pool
+		}
+		opt.TLSConfig = cfg
+	}
+	return &jobStream{rdb: redis.NewClient(opt)}
 }
 
 func (s *jobStream) Add(ctx context.Context, job Job) error {
