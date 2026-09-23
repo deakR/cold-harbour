@@ -217,12 +217,15 @@ func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purg
 	return handle(ctx, stream, hash, purge, reg, c, store, emit, hooks)
 }
 
-func openJobInput(ctx context.Context, keys seal.KeyStore, jobID, sealed string) (string, error) {
-	key, err := keys.Ensure(ctx, journal.DurableIDFor(jobID))
+func openJobInput(ctx context.Context, keys seal.KeyStore, jobID, raw string) (string, error) {
+	key, ok, err := keys.Load(ctx, journal.DurableIDFor(jobID))
 	if err != nil {
 		return "", err
 	}
-	plain, err := seal.Open(key, sealed)
+	if !ok {
+		return raw, nil
+	}
+	plain, err := seal.Open(key, raw)
 	if err != nil {
 		return "", err
 	}

@@ -21,6 +21,8 @@ var (
 // KeyStore holds per-job AES-256 material keyed by DurableIDFor(redisId).
 type KeyStore interface {
 	Ensure(ctx context.Context, durableID uuid.UUID) ([32]byte, error)
+	// Load reports whether a key row exists. It does not create one.
+	Load(ctx context.Context, durableID uuid.UUID) (key [32]byte, ok bool, err error)
 	Destroy(ctx context.Context, durableID uuid.UUID, at time.Time) error
 }
 
@@ -55,6 +57,19 @@ func (s *MemoryKeyStore) Ensure(_ context.Context, durableID uuid.UUID) ([32]byt
 	}
 	s.keys[durableID] = memoryKeyRow{material: key}
 	return key, nil
+}
+
+func (s *MemoryKeyStore) Load(_ context.Context, durableID uuid.UUID) ([32]byte, bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	row, ok := s.keys[durableID]
+	if !ok {
+		return [32]byte{}, false, nil
+	}
+	if row.destroyed {
+		return [32]byte{}, false, errKeyDestroyed
+	}
+	return row.material, true, nil
 }
 
 func (s *MemoryKeyStore) Has(durableID uuid.UUID) bool {
@@ -139,6 +154,29 @@ func (s *pgKeyStore) Ensure(ctx context.Context, durableID uuid.UUID) ([32]byte,
 	var key [32]byte
 	copy(key[:], plain)
 	return key, nil
+}
+
+func (s *pgKeyStore) Load(ctx context.Context, durableID uuid.UUID) ([32]byte, bool, error) {
+	var material []byte
+	err := s.db.QueryRowContext(ctx, `
+		SELECT key_material FROM job_keys WHERE job_id = $1
+	`, durableID).Scan(&material)
+	if errors.Is(err, sql.ErrNoRows) {
+		return [32]byte{}, false, nil
+	}
+	if err != nil {
+		return [32]byte{}, false, err
+	}
+	if material == nil {
+		return [32]byte{}, false, errKeyDestroyed
+	}
+	plain, err := unwrapKey(ctx, material)
+	if err != nil {
+		return [32]byte{}, false, err
+	}
+	var key [32]byte
+	copy(key[:], plain)
+	return key, true, nil
 }
 
 func (s *pgKeyStore) Destroy(ctx context.Context, durableID uuid.UUID, at time.Time) error {

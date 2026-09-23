@@ -269,6 +269,39 @@ func TestPoisonJobIsBuriedAndWorkerContinues(t *testing.T) {
 	}
 }
 
+func TestCorruptSealedInputIsBuried(t *testing.T) {
+	_, stream := startStream(t)
+	ctx := context.Background()
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatal(err)
+	}
+	keys := seal.NewMemoryKeyStore()
+	if _, err := keys.Ensure(ctx, journal.DurableIDFor("bad-seal")); err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.rdb.XAdd(ctx, &redis.XAddArgs{
+		Stream: jobsStreamKey,
+		Values: map[string]any{"id": "bad-seal", "input": "not-a-seal", "job_type": "redact"},
+	}).Err(); err != nil {
+		t.Fatal(err)
+	}
+	store := journal.NewMemoryJournal()
+	priv, receipts := testSigning(t)
+	if err := consumeOne(t, stream, store, keys, receipts, priv, nil, Hooks{}); err != nil {
+		t.Fatal(err)
+	}
+	row, err := store.Load(ctx, "bad-seal")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if row.FinalState != journal.FAILED {
+		t.Fatalf("FinalState = %s, want FAILED", row.FinalState)
+	}
+	assertMainLen(t, stream, 0)
+	assertDLQLen(t, stream, 1)
+	assertNoStreamField(t, stream, dlqStreamKey, 0, "input")
+}
+
 func TestCompletedJobLeavesNoStreamEntry(t *testing.T) {
 	_, stream := startStream(t)
 	ctx := context.Background()

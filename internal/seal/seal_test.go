@@ -74,4 +74,12 @@ func TestMemoryKeyStoreEnsureOnce(t *testing.T) {
 	if a != b {
 		t.Fatal("Ensure returned a second key for the same id")
 	}
+	loaded, ok, err := store.Load(context.Background(), id)
+	if err != nil || !ok || loaded != a {
+		t.Fatalf("Load ok=%v err=%v", ok, err)
+	}
+	_, ok, err = store.Load(context.Background(), uuid.New())
+	if err != nil || ok {
+		t.Fatalf("missing Load ok=%v err=%v, want false", ok, err)
+	}
 }

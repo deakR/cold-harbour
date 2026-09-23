@@ -59,8 +59,8 @@ services:
       SIGNING_KEY: ${SIGNING_KEY:?set SIGNING_KEY}
       VAULT_ADDR: ${VAULT_ADDR:-}
       VAULT_TOKEN: ${VAULT_TOKEN:-}
-    ports:
-      - "9100:9100"
+    expose:
+      - "9100"
     volumes:
       - ./docker/certs:/certs:ro
   controlplane:

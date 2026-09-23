@@ -787,6 +787,37 @@ func TestAddStoresCiphertext(t *testing.T) {
 	}
 }
 
+func TestLegacyPlaintextCompletesWithoutAKey(t *testing.T) {
+	_, stream := startStream(t)
+	ctx := context.Background()
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatal(err)
+	}
+	const plain = "Email a@b.com x"
+	if err := stream.rdb.XAdd(ctx, &redis.XAddArgs{
+		Stream: jobsStreamKey,
+		Values: map[string]any{"id": "legacy-1", "input": plain},
+	}).Err(); err != nil {
+		t.Fatal(err)
+	}
+	keys := seal.NewMemoryKeyStore()
+	got, err := runGroupOnce(t, stream, testWorkerConfig("legacy"), journal.NewMemoryJournal(), keys)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != "legacy-1" {
+		t.Fatalf("ID = %q, want legacy-1", got.ID)
+	}
+	want, err := redact.RedactPII(plain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got.Result, redact.MapResult(want)) {
+		t.Fatalf("Result = %+v", got.Result)
+	}
+	assertMainLen(t, stream, 0)
+}
+
 func TestPrepareGroupLeavesStreamEmpty(t *testing.T) {
 	_, stream := startStream(t)
 	ctx := context.Background()
