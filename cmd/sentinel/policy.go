@@ -17,10 +17,11 @@ import (
 )
 
 type maskSettings struct {
-	maxInline int
-	kinds     []detect.Kind
-	mode      detect.Mode
-	etag      string
+	maxInline  int
+	kinds      []detect.Kind
+	mode       detect.Mode
+	failPolicy string
+	etag       string
 }
 
 var active atomic.Value
@@ -115,11 +116,16 @@ func settingsFrom(doc policy.Doc, etag string) maskSettings {
 	if max < 1 {
 		max = 65536
 	}
+	fail := doc.FailPolicy
+	if fail == "" {
+		fail = "closed"
+	}
 	return maskSettings{
-		maxInline: max,
-		kinds:     append([]detect.Kind(nil), doc.Detectors...),
-		mode:      mode,
-		etag:      etag,
+		maxInline:  max,
+		kinds:      append([]detect.Kind(nil), doc.Detectors...),
+		mode:       mode,
+		failPolicy: fail,
+		etag:       etag,
 	}
 }
 

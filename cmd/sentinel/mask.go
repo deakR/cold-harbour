@@ -18,18 +18,28 @@ type maskResult struct {
 }
 
 func maskLine(line string, maxInline int, shadow bool) maskResult {
-	return maskWith(line, maxInline, shadow, maskKinds, detect.ModeRedact)
+	return maskWith(line, maxInline, shadow, maskKinds, detect.ModeRedact, nil, "closed")
 }
 
-func maskWith(line string, maxInline int, shadow bool, kinds []detect.Kind, mode detect.Mode) maskResult {
-	if len(line) > maxInline {
-		return maskResult{line: "[DROPPED reason=too_large]", dropped: true}
-	}
+func maskWith(line string, maxInline int, shadow bool, kinds []detect.Kind, mode detect.Mode, h *handoff, failPolicy string) maskResult {
 	if len(kinds) == 0 {
 		kinds = maskKinds
 	}
 	if mode == "" {
 		mode = detect.ModeRedact
+	}
+	if failPolicy == "" {
+		failPolicy = "closed"
+	}
+	if len(line) > maxInline {
+		if shadow {
+			counts := map[detect.Kind]int{}
+			for _, sp := range detect.Scan(line, kinds) {
+				counts[sp.Kind]++
+			}
+			return maskResult{line: line, counts: counts}
+		}
+		return h.handle(line, failPolicy, kinds, mode)
 	}
 	spans := detect.Scan(line, kinds)
 	if shadow {

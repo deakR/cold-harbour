@@ -186,7 +186,14 @@ func TestHeldJobCompletesWithReceipt(t *testing.T) {
 
 	durable := journal.DurableIDFor(jobID)
 	var purgedAt time.Time
-	err = pool.QueryRow(context.Background(), `SELECT purged_at FROM purge_receipts WHERE job_id = $1`, durable).Scan(&purgedAt)
+	deadline := time.Now().Add(10 * time.Second)
+	for time.Now().Before(deadline) {
+		err = pool.QueryRow(context.Background(), `SELECT purged_at FROM purge_receipts WHERE job_id = $1`, durable).Scan(&purgedAt)
+		if err == nil && !purgedAt.IsZero() {
+			break
+		}
+		time.Sleep(30 * time.Millisecond)
+	}
 	if err != nil {
 		t.Fatalf("purge receipt: %v", err)
 	}
