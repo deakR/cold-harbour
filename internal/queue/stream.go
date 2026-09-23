@@ -21,6 +21,8 @@ const jobsStreamKey = "coldharbour:jobs"
 var (
 	errInvalidStreamID = errors.New("stream id must be millis-seq")
 	errMissingInput    = errors.New("missing input field")
+	errMissingTenant   = errors.New("missing tenant_id")
+	errInputKeyMissing = errors.New("input key missing")
 )
 
 type StreamID struct {
@@ -60,7 +62,11 @@ func parseJob(entryID StreamID, fields map[string]string) (Job, error) {
 	if id == "" {
 		id = entryID.String()
 	}
-	return Job{ID: id, Input: input, TenantID: fields["tenant_id"]}, nil
+	tenant := fields["tenant_id"]
+	if tenant == "" {
+		return Job{}, errMissingTenant
+	}
+	return Job{ID: id, Input: input, TenantID: tenant}, nil
 }
 
 func RedisAddr() string {

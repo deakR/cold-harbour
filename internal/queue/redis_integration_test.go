@@ -19,7 +19,7 @@ func TestBuryStripsInputOnRealRedis(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	job := Job{ID: "job-bury-real", Input: redact.M1Fixture}
+	job := Job{ID: "job-bury-real", Input: redact.M1Fixture, TenantID: testTenantID}
 	store := journal.NewMemoryJournal()
 	keys := seal.NewMemoryKeyStore()
 	if err := addFailJob(ctx, stream, keys, job); err != nil {

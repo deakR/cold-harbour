@@ -74,10 +74,7 @@ func (d *deadLetters) fail(ctx context.Context, c claimed, result journal.JobRes
 		if err := purge.signOutput(&result); err != nil {
 			return err
 		}
-		if err := store.Record(ctx, result); err != nil {
-			return err
-		}
-		if err := purge.run(ctx, c.job.ID); err != nil {
+		if err := commitJob(ctx, c, result, store, purge); err != nil {
 			return err
 		}
 		if err := events.Publish(ctx, d.rdb, events.JobEvent{
@@ -128,10 +125,7 @@ func (d *deadLetters) bury(ctx context.Context, c claimed, jobType, reason strin
 	if err := purge.signOutput(&result); err != nil {
 		return err
 	}
-	if err := store.Record(ctx, result); err != nil {
-		return err
-	}
-	if err := purge.run(ctx, c.job.ID); err != nil {
+	if err := commitJob(ctx, c, result, store, purge); err != nil {
 		return err
 	}
 	if err := events.Publish(ctx, d.rdb, events.JobEvent{

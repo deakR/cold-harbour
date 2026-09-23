@@ -29,7 +29,7 @@ func TestFailJobThreeAttemptsThenBury(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	job := Job{ID: "job-5", Input: redact.M1Fixture}
+	job := Job{ID: "job-5", Input: redact.M1Fixture, TenantID: testTenantID}
 	store := journal.NewMemoryJournal()
 	keys := seal.NewMemoryKeyStore()
 	if err := addFailJob(ctx, stream, keys, job); err != nil {
@@ -109,7 +109,7 @@ func TestRunGroupBuriesWithoutEmit(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := seal.NewMemoryKeyStore()
-	if err := addFailJob(ctx, stream, keys, Job{ID: "job-5", Input: redact.M1Fixture}); err != nil {
+	if err := addFailJob(ctx, stream, keys, Job{ID: "job-5", Input: redact.M1Fixture, TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
@@ -152,7 +152,7 @@ func TestReplayAtThreeBuriesAgain(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := seal.NewMemoryKeyStore()
-	if err := addFailJob(ctx, stream, keys, Job{ID: "job-5", Input: redact.M1Fixture}); err != nil {
+	if err := addFailJob(ctx, stream, keys, Job{ID: "job-5", Input: redact.M1Fixture, TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
@@ -180,7 +180,7 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "crash-fail", Input: redact.M1Fixture}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "crash-fail", Input: redact.M1Fixture, TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
@@ -210,16 +210,17 @@ func TestPoisonJobIsBuriedAndWorkerContinues(t *testing.T) {
 	if err := stream.rdb.XAdd(ctx, &redis.XAddArgs{
 		Stream: jobsStreamKey,
 		Values: map[string]any{
-			"id":       "poison-1",
-			"input":    "x",
-			"job_type": "nope",
+			"id":        "poison-1",
+			"input":     "x",
+			"job_type":  "nope",
+			"tenant_id": testTenantID,
 		},
 	}).Err(); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "ok-1", Input: redact.M1Fixture}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "ok-1", Input: redact.M1Fixture, TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 	priv, receipts := testSigning(t)
@@ -280,7 +281,7 @@ func TestCorruptSealedInputIsBuried(t *testing.T) {
 	}
 	if err := stream.rdb.XAdd(ctx, &redis.XAddArgs{
 		Stream: jobsStreamKey,
-		Values: map[string]any{"id": "bad-seal", "input": "not-a-seal", "job_type": "redact"},
+		Values: map[string]any{"id": "bad-seal", "input": "not-a-seal", "job_type": "redact", "tenant_id": testTenantID},
 	}).Err(); err != nil {
 		t.Fatal(err)
 	}
@@ -308,7 +309,7 @@ func TestCompletedJobLeavesNoStreamEntry(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "job-ok", Input: redact.M1Fixture}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "job-ok", Input: redact.M1Fixture, TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()

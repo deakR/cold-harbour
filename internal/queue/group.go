@@ -59,22 +59,41 @@ var ErrSimulatedCrash = errors.New("simulated crash after step 1 checkpoint")
 type CrashPoint int
 
 const (
-	CrashNever      CrashPoint = 0
-	CrashAfterStep1 CrashPoint = 1
+	CrashNever           CrashPoint = 0
+	CrashAfterStep1      CrashPoint = 1
+	CrashAfterRecord     CrashPoint = 2
+	CrashAfterKeyDestroy CrashPoint = 3
 )
 
 type Hooks struct {
-	CrashAfterStep1 func(jobID string) bool
-	Fail            func(jobID string) bool
+	CrashAfterStep1      func(jobID string) bool
+	CrashAfterRecord     func(jobID string) bool
+	CrashAfterKeyDestroy func(jobID string) bool
+	Fail                 func(jobID string) bool
 }
 
 func applyHooks(c *claimed, hooks Hooks) {
-	if hooks.CrashAfterStep1 != nil && hooks.CrashAfterStep1(c.job.ID) {
+	switch {
+	case hooks.CrashAfterStep1 != nil && hooks.CrashAfterStep1(c.job.ID):
 		c.crash = CrashAfterStep1
+	case hooks.CrashAfterRecord != nil && hooks.CrashAfterRecord(c.job.ID):
+		c.crash = CrashAfterRecord
+	case hooks.CrashAfterKeyDestroy != nil && hooks.CrashAfterKeyDestroy(c.job.ID):
+		c.crash = CrashAfterKeyDestroy
 	}
 	if hooks.Fail != nil && hooks.Fail(c.job.ID) {
 		c.fail = true
 	}
+}
+
+func commitJob(ctx context.Context, c claimed, result journal.JobResult, store journal.Journal, purge *purger) error {
+	if err := store.Record(ctx, result); err != nil {
+		return err
+	}
+	if c.crash == CrashAfterRecord {
+		return ErrSimulatedCrash
+	}
+	return purge.run(ctx, c.job.ID, c.crash)
 }
 
 func (s *jobStream) ensureGroup(ctx context.Context) error {
@@ -215,14 +234,31 @@ func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purg
 	if err != nil {
 		return err
 	}
-	c, err := parseClaim(id, valuesToFields(msg.Values))
+	fields := valuesToFields(msg.Values)
+	c, err := parseClaim(id, fields)
 	if errors.Is(err, errMissingInput) {
 		return stream.finish(context.WithoutCancel(ctx), id)
+	}
+	if errors.Is(err, errMissingTenant) {
+		return deadLetterMissingTenant(ctx, stream, purge, id, fields)
 	}
 	if err != nil {
 		return err
 	}
 	return handle(ctx, stream, hash, purge, reg, c, store, emit, hooks)
+}
+
+func deadLetterMissingTenant(ctx context.Context, stream *jobStream, purge *purger, id StreamID, fields map[string]string) error {
+	jobID := fields["id"]
+	if jobID == "" {
+		jobID = id.String()
+	}
+	if err := purge.keys.Destroy(ctx, journal.DurableIDFor(jobID), time.Now().UTC()); err != nil {
+		return err
+	}
+	c := claimed{entry: id, job: Job{ID: jobID}, fields: fields}
+	_, _, err := (&deadLetters{rdb: stream.rdb}).settle(ctx, c, true)
+	return err
 }
 
 func openJobInput(ctx context.Context, keys seal.KeyStore, jobID, raw string) (string, error) {
@@ -231,7 +267,7 @@ func openJobInput(ctx context.Context, keys seal.KeyStore, jobID, raw string) (s
 		return "", err
 	}
 	if !ok {
-		return raw, nil
+		return "", errInputKeyMissing
 	}
 	plain, err := seal.Open(key, raw)
 	if err != nil {
@@ -248,22 +284,34 @@ func jobInput(raw string) map[string]any {
 	return map[string]any{"input": raw}
 }
 
+func finishJournaled(ctx context.Context, stream *jobStream, purge *purger, c claimed, store journal.Journal) (bool, error) {
+	_, err := store.Load(ctx, c.job.ID)
+	if errors.Is(err, journal.ErrUnknownStoredJob) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if err := purge.run(ctx, c.job.ID, CrashNever); err != nil {
+		return false, err
+	}
+	if err := stream.finish(context.WithoutCancel(ctx), c.entry); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, c claimed, store journal.Journal, emit func(journal.JobResult), hooks Hooks) error {
 	started := time.Now()
 	defer observeJob(started)
 	applyHooks(&c, hooks)
+	finished, err := finishJournaled(ctx, stream, purge, c, store)
+	if err != nil || finished {
+		return err
+	}
 	st, err := hash.load(ctx, c.job.ID)
 	if err != nil {
 		return err
-	}
-	if st == nil {
-		_, loadErr := store.Load(ctx, c.job.ID)
-		if loadErr == nil {
-			return stream.finish(context.WithoutCancel(ctx), c.entry)
-		}
-		if !errors.Is(loadErr, journal.ErrUnknownStoredJob) {
-			return loadErr
-		}
 	}
 
 	jobType := c.fields["job_type"]
@@ -278,6 +326,9 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 	if err != nil {
 		if errors.Is(err, seal.ErrBadSealed) {
 			return (&deadLetters{rdb: stream.rdb}).bury(ctx, c, jr.JobType(), "input is not sealed", store, purge)
+		}
+		if errors.Is(err, errInputKeyMissing) {
+			return (&deadLetters{rdb: stream.rdb}).bury(ctx, c, jr.JobType(), "input key missing", store, purge)
 		}
 		return err
 	}
@@ -342,10 +393,7 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 	if err := purge.signOutput(&result); err != nil {
 		return err
 	}
-	if err := store.Record(ctx, result); err != nil {
-		return err
-	}
-	if err := purge.run(ctx, c.job.ID); err != nil {
+	if err := commitJob(ctx, c, result, store, purge); err != nil {
 		return err
 	}
 	if err := events.Publish(ctx, stream.rdb, events.JobEvent{
