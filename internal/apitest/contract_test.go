@@ -379,21 +379,22 @@ func TestWebSocketFiltersByTenant(t *testing.T) {
 }
 
 func TestPostRateLimitIs429(t *testing.T) {
-	saw := false
-	for i := 0; i < 40; i++ {
-		status, body := call(t, http.MethodPost, "/jobs", keyA, map[string]string{
+	okCount := 0
+	for i := 0; i < 31; i++ {
+		status, body := call(t, http.MethodPost, "/jobs", keyB, map[string]string{
 			"input":   "rate limit probe",
 			"jobType": "redact",
 		})
 		if status == http.StatusTooManyRequests {
-			saw = true
-			break
+			if okCount != 30 {
+				t.Fatalf("429 after %d successes, want 30", okCount)
+			}
+			return
 		}
 		if status != http.StatusOK {
 			t.Fatalf("POST %d = %d, body %s", i, status, body)
 		}
+		okCount++
 	}
-	if !saw {
-		t.Fatal("no 429 after 40 posts")
-	}
+	t.Fatalf("successes = %d, want a 429 on request 31", okCount)
 }

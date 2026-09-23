@@ -110,14 +110,15 @@ func (s *Server) openLink(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback(r.Context())
 
 	var jobID string
+	var linkTenant uuid.UUID
 	var expires time.Time
 	var maxViews, views int
 	err = tx.QueryRow(r.Context(), `
-		SELECT redis_job_id, expires_at, max_views, view_count
+		SELECT redis_job_id, tenant_id, expires_at, max_views, view_count
 		FROM delivery_links
 		WHERE token_hash = $1
 		FOR UPDATE
-	`, hash).Scan(&jobID, &expires, &maxViews, &views)
+	`, hash).Scan(&jobID, &linkTenant, &expires, &maxViews, &views)
 	if err == pgx.ErrNoRows {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -140,8 +141,8 @@ func (s *Server) openLink(w http.ResponseWriter, r *http.Request) {
 		SELECT o.body, o.tenant_id::text, j.output_signature, COALESCE(j.signing_key_id, '')
 		FROM outputs o
 		JOIN jobs j ON j.tenant_id = o.tenant_id AND j.id = $1
-		WHERE o.redis_job_id = $2
-	`, journal.DurableIDFor(jobID), jobID).Scan(&body, &tenantID, &sig, &keyID)
+		WHERE o.redis_job_id = $2 AND o.tenant_id = $3
+	`, journal.DurableIDFor(jobID), jobID, linkTenant).Scan(&body, &tenantID, &sig, &keyID)
 	if err == pgx.ErrNoRows {
 		writeJSON(w, http.StatusConflict, map[string]string{"error": "job has no output"})
 		return
