@@ -24,7 +24,12 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25.x"
+      - run: go run ./cmd/coldharbour migrate
+        env:
+          POSTGRES_DSN: postgres://coldharbour:ci@127.0.0.1:5432/coldharbour?sslmode=disable
       - run: COLDHARBOUR_INTEGRATION=1 go test ./...
+        env:
+          POSTGRES_DSN: postgres://coldharbour:ci@127.0.0.1:5432/coldharbour?sslmode=disable
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -75,14 +80,21 @@ jobs:
           export POSTGRES_PASSWORD=ci-postgres
           export REDIS_PASSWORD=ci-redis
           docker compose up -d --build
+          ready=0
           for i in $(seq 1 60); do
             code=$(curl -s -o /dev/null -w "%{http_code}" -H "X-API-Key: ch_live_a_demo_key_aaaaaaaa" http://127.0.0.1:8081/v1/jobs || true)
-            if [ "$code" = "200" ]; then
-              exit 0
+            if [ "$code" = "200" ] || [ "$code" = "401" ]; then
+              ready=1
+              break
             fi
             sleep 2
           done
-          docker compose logs
-          exit 1
+          if [ "$ready" != 1 ]; then
+            docker compose logs
+            exit 1
+          fi
+          export POSTGRES_DSN="postgres://coldharbour:${POSTGRES_PASSWORD}@127.0.0.1:5433/coldharbour?sslmode=verify-full&sslrootcert=docker/certs/ca.crt"
+          echo "API_KEY_A=$(go run ./cmd/coldharbour admin create-tenant --name tenant-a)" >> "$GITHUB_ENV"
+          echo "API_KEY_B=$(go run ./cmd/coldharbour admin create-tenant --name tenant-b)" >> "$GITHUB_ENV"
       - name: Contract tests
         run: API_BASE=http://127.0.0.1:8081 API_PREFIX=/v1 COLDHARBOUR_WORKER_CONTAINER=coldharbour-worker go test ./internal/apitest -count=1 -timeout 180s

@@ -3,9 +3,12 @@ package seal
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"sync"
 	"time"
+
+	"coldharbour/internal/ledger"
 
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -18,6 +21,7 @@ type Receipt struct {
 	PurgedAt     time.Time
 	Signature    []byte
 	SigningKeyID string
+	TenantID     string
 }
 
 // ReceiptStore persists purge receipts. Insert is idempotent on JobID.
@@ -85,7 +89,12 @@ func (s *pgReceiptStore) Close() error {
 }
 
 func (s *pgReceiptStore) Insert(ctx context.Context, r Receipt) (bool, error) {
-	res, err := s.db.ExecContext(ctx, `
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback()
+	res, err := tx.ExecContext(ctx, `
 		INSERT INTO purge_receipts (job_id, redis_job_id, purged_at, signature, signing_key_id)
 		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (job_id) DO NOTHING
@@ -95,6 +104,26 @@ func (s *pgReceiptStore) Insert(ctx context.Context, r Receipt) (bool, error) {
 	}
 	n, err := res.RowsAffected()
 	if err != nil {
+		return false, err
+	}
+	if n == 1 && r.TenantID != "" {
+		tenant, err := uuid.Parse(r.TenantID)
+		if err != nil {
+			return false, err
+		}
+		payload, err := json.Marshal(map[string]string{
+			"jobId":        r.RedisJobID,
+			"purgedAt":     r.PurgedAt.UTC().Format(time.RFC3339Nano),
+			"signingKeyId": r.SigningKeyID,
+		})
+		if err != nil {
+			return false, err
+		}
+		if err := ledger.AppendSQL(ctx, tx, tenant, "purge_receipt", payload, r.PurgedAt); err != nil {
+			return false, err
+		}
+	}
+	if err := tx.Commit(); err != nil {
 		return false, err
 	}
 	return n == 1, nil

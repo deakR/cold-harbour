@@ -13,7 +13,7 @@ type LiveEvent = { tenantId: string; jobId: string; status: string }
 const maskSample = '{"document":{"email":"a@b.com","name":"Ann"},"fields":["email"]}'
 
 export default function App() {
-  const [apiKey, setApiKey] = useState('ch_live_a_demo_key_aaaaaaaa')
+  const [apiKey, setApiKey] = useState('')
   const [jobType, setJobType] = useState('redact')
   const [input, setInput] = useState('Call 415-555-0199 before noon.')
   const [jobs, setJobs] = useState<JobRow[]>([])

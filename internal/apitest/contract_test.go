@@ -16,10 +16,17 @@ import (
 	"github.com/coder/websocket"
 )
 
-const (
-	keyA = "ch_live_a_demo_key_aaaaaaaa"
-	keyB = "ch_live_b_demo_key_bbbbbbbb"
+var (
+	keyA = envOr("API_KEY_A", "ch_live_a_demo_key_aaaaaaaa")
+	keyB = envOr("API_KEY_B", "ch_live_b_demo_key_bbbbbbbb")
 )
+
+func envOr(name, fallback string) string {
+	if v := os.Getenv(name); v != "" {
+		return v
+	}
+	return fallback
+}
 
 func baseURL(t *testing.T) string {
 	t.Helper()

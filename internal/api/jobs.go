@@ -6,13 +6,15 @@ import (
 	"time"
 
 	"coldharbour/internal/journal"
+	"coldharbour/internal/keys"
 	"coldharbour/internal/queue"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *Server) postJob(w http.ResponseWriter, r *http.Request, tenant uuid.UUID) {
+func (s *Server) postJob(w http.ResponseWriter, r *http.Request, p keys.Principal) {
+	tenant := p.TenantID
 	body, err := readJSON(r)
 	if err != nil {
 		fieldError(w, "input")
@@ -78,7 +80,8 @@ func (s *Server) allowPost(r *http.Request, tenant uuid.UUID) (bool, error) {
 	return n <= 30, nil
 }
 
-func (s *Server) listJobs(w http.ResponseWriter, r *http.Request, tenant uuid.UUID) {
+func (s *Server) listJobs(w http.ResponseWriter, r *http.Request, p keys.Principal) {
+	tenant := p.TenantID
 	rows, err := s.db.Query(r.Context(), `
 		SELECT a.redis_job_id, a.accepted_at, o.final_state
 		FROM job_accepts a
@@ -115,7 +118,8 @@ func (s *Server) listJobs(w http.ResponseWriter, r *http.Request, tenant uuid.UU
 	writeJSON(w, http.StatusOK, out)
 }
 
-func (s *Server) getJob(w http.ResponseWriter, r *http.Request, tenant uuid.UUID) {
+func (s *Server) getJob(w http.ResponseWriter, r *http.Request, p keys.Principal) {
+	tenant := p.TenantID
 	id := r.PathValue("id")
 	var state, body, keyID string
 	var sig []byte

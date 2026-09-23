@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -9,12 +10,14 @@ import (
 
 	"coldharbour/internal/api"
 	"coldharbour/internal/mask"
+	"coldharbour/internal/migrate"
 	"coldharbour/internal/queue"
 	"coldharbour/internal/redact"
 	"coldharbour/internal/runner"
 	"coldharbour/internal/seal"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -23,6 +26,14 @@ func main() {
 		log.Fatal("controlplane: POSTGRES_DSN is required")
 	}
 	ctx := context.Background()
+	sqldb, err := sql.Open("pgx", dsn)
+	if err != nil {
+		log.Fatalf("controlplane: postgres: %v", err)
+	}
+	if err := migrate.Up(sqldb); err != nil {
+		log.Fatalf("controlplane: migrate: %v", err)
+	}
+	_ = sqldb.Close()
 	db, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		log.Fatalf("controlplane: postgres: %v", err)

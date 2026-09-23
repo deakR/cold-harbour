@@ -93,7 +93,7 @@ func commitJob(ctx context.Context, c claimed, result journal.JobResult, store j
 	if c.crash == CrashAfterRecord {
 		return ErrSimulatedCrash
 	}
-	return purge.run(ctx, c.job.ID, c.crash)
+	return purge.run(ctx, c.job.ID, c.crash, c.job.TenantID)
 }
 
 func (s *jobStream) ensureGroup(ctx context.Context) error {
@@ -295,7 +295,7 @@ func finishJournaled(ctx context.Context, stream *jobStream, purge *purger, c cl
 	if err != nil {
 		return false, err
 	}
-	if err := purge.run(ctx, c.job.ID, CrashNever); err != nil {
+	if err := purge.run(ctx, c.job.ID, CrashNever, c.job.TenantID); err != nil {
 		return false, err
 	}
 	if err := stream.finish(context.WithoutCancel(ctx), c.entry); err != nil {

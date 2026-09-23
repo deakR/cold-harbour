@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -11,10 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"coldharbour/internal/keys"
 	"coldharbour/internal/queue"
 	"coldharbour/internal/seal"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
@@ -52,45 +50,49 @@ func New(db *pgxpool.Pool, rdb *redis.Client, keys seal.KeyStore, jobs enqueuer,
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /v1/jobs", s.authed(s.postJob))
-	mux.HandleFunc("GET /v1/jobs", s.authed(s.listJobs))
-	mux.HandleFunc("GET /v1/jobs/{id}", s.authed(s.getJob))
-	mux.HandleFunc("POST /v1/jobs/{id}/delivery-links", s.authed(s.createLink))
-	mux.HandleFunc("GET /v1/reports/compliance", s.authed(s.compliance))
+	mux.HandleFunc("POST /v1/jobs", s.authed([]string{"admin", "app", "sentinel"}, s.postJob))
+	mux.HandleFunc("GET /v1/jobs", s.authed([]string{"admin", "app"}, s.listJobs))
+	mux.HandleFunc("GET /v1/jobs/{id}", s.authed([]string{"admin", "app"}, s.getJob))
+	mux.HandleFunc("POST /v1/jobs/{id}/delivery-links", s.authed([]string{"admin", "app"}, s.createLink))
+	mux.HandleFunc("GET /v1/reports/compliance", s.authed([]string{"admin", "app"}, s.compliance))
+	mux.HandleFunc("POST /v1/keys", s.authed([]string{"admin"}, s.createKey))
+	mux.HandleFunc("GET /v1/keys", s.authed([]string{"admin"}, s.listKeys))
+	mux.HandleFunc("DELETE /v1/keys/{id}", s.authed([]string{"admin"}, s.revokeKey))
 	mux.HandleFunc("GET /v1/ws/events", s.events)
 	mux.HandleFunc("GET /d/{token}", s.openLink)
 	return mux
 }
 
-func (s *Server) authed(next func(http.ResponseWriter, *http.Request, uuid.UUID)) http.HandlerFunc {
+func (s *Server) authed(roles []string, next func(http.ResponseWriter, *http.Request, keys.Principal)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tenant, ok := s.authenticate(r)
+		p, ok := s.authenticate(r)
 		if !ok {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		next(w, r, tenant)
+		if !roleAllowed(p.Role, roles) {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		next(w, r, p)
 	}
 }
 
-func (s *Server) authenticate(r *http.Request) (uuid.UUID, bool) {
+func roleAllowed(role string, roles []string) bool {
+	for _, allowed := range roles {
+		if role == allowed {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Server) authenticate(r *http.Request) (keys.Principal, bool) {
 	raw := r.Header.Get("X-API-Key")
 	if raw == "" && strings.HasPrefix(r.URL.Path, "/v1/ws/") {
 		raw = r.URL.Query().Get("apiKey")
 	}
-	if raw == "" {
-		return uuid.Nil, false
-	}
-	sum := sha256.Sum256([]byte(raw))
-	var tenant uuid.UUID
-	err := s.db.QueryRow(r.Context(), `
-		SELECT tenant_id FROM api_keys
-		WHERE key_hash = $1 AND revoked_at IS NULL
-	`, hex.EncodeToString(sum[:])).Scan(&tenant)
-	if err != nil {
-		return uuid.Nil, false
-	}
-	return tenant, true
+	return keys.Authenticate(r.Context(), s.db, raw)
 }
 
 func writeJSON(w http.ResponseWriter, status int, body any) {

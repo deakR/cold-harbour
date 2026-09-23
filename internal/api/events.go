@@ -90,11 +90,16 @@ func (h *hub) read(ctx context.Context, sub *redis.PubSub) {
 }
 
 func (s *Server) events(w http.ResponseWriter, r *http.Request) {
-	tenant, ok := s.authenticate(r)
+	p, ok := s.authenticate(r)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+	if p.Role != "admin" && p.Role != "app" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	tenant := p.TenantID
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
 	if err != nil {
 		return

@@ -263,6 +263,11 @@ func TestPostgresJournalOptional(t *testing.T) {
 	redisID := "job-live-" + t.Name()
 	jr := completedResult(t, redisID, want, created, done)
 	jr.TenantID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+	if _, err := j.db.ExecContext(ctx, `
+		INSERT INTO tenants (id, name) VALUES ($1, 'tenant-a') ON CONFLICT (id) DO NOTHING
+	`, jr.TenantID); err != nil {
+		t.Fatal(err)
+	}
 	if err := j.Record(ctx, jr); err != nil {
 		t.Fatal(err)
 	}
