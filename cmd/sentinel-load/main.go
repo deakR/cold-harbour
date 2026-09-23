@@ -52,7 +52,7 @@ func run() error {
 		if !os.IsNotExist(err) {
 			return err
 		}
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 			return err
 		}
 		out, err := json.MarshalIndent(got, "", "  ")
@@ -60,7 +60,7 @@ func run() error {
 			return err
 		}
 		out = append(out, '\n')
-		if err := os.WriteFile(path, out, 0o644); err != nil {
+		if err := os.WriteFile(path, out, 0o600); err != nil {
 			return err
 		}
 		fmt.Printf("wrote baseline %s\n", path)
