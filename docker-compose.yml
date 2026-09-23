@@ -57,6 +57,9 @@ services:
       REDIS_TLS: "1"
       REDIS_CA: /certs/server.crt
       SIGNING_KEY: ${SIGNING_KEY:?set SIGNING_KEY}
+      CONSUMER: worker-1
+    ports:
+      - "9100:9100"
     volumes:
       - ./docker/certs:/certs:ro
   controlplane:
