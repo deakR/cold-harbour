@@ -119,14 +119,20 @@ func runEnsureSentinelKey(args []string) error {
 	if *tenantName == "" || *outPath == "" {
 		return fmt.Errorf("usage: coldharbour admin ensure-sentinel-key --tenant-name <name> --out <path>")
 	}
-	if raw, err := os.ReadFile(*outPath); err == nil && strings.TrimSpace(string(raw)) != "" {
-		fmt.Fprintf(os.Stderr, "sentinel key already present at %s\n", *outPath)
-		return nil
-	}
 	ctx := context.Background()
 	var last error
 	for attempt := 0; attempt < 60; attempt++ {
-		err := writeSentinelKey(ctx, *tenantName, *keyName, *outPath)
+		action, err := sentinelKeyFileAction(ctx, *outPath)
+		if err != nil {
+			last = err
+			time.Sleep(time.Second)
+			continue
+		}
+		if action == sentinelKeyReuse {
+			fmt.Fprintf(os.Stderr, "sentinel key already present at %s\n", *outPath)
+			return nil
+		}
+		err = writeSentinelKey(ctx, *tenantName, *keyName, *outPath)
 		if err == nil {
 			fmt.Fprintf(os.Stderr, "sentinel key written to %s\n", *outPath)
 			return nil
@@ -135,6 +141,45 @@ func runEnsureSentinelKey(args []string) error {
 		time.Sleep(time.Second)
 	}
 	return fmt.Errorf("ensure-sentinel-key: %w", last)
+}
+
+type sentinelKeyAction int
+
+const (
+	sentinelKeyRewrite sentinelKeyAction = iota
+	sentinelKeyReuse
+)
+
+func classifySentinelKey(raw, role string, ok bool) sentinelKeyAction {
+	if strings.TrimSpace(raw) == "" || !ok || role != "sentinel" {
+		return sentinelKeyRewrite
+	}
+	return sentinelKeyReuse
+}
+
+func sentinelKeyFileAction(ctx context.Context, path string) (sentinelKeyAction, error) {
+	raw, err := os.ReadFile(path) //#nosec G304 G703 -- operator key file path
+	if err != nil && !os.IsNotExist(err) {
+		return sentinelKeyRewrite, err
+	}
+	text := ""
+	if err == nil {
+		text = string(raw)
+	}
+	if strings.TrimSpace(text) == "" {
+		return sentinelKeyRewrite, nil
+	}
+	conn, err := pgx.Connect(ctx, dsn())
+	if err != nil {
+		return sentinelKeyRewrite, err
+	}
+	defer conn.Close(ctx)
+	p, ok := keys.Authenticate(ctx, conn, strings.TrimSpace(text))
+	role := ""
+	if ok {
+		role = p.Role
+	}
+	return classifySentinelKey(text, role, ok), nil
 }
 
 func writeSentinelKey(ctx context.Context, tenantName, keyName, outPath string) error {

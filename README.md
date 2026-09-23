@@ -90,7 +90,7 @@ You should see `[EMAIL]` in the masked file and no raw `user1@example.com`. Read
 docker run --rm -v coldharbour_sentinel-logs:/logs busybox:1.37 cat /logs/app.masked.log
 ```
 
-A one-shot bootstrap creates a sentinel API key on first start and reuses the file on later starts. The key is not printed into Compose logs. Read it for the dashboard Sentinel view with:
+A one-shot bootstrap writes a sentinel API key. On a later start it keeps the file when that key still authenticates, and replaces the file when Postgres rejects it. The key is not printed into Compose logs. Read it for the dashboard Sentinel view with:
 
 ```shell
 docker run --rm -v coldharbour_sentinel-keys:/keys busybox:1.37 cat /keys/sentinel.key
@@ -141,7 +141,7 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | --- | --- |
 | `cmd/worker` | The worker process. Reads `coldharbour:jobs`, runs the registered job type, signs and journals the result, then purges the key. Serves Prometheus metrics on port 9100. Compose does not publish that port on the host, so more than one worker can run. Scrape `http://<worker-container>:9100/metrics` on the Compose network. |
 | `cmd/sentinel` | Masks personal data in log lines. `sentinel run --in - --out -` reads stdin and writes masked lines. Lines longer than `--max-inline-bytes` (default 65536) are posted to Cold Harbour when `--control-plane` is set, and stdout gets `[HELD job=<id>]`. When handoff is unavailable, `failPolicy` chooses `[DROPPED reason=handoff_unavailable]`, inline masking, or unmasked output with `--allow-fail-open`. `--shadow` counts detections and writes the line unchanged. Metrics are served at `--metrics` (default `:9101`). Set `SENTINEL_API_KEY`, or set `SENTINEL_API_KEY_FILE` to a path that holds the key. |
-| `cmd/coldharbour` | `migrate` applies goose migrations. `admin create-tenant` creates a tenant and prints one admin key. `admin ensure-sentinel-key --tenant-name --out` writes a sentinel key to a file (or keeps an existing file) without printing the key. |
+| `cmd/coldharbour` | `migrate` applies goose migrations. `admin create-tenant` creates a tenant and prints one admin key. `admin ensure-sentinel-key --tenant-name --out` writes a sentinel key to a file without printing the key. It keeps the file when the key still authenticates as sentinel, and replaces the file when the database rejects it. |
 | `cmd/verify` | A standalone checker. `verify output --body --job-id --tenant-id --sig --pub` checks a signed job result. `verify receipt --job-id --purged-at --sig --pub` checks a purge receipt. Neither subcommand touches Redis or Postgres. |
 | `internal/detect` | Finds email, US phone, Indian phone, SSN, Aadhaar, and PAN spans. Aadhaar must pass the Verhoeff check. `Apply` writes `[KIND]` or keeps the last four characters of the span. |
 | `internal/redact` | The `redact` job type. Calls `detect` and writes `[EMAIL_REDACTED]`, `[PHONE_REDACTED]`, and `[SSN_REDACTED]`. |
