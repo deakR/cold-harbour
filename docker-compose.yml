@@ -43,6 +43,16 @@ services:
       - "6380:6379"
     volumes:
       - ./docker/certs:/certs:ro
+  seed:
+    profiles: ["dev"]
+    image: postgres:16
+    depends_on:
+      - postgres
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - ./dev/seed.sql:/seed.sql:ro
+    entrypoint: ["bash", "-c", "until pg_isready -h postgres -U coldharbour; do sleep 1; done; psql -h postgres -U coldharbour -d coldharbour -f /seed.sql"]
   worker:
     container_name: coldharbour-worker
     restart: unless-stopped

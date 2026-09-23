@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"coldharbour/internal/journal"
-
-	"github.com/google/uuid"
+	"coldharbour/internal/keys"
 )
 
-func (s *Server) compliance(w http.ResponseWriter, r *http.Request, tenant uuid.UUID) {
+func (s *Server) compliance(w http.ResponseWriter, r *http.Request, p keys.Principal) {
+	tenant := p.TenantID
 	from, ok := parseInstant(r.URL.Query().Get("from"))
 	if !ok {
 		fieldError(w, "from")

@@ -57,7 +57,7 @@ You need Docker and Go 1.25.
 
    ```shell
    curl -X POST http://127.0.0.1:8081/v1/jobs \
-     -H "X-API-Key: ch_live_a_demo_key_aaaaaaaa" \
+     -H "X-API-Key: $ADMIN_KEY" \
      -H "Content-Type: application/json" \
      -d '{"input":"Contact jane.doe@example.com or (555) 123-4567."}'
    ```

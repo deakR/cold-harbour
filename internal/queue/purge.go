@@ -21,7 +21,7 @@ type purger struct {
 	priv     ed25519.PrivateKey
 }
 
-func (p *purger) run(ctx context.Context, redisJobID string, crash CrashPoint) error {
+func (p *purger) run(ctx context.Context, redisJobID string, crash CrashPoint, tenantID string) error {
 	durable := journal.DurableIDFor(redisJobID)
 	if existing, ok, err := p.receipts.Get(ctx, durable); err != nil {
 		return err
@@ -45,6 +45,7 @@ func (p *purger) run(ctx context.Context, redisJobID string, crash CrashPoint) e
 		PurgedAt:     purgedAt,
 		Signature:    sig,
 		SigningKeyID: seal.SigningKeyID(pub),
+		TenantID:     tenantID,
 	})
 	if err != nil {
 		return err

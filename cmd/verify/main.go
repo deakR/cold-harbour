@@ -1,13 +1,18 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"flag"
 	"fmt"
 	"os"
 	"time"
 
+	"coldharbour/internal/ledger"
 	"coldharbour/internal/seal"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 func main() {
@@ -20,10 +25,43 @@ func main() {
 		os.Exit(runReceipt(os.Args[2:]))
 	case "output":
 		os.Exit(runOutput(os.Args[2:]))
+	case "ledger":
+		os.Exit(runLedger(os.Args[2:]))
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n", os.Args[1])
 		os.Exit(2)
 	}
+}
+
+func runLedger(args []string) int {
+	fs := flag.NewFlagSet("ledger", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	tenant := fs.String("tenant", "", "tenant id")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	id, err := uuid.Parse(*tenant)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "ledger requires --tenant")
+		return 2
+	}
+	dsn := os.Getenv("POSTGRES_DSN")
+	if dsn == "" {
+		fmt.Fprintln(os.Stderr, "POSTGRES_DSN is required")
+		return 2
+	}
+	ctx := context.Background()
+	conn, err := pgx.Connect(ctx, dsn)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer conn.Close(ctx)
+	if err := ledger.Verify(ctx, conn, id); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	return 0
 }
 
 func runReceipt(args []string) int {

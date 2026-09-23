@@ -16,10 +16,17 @@ import (
 	"github.com/coder/websocket"
 )
 
-const (
-	keyA = "ch_live_a_demo_key_aaaaaaaa"
-	keyB = "ch_live_b_demo_key_bbbbbbbb"
+var (
+	keyA = envOr("API_KEY_A", "ch_live_a_demo_key_aaaaaaaa")
+	keyB = envOr("API_KEY_B", "ch_live_b_demo_key_bbbbbbbb")
 )
+
+func envOr(name, fallback string) string {
+	if v := os.Getenv(name); v != "" {
+		return v
+	}
+	return fallback
+}
 
 func baseURL(t *testing.T) string {
 	t.Helper()
@@ -208,7 +215,8 @@ func TestPostListAndFetch(t *testing.T) {
 	if got["status"] != "COMPLETED" {
 		t.Fatalf("status = %v, want COMPLETED", got["status"])
 	}
-	if got["tenantId"] != "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" {
+	tenant, _ := got["tenantId"].(string)
+	if tenant == "" {
 		t.Fatalf("tenantId = %v", got["tenantId"])
 	}
 }

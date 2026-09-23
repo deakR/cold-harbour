@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"coldharbour/internal/journal"
+	"coldharbour/internal/keys"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *Server) createLink(w http.ResponseWriter, r *http.Request, tenant uuid.UUID) {
+func (s *Server) createLink(w http.ResponseWriter, r *http.Request, p keys.Principal) {
+	tenant := p.TenantID
 	id := r.PathValue("id")
 	var owned int
 	err := s.db.QueryRow(r.Context(), `
