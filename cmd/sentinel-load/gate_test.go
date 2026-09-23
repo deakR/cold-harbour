@@ -14,6 +14,9 @@ func TestCheckGateLiterals(t *testing.T) {
 	if err := checkGate(Metrics{P50Ms: 0.1, P99Ms: 1, MBps: 70}, base); err == nil {
 		t.Fatal("throughput at 70% of baseline must fail the gate")
 	}
+	if err := checkGate(Metrics{P50Ms: 0.1, P99Ms: 4.9, MBps: 11.9}, base); err == nil {
+		t.Fatal("throughput under 12 MB/s must fail the gate when p99 is under 5 ms")
+	}
 	if err := checkGate(Metrics{P50Ms: 0.1, P99Ms: 1, MBps: 100}, base); err != nil {
 		t.Fatalf("p99 1 ms at 100%% of baseline must pass, got %v", err)
 	}
