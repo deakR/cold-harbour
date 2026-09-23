@@ -33,6 +33,14 @@ func (s *Server) postJob(w http.ResponseWriter, r *http.Request, p keys.Principa
 		fieldError(w, "jobType")
 		return
 	}
+	source := body["source"]
+	if source == "" {
+		source = "cold-harbour"
+	}
+	if source != "cold-harbour" && source != "sentinel" {
+		fieldError(w, "source")
+		return
+	}
 	allowed, err := s.allowPost(r, tenant)
 	if err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "queue unavailable"})
@@ -45,9 +53,9 @@ func (s *Server) postJob(w http.ResponseWriter, r *http.Request, p keys.Principa
 
 	jobID := uuid.NewString()
 	_, err = s.db.Exec(r.Context(), `
-		INSERT INTO job_accepts (redis_job_id, tenant_id, accepted_at)
-		VALUES ($1, $2, now())
-	`, jobID, tenant)
+		INSERT INTO job_accepts (redis_job_id, tenant_id, accepted_at, source)
+		VALUES ($1, $2, now(), $3)
+	`, jobID, tenant, source)
 	if err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "queue unavailable"})
 		return

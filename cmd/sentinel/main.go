@@ -29,6 +29,7 @@ func main() {
 	stateDir := fs.String("state-dir", "", "directory for the cached policy")
 	policyFile := fs.String("policy", "", "policy file used when the control plane is unreachable")
 	interval := fs.Duration("policy-interval", 60*time.Second, "how often to fetch the policy")
+	allowFailOpen := fs.Bool("allow-fail-open", false, "allow failPolicy open to write unmasked lines")
 	if err := fs.Parse(os.Args[2:]); err != nil {
 		log.Fatal("sentinel: bad flags")
 	}
@@ -38,7 +39,7 @@ func main() {
 	if err := serveMetrics(*metrics); err != nil {
 		log.Fatalf("sentinel: metrics: %v", err)
 	}
-	active.Store(maskSettings{maxInline: *maxInline, kinds: append([]detect.Kind(nil), maskKinds...), mode: detect.ModeRedact})
+	active.Store(maskSettings{maxInline: *maxInline, kinds: append([]detect.Kind(nil), maskKinds...), mode: detect.ModeRedact, failPolicy: "closed"})
 	if *control != "" || *policyFile != "" {
 		doc, etag, err := loadInitial(*control, *stateDir, *policyFile, os.Getenv("SENTINEL_API_KEY"))
 		if err != nil {
@@ -51,6 +52,8 @@ func main() {
 			go poll(ctx, *control, *stateDir, os.Getenv("SENTINEL_API_KEY"), *interval)
 		}
 	}
+	h := newHandoff(*control, os.Getenv("SENTINEL_API_KEY"), *allowFailOpen)
+	defer h.close()
 	in, err := openIn(*inPath)
 	if err != nil {
 		log.Fatalf("sentinel: input: %v", err)
@@ -64,7 +67,7 @@ func main() {
 	if err := readLines(in, *follow, func(line string) error {
 		start := time.Now()
 		st := active.Load().(maskSettings)
-		result := maskWith(line, st.maxInline, *shadow, st.kinds, st.mode)
+		result := maskWith(line, st.maxInline, *shadow, st.kinds, st.mode, h, st.failPolicy)
 		if _, err := out.WriteString(result.line + "\n"); err != nil {
 			return err
 		}

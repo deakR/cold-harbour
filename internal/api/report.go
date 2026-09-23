@@ -21,7 +21,7 @@ func (s *Server) compliance(w http.ResponseWriter, r *http.Request, p keys.Princ
 		return
 	}
 	rows, err := s.db.Query(r.Context(), `
-		SELECT redis_job_id, accepted_at
+		SELECT redis_job_id, accepted_at, source
 		FROM job_accepts
 		WHERE tenant_id = $1 AND accepted_at >= $2 AND accepted_at < $3
 		ORDER BY accepted_at
@@ -31,13 +31,16 @@ func (s *Server) compliance(w http.ResponseWriter, r *http.Request, p keys.Princ
 		return
 	}
 	defer rows.Close()
-	csv := "dispatch_time,completion_time,final_state,checksum,signature_status,purge_timestamp\n"
+	csv := "dispatch_time,completion_time,final_state,checksum,signature_status,purge_timestamp,source\n"
 	for rows.Next() {
-		var redisID string
+		var redisID, source string
 		var accepted time.Time
-		if err := rows.Scan(&redisID, &accepted); err != nil {
+		if err := rows.Scan(&redisID, &accepted, &source); err != nil {
 			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "queue unavailable"})
 			return
+		}
+		if source == "" {
+			source = "cold-harbour"
 		}
 		durable := journal.DurableIDFor(redisID)
 		var completed *time.Time
@@ -73,7 +76,7 @@ func (s *Server) compliance(w http.ResponseWriter, r *http.Request, p keys.Princ
 		if purged != nil {
 			purgedText = purged.UTC().Format(time.RFC3339Nano)
 		}
-		csv += accepted.UTC().Format(time.RFC3339Nano) + "," + completedText + "," + stateText + "," + checksumText + "," + signatureStatus + "," + purgedText + "\n"
+		csv += accepted.UTC().Format(time.RFC3339Nano) + "," + completedText + "," + stateText + "," + checksumText + "," + signatureStatus + "," + purgedText + "," + source + "\n"
 	}
 	w.Header().Set("Content-Type", "text/csv")
 	w.WriteHeader(http.StatusOK)

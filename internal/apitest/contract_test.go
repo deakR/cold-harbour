@@ -230,7 +230,7 @@ func TestReportCSVHeader(t *testing.T) {
 		t.Fatalf("report status = %d, body %s", status, body)
 	}
 	first, _, _ := strings.Cut(string(body), "\n")
-	const header = "dispatch_time,completion_time,final_state,checksum,signature_status,purge_timestamp"
+	const header = "dispatch_time,completion_time,final_state,checksum,signature_status,purge_timestamp,source"
 	if first != header {
 		t.Fatalf("header = %q, want %q", first, header)
 	}
