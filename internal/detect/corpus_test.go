@@ -8,17 +8,6 @@ import (
 	"testing"
 )
 
-type corpusLine struct {
-	Text  string       `json:"text"`
-	Spans []corpusSpan `json:"spans"`
-}
-
-type corpusSpan struct {
-	Kind  Kind `json:"kind"`
-	Start int  `json:"start"`
-	End   int  `json:"end"`
-}
-
 func TestCorpusAccuracy(t *testing.T) {
 	f, err := os.Open("testdata/corpus.jsonl")
 	if err != nil {

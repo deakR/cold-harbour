@@ -115,7 +115,7 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | --- | --- |
 | `cmd/worker` | The worker process. Reads `coldharbour:jobs`, runs the registered job type, signs and journals the result, then purges the key. Serves Prometheus metrics on port 9100. Compose does not publish that port on the host, so more than one worker can run. Scrape `http://<worker-container>:9100/metrics` on the Compose network. |
 | `cmd/verify` | A standalone checker. `verify output --body --job-id --tenant-id --sig --pub` checks a signed job result. `verify receipt --job-id --purged-at --sig --pub` checks a purge receipt. Neither subcommand touches Redis or Postgres. |
-| `internal/detect` | Finds email, US phone, and SSN spans. `Apply` writes `[KIND]` or keeps the last four characters of the span. |
+| `internal/detect` | Finds email, US phone, Indian phone, SSN, Aadhaar, and PAN spans. Aadhaar must pass the Verhoeff check. `Apply` writes `[KIND]` or keeps the last four characters of the span. |
 | `internal/redact` | The `redact` job type. Calls `detect` and writes `[EMAIL_REDACTED]`, `[PHONE_REDACTED]`, and `[SSN_REDACTED]`. |
 | `internal/mask` | The `mask` job type: replaces named fields in a JSON document. Added to prove the job-type registry needs no changes to add a job. |
 | `internal/runner` | The `JobRunner` interface and the registry. The registry is the only list of job types. |
