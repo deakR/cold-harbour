@@ -25,13 +25,6 @@ jobs:
         with:
           go-version: "1.25.x"
       - run: COLDHARBOUR_INTEGRATION=1 go test ./...
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: maven
-      - run: bash ./mvnw -q verify
-        working-directory: controlplane
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -48,3 +41,48 @@ jobs:
           scan-ref: .
           severity: CRITICAL
           exit-code: "1"
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+      - run: bash scripts/gen-certs.sh
+      - name: Start the Compose stack
+        run: |
+          mkdir -p /tmp/signkey
+          cat > /tmp/signkey/main.go <<'EOF'
+          package main
+
+          import (
+            "crypto/ed25519"
+            "crypto/rand"
+            "encoding/base64"
+            "fmt"
+          )
+
+          func main() {
+            _, priv, err := ed25519.GenerateKey(rand.Reader)
+            if err != nil {
+              panic(err)
+            }
+            fmt.Print(base64.StdEncoding.EncodeToString(priv))
+          }
+          EOF
+          key=$(cd /tmp/signkey && go mod init signkey >/dev/null && go run .)
+          export SIGNING_KEY="$key"
+          export POSTGRES_PASSWORD=ci-postgres
+          export REDIS_PASSWORD=ci-redis
+          docker compose up -d --build
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -H "X-API-Key: ch_live_a_demo_key_aaaaaaaa" http://127.0.0.1:8081/v1/jobs || true)
+            if [ "$code" = "200" ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs
+          exit 1
+      - name: Contract tests
+        run: API_BASE=http://127.0.0.1:8081 API_PREFIX=/v1 COLDHARBOUR_WORKER_CONTAINER=coldharbour-worker go test ./internal/apitest -count=1 -timeout 180s

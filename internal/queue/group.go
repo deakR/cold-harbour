@@ -112,6 +112,9 @@ func (s *jobStream) enqueue(ctx context.Context, job Job) error {
 	if job.TenantID != "" {
 		values["tenant_id"] = job.TenantID
 	}
+	if job.JobType != "" {
+		values["job_type"] = job.JobType
+	}
 	return s.rdb.XAdd(ctx, &redis.XAddArgs{
 		Stream: jobsStreamKey,
 		Values: values,

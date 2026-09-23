@@ -34,7 +34,7 @@ services:
       - --tls-key-file
       - /certs/server.key
       - --tls-ca-cert-file
-      - /certs/server.crt
+      - /certs/ca.crt
       - --tls-auth-clients
       - "no"
       - --requirepass
@@ -44,6 +44,7 @@ services:
     volumes:
       - ./docker/certs:/certs:ro
   worker:
+    container_name: coldharbour-worker
     restart: unless-stopped
     build:
       context: .
@@ -52,11 +53,11 @@ services:
       - postgres
       - redis
     environment:
-      POSTGRES_DSN: postgres://coldharbour:${POSTGRES_PASSWORD}@postgres:5432/coldharbour?sslmode=require
+      POSTGRES_DSN: "postgres://coldharbour:${POSTGRES_PASSWORD}@postgres:5432/coldharbour?sslmode=verify-full&sslrootcert=/certs/ca.crt"
       REDIS_ADDR: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_TLS: "1"
-      REDIS_CA: /certs/server.crt
+      REDIS_CA: /certs/ca.crt
       SIGNING_KEY: ${SIGNING_KEY:?set SIGNING_KEY}
       VAULT_ADDR: ${VAULT_ADDR:-}
       VAULT_TOKEN: ${VAULT_TOKEN:-}
@@ -65,19 +66,23 @@ services:
     volumes:
       - ./docker/certs:/certs:ro
   controlplane:
+    container_name: coldharbour-controlplane
     restart: unless-stopped
     build:
       context: .
-      dockerfile: controlplane/Dockerfile
+      dockerfile: Dockerfile.controlplane
     depends_on:
       - postgres
       - redis
     environment:
-      POSTGRES_DSN: postgres://coldharbour:${POSTGRES_PASSWORD}@postgres:5432/coldharbour?sslmode=require
+      POSTGRES_DSN: "postgres://coldharbour:${POSTGRES_PASSWORD}@postgres:5432/coldharbour?sslmode=verify-full&sslrootcert=/certs/ca.crt"
       REDIS_ADDR: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_TLS: "1"
+      REDIS_CA: /certs/ca.crt
       VAULT_ADDR: ${VAULT_ADDR:-}
       VAULT_TOKEN: ${VAULT_TOKEN:-}
     ports:
       - "8081:8080"
+    volumes:
+      - ./docker/certs:/certs:ro
