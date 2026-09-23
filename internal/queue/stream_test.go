@@ -179,7 +179,8 @@ func TestStreamPicksUpSittingJob(t *testing.T) {
 	}
 
 	input := "Email alice.nguyen@school.edu about the lab report."
-	if err := stream.Add(ctx, Job{ID: "job-cli", Input: input}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: input}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -188,7 +189,7 @@ func TestStreamPicksUpSittingJob(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	got, err := runGroupOnce(t, stream, testWorkerConfig("sit"), journal.NewMemoryJournal(), seal.NewMemoryKeyStore())
+	got, err := runGroupOnce(t, stream, testWorkerConfig("sit"), journal.NewMemoryJournal(), keys)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,12 +247,13 @@ func TestRunGroupSkipsBadEntry(t *testing.T) {
 	}).Err(); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.Add(ctx, Job{ID: "good", Input: "Email a@b.com x"}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "good", Input: "Email a@b.com x"}); err != nil {
 		t.Fatal(err)
 	}
 
 	store := journal.NewMemoryJournal()
-	got, err := runGroupOnce(t, stream, testWorkerConfig("skip"), store, seal.NewMemoryKeyStore())
+	got, err := runGroupOnce(t, stream, testWorkerConfig("skip"), store, keys)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -290,12 +292,12 @@ func TestRunGroupRecoversViaAutoClaim(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.enqueue(ctx, Job{ID: "crash-1", Input: redact.M1Fixture}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "crash-1", Input: redact.M1Fixture}); err != nil {
 		t.Fatal(err)
 	}
 
 	store := journal.NewMemoryJournal()
-	keys := seal.NewMemoryKeyStore()
 	priv, receipts := testSigning(t)
 	err := RunGroup(ctx, stream, cfg1, testDeps(store, keys, receipts, priv, func(journal.JobResult) {}, Hooks{CrashAfterStep1: func(id string) bool { return id == "crash-1" }}))
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
@@ -409,11 +411,12 @@ func TestSuccessfulJobPublishesCompletedEvent(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.Add(ctx, Job{ID: jobID, Input: "Email a@b.com x", TenantID: tenant}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: jobID, Input: "Email a@b.com x", TenantID: tenant}); err != nil {
 		t.Fatal(err)
 	}
 
-	got, err := runGroupOnce(t, stream, testWorkerConfig("evt"), journal.NewMemoryJournal(), seal.NewMemoryKeyStore())
+	got, err := runGroupOnce(t, stream, testWorkerConfig("evt"), journal.NewMemoryJournal(), keys)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -478,7 +481,8 @@ func TestRunGroupRecordsThenEmitsThenAcks(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.Add(ctx, Job{ID: "job-cli", Input: "Email a@b.com x"}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: "Email a@b.com x"}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
@@ -487,7 +491,7 @@ func TestRunGroupRecordsThenEmitsThenAcks(t *testing.T) {
 	runCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 	priv, receipts := testSigning(t)
-	err := RunGroup(runCtx, stream, testWorkerConfig("order"), testDeps(store, seal.NewMemoryKeyStore(), receipts, priv, func(result journal.JobResult) {
+	err := RunGroup(runCtx, stream, testWorkerConfig("order"), testDeps(store, keys, receipts, priv, func(result journal.JobResult) {
 		if result.ID != "job-cli" {
 			t.Errorf("emit ID = %q, want job-cli", result.ID)
 		}
@@ -553,13 +557,14 @@ func TestRecordErrorSkipsEmitAndAck(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.Add(ctx, Job{ID: "job-cli", Input: "Email a@b.com x"}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: "Email a@b.com x"}); err != nil {
 		t.Fatal(err)
 	}
 	forced := errors.New("forced record failure")
 	emitted := false
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, testWorkerConfig("rec"), testDeps(errJournal{err: forced}, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("rec"), testDeps(errJournal{err: forced}, keys, receipts, priv, func(journal.JobResult) {
 		emitted = true
 	}, Hooks{}))
 	if !errors.Is(err, forced) {
@@ -584,11 +589,12 @@ func TestOutputsSurviveRedisFlushAll(t *testing.T) {
 		t.Fatal(err)
 	}
 	input := "Email alice.nguyen@school.edu about the lab report."
-	if err := stream.Add(ctx, Job{ID: "job-cli", Input: input}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: input}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
-	got, err := runGroupOnce(t, stream, testWorkerConfig("flush"), store, seal.NewMemoryKeyStore())
+	got, err := runGroupOnce(t, stream, testWorkerConfig("flush"), store, keys)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -634,10 +640,10 @@ func TestSuccessfulJobDeletesMemHash(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.Add(ctx, Job{ID: "job-purge", Input: "Email a@b.com x"}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "job-purge", Input: "Email a@b.com x"}); err != nil {
 		t.Fatal(err)
 	}
-	keys := seal.NewMemoryKeyStore()
 	receipts := seal.NewMemoryReceiptStore()
 	priv, _ := testSigning(t)
 	got, err := func() (journal.JobResult, error) {
@@ -697,11 +703,12 @@ func TestCrashLeavesMemHash(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.enqueue(ctx, Job{ID: "crash-keep", Input: redact.M1Fixture}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "crash-keep", Input: redact.M1Fixture}); err != nil {
 		t.Fatal(err)
 	}
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, testWorkerConfig("crash-keep"), testDeps(journal.NewMemoryJournal(), seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("crash-keep"), testDeps(journal.NewMemoryJournal(), keys, receipts, priv, func(journal.JobResult) {
 		t.Error("emit after crash")
 	}, Hooks{CrashAfterStep1: func(id string) bool { return id == "crash-keep" }}))
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
@@ -748,6 +755,38 @@ func runGroupOnce(t *testing.T, stream *jobStream, cfg WorkerConfig, store journ
 	}
 }
 
+func TestAddStoresCiphertext(t *testing.T) {
+	_, stream := startStream(t)
+	ctx := context.Background()
+	keys := seal.NewMemoryKeyStore()
+	const plain = "Contact jane.doe@example.com"
+	if err := stream.Add(ctx, keys, Job{ID: "job-seal", Input: plain}); err != nil {
+		t.Fatal(err)
+	}
+	entries, err := stream.rdb.XRange(ctx, jobsStreamKey, "-", "+").Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("XRANGE len = %d, want 1", len(entries))
+	}
+	fields := valuesToFields(entries[0].Values)
+	if strings.Contains(fields["input"], "jane.doe") {
+		t.Fatal("stream entry contains plaintext")
+	}
+	key, err := keys.Ensure(ctx, journal.DurableIDFor("job-seal"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := seal.Open(key, fields["input"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != plain {
+		t.Fatalf("Open = %q, want plaintext", got)
+	}
+}
+
 func TestPrepareGroupLeavesStreamEmpty(t *testing.T) {
 	_, stream := startStream(t)
 	ctx := context.Background()
@@ -784,8 +823,9 @@ func seedIfEmpty(ctx context.Context, stream *jobStream, jobs []Job) error {
 	if n != 0 {
 		return nil
 	}
+	keys := seal.NewMemoryKeyStore()
 	for _, job := range jobs {
-		if err := stream.Add(ctx, job); err != nil {
+		if err := stream.Add(ctx, keys, job); err != nil {
 			return err
 		}
 	}

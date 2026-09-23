@@ -57,14 +57,16 @@ services:
       REDIS_TLS: "1"
       REDIS_CA: /certs/server.crt
       SIGNING_KEY: ${SIGNING_KEY:?set SIGNING_KEY}
-      CONSUMER: worker-1
+      VAULT_ADDR: ${VAULT_ADDR:-}
+      VAULT_TOKEN: ${VAULT_TOKEN:-}
     ports:
       - "9100:9100"
     volumes:
       - ./docker/certs:/certs:ro
   controlplane:
     build:
-      context: ./controlplane
+      context: .
+      dockerfile: controlplane/Dockerfile
     depends_on:
       - postgres
       - redis
@@ -73,5 +75,7 @@ services:
       REDIS_ADDR: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_TLS: "1"
+      VAULT_ADDR: ${VAULT_ADDR:-}
+      VAULT_TOKEN: ${VAULT_TOKEN:-}
     ports:
       - "8081:8080"

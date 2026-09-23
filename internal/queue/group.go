@@ -217,6 +217,18 @@ func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purg
 	return handle(ctx, stream, hash, purge, reg, c, store, emit, hooks)
 }
 
+func openJobInput(ctx context.Context, keys seal.KeyStore, jobID, sealed string) (string, error) {
+	key, err := keys.Ensure(ctx, journal.DurableIDFor(jobID))
+	if err != nil {
+		return "", err
+	}
+	plain, err := seal.Open(key, sealed)
+	if err != nil {
+		return "", err
+	}
+	return string(plain), nil
+}
+
 func jobInput(raw string) map[string]any {
 	var input map[string]any
 	if err := json.Unmarshal([]byte(raw), &input); err == nil && input != nil {
@@ -251,11 +263,14 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 	if !ok {
 		return (&deadLetters{rdb: stream.rdb}).bury(ctx, c, jobType, "unknown job_type", store, purge)
 	}
-	if st == nil {
-		if _, err := hash.keys.Ensure(ctx, journal.DurableIDFor(c.job.ID)); err != nil {
-			return err
+	plain, err := openJobInput(ctx, hash.keys, c.job.ID, c.job.Input)
+	if err != nil {
+		if errors.Is(err, seal.ErrBadSealed) {
+			return (&deadLetters{rdb: stream.rdb}).bury(ctx, c, jr.JobType(), "input is not sealed", store, purge)
 		}
+		return err
 	}
+	c.job.Input = plain
 
 	cp := runner.NewCheckpointRecorder(
 		func() (int, map[string]any, bool) {

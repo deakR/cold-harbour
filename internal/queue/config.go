@@ -38,10 +38,10 @@ func testWorkerConfig(consumer string) WorkerConfig {
 }
 
 func LoadWorkerConfig() (WorkerConfig, error) {
-	return loadWorkerConfigFrom(os.Args[1:], os.Getenv)
+	return loadWorkerConfigFrom(os.Args[1:], os.Getenv, os.Hostname)
 }
 
-func loadWorkerConfigFrom(args []string, getenv func(string) string) (WorkerConfig, error) {
+func loadWorkerConfigFrom(args []string, getenv func(string) string, hostname func() (string, error)) (WorkerConfig, error) {
 	fs := flag.NewFlagSet("coldharbour", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	name := fs.String("consumer", "", "consumer name")
@@ -51,6 +51,13 @@ func loadWorkerConfigFrom(args []string, getenv func(string) string) (WorkerConf
 	consumer := *name
 	if consumer == "" {
 		consumer = getenv("CONSUMER")
+	}
+	if consumer == "" {
+		host, err := hostname()
+		if err != nil {
+			return WorkerConfig{}, err
+		}
+		consumer = host
 	}
 	cfg := WorkerConfig{
 		Consumer: consumer,

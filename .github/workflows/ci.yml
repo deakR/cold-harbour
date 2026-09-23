@@ -47,4 +47,4 @@ jobs:
           scan-type: fs
           scan-ref: .
           severity: CRITICAL
-          exit-code: "0"
+          exit-code: "1"

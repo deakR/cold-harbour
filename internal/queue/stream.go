@@ -10,6 +10,9 @@ import (
 	"strconv"
 	"strings"
 
+	"coldharbour/internal/journal"
+	"coldharbour/internal/seal"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -98,7 +101,22 @@ func OpenJobs(addr string) *jobStream {
 	return &jobStream{rdb: redis.NewClient(redisOptions(addr))}
 }
 
-func (s *jobStream) Add(ctx context.Context, job Job) error {
+func (s *jobStream) Add(ctx context.Context, keys seal.KeyStore, job Job) error {
+	if keys == nil {
+		return errors.New("key store is required")
+	}
+	if job.ID == "" {
+		return errors.New("job id is required")
+	}
+	key, err := keys.Ensure(ctx, journal.DurableIDFor(job.ID))
+	if err != nil {
+		return err
+	}
+	sealed, err := seal.Seal(key, []byte(job.Input))
+	if err != nil {
+		return err
+	}
+	job.Input = sealed
 	return s.enqueue(ctx, job)
 }
 

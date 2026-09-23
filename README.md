@@ -83,7 +83,7 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 
 | Method and path | What it does |
 | --- | --- |
-| `POST /jobs` | Queues a job. Body is `{"input": string, "jobType": string}`. `jobType` defaults to `redact`. Returns `{"jobId", "status": "QUEUED"}`. |
+| `POST /jobs` | Queues a job. Body is `{"input": string, "jobType": string}`. `jobType` defaults to `redact` and must be listed in `internal/runner/types.txt`. The control plane encrypts `input` with a per-job AES-256-GCM key before writing Redis, and stores that key in `job_keys`. Returns `{"jobId", "status": "QUEUED"}`. |
 | `GET /jobs` | Lists the calling tenant's jobs, most recent first. |
 | `GET /jobs/{id}` | Returns the job's status. On `COMPLETED`, the response includes the redacted result, `signature`, and `signingKeyId`. |
 | `POST /jobs/{id}/delivery-links` | Creates a one-time link. Body is `{"expiresAt": RFC3339 timestamp, "maxViews": integer}`. Returns the raw token once. |
@@ -101,8 +101,8 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | `REDIS_TLS` | `cmd/worker`, `controlplane` | Set to `1` to connect over TLS. |
 | `REDIS_CA` | `cmd/worker` | Path to the CA certificate that signed the Redis server certificate. |
 | `SIGNING_KEY` | `cmd/worker`, `cmd/verify` | Base64 of a 64-byte Ed25519 private key. The worker signs every job output and every purge receipt with this key. |
-| `CONSUMER` | `cmd/worker` | Consumer name inside the `worker-group` Redis consumer group. Two worker processes must use different names. The `-consumer` flag overrides this. |
-| `VAULT_ADDR`, `VAULT_TOKEN` | `cmd/worker` | If both are set, the worker wraps and unwraps each job's AES key through Vault Transit at `$VAULT_ADDR/v1/transit/{encrypt,decrypt}/coldharbour`. If either is unset, the worker stores the raw 32-byte key. |
+| `CONSUMER` | `cmd/worker` | Consumer name inside the `worker-group` Redis consumer group. Two worker processes must use different names. If this and `-consumer` are both unset, the worker uses the machine hostname. |
+| `VAULT_ADDR`, `VAULT_TOKEN` | `cmd/worker`, `controlplane` | If both are set, each job's AES key is wrapped through Vault Transit at `$VAULT_ADDR/v1/transit/{encrypt,decrypt}/coldharbour`. If either is unset, the raw 32-byte key is stored. Set both on the control plane and the worker, or on neither. |
 
 ### Repository layout
 
@@ -113,8 +113,8 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | `cmd/scrub` | One-time cleanup for Redis written before finished jobs dropped `input`. Deletes settled `coldharbour:jobs` entries that still have `input`. Rewrites `coldharbour:jobs:dlq` entries so `input` is gone. Pending and unread jobs are left in place. |
 | `internal/redact` | The `redact` job type: the three regular expressions and the `RedactPII` function they implement. |
 | `internal/mask` | The `mask` job type: replaces named fields in a JSON document. Added to prove the job-type registry needs no changes to add a job. |
-| `internal/runner` | The `JobRunner` interface and the registry that looks up a job type by name. |
-| `internal/queue` | The Redis stream, the consumer group, the dead-letter queue, and the encrypted checkpoint hash. A job that reaches `COMPLETED` or `FAILED` leaves no `input` field on `coldharbour:jobs` or `coldharbour:jobs:dlq`. |
+| `internal/runner` | The `JobRunner` interface, the registry, and `types.txt`. That file is the only job-type list. The worker refuses to start if the registry and the file disagree. The control plane reads the same file. |
+| `internal/queue` | The Redis stream, the consumer group, the dead-letter queue, and the encrypted checkpoint hash. The `input` field on a queued job is AES-GCM ciphertext. A job that reaches `COMPLETED` or `FAILED` leaves no `input` field on `coldharbour:jobs` or `coldharbour:jobs:dlq`. |
 | `internal/checkpoint` | The in-memory checkpoint store used before the Redis-backed one existed. Kept for its tests. |
 | `internal/seal` | AES-GCM encryption of the checkpoint, Ed25519 signing, the key store, the purge receipt store, and the optional Vault wrapping. |
 | `internal/journal` | The Postgres audit row: one row per job with its checksum, its signature, and its final state. |

@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"coldharbour/internal/journal"
@@ -19,25 +20,25 @@ func TestBuryStripsInputOnRealRedis(t *testing.T) {
 		t.Fatal(err)
 	}
 	job := Job{ID: "job-bury-real", Input: redact.M1Fixture}
-	if err := addFailJob(ctx, stream, job); err != nil {
-		t.Fatal(err)
-	}
 	store := journal.NewMemoryJournal()
 	keys := seal.NewMemoryKeyStore()
+	if err := addFailJob(ctx, stream, keys, job); err != nil {
+		t.Fatal(err)
+	}
 	priv, receipts := testSigning(t)
 
 	if err := consumeOne(t, stream, store, keys, receipts, priv, nil, failThese(job.ID)); err != nil {
 		t.Fatal(err)
 	}
 	assertMainLen(t, stream, 1)
-	assertStreamField(t, stream, jobsStreamKey, 0, "input", redact.M1Fixture)
+	assertSealedInput(t, stream, keys, job.ID, redact.M1Fixture)
 	assertDLQLen(t, stream, 0)
 
 	if err := consumeOne(t, stream, store, keys, receipts, priv, nil, failThese(job.ID)); err != nil {
 		t.Fatal(err)
 	}
 	assertMainLen(t, stream, 1)
-	assertStreamField(t, stream, jobsStreamKey, 0, "input", redact.M1Fixture)
+	assertSealedInput(t, stream, keys, job.ID, redact.M1Fixture)
 
 	if err := consumeOne(t, stream, store, keys, receipts, priv, nil, failThese(job.ID)); err != nil {
 		t.Fatal(err)
@@ -53,6 +54,32 @@ func TestBuryStripsInputOnRealRedis(t *testing.T) {
 	}
 	if row.FinalState != journal.FAILED {
 		t.Fatalf("FinalState = %s, want FAILED", row.FinalState)
+	}
+}
+
+func assertSealedInput(t *testing.T, stream *jobStream, keys seal.KeyStore, jobID, plain string) {
+	t.Helper()
+	entries, err := stream.rdb.XRange(context.Background(), jobsStreamKey, "-", "+").Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("XRANGE len = %d, want 1", len(entries))
+	}
+	fields := valuesToFields(entries[0].Values)
+	if fields["input"] == "" || strings.Contains(fields["input"], plain) {
+		t.Fatal("stream entry does not hold sealed input")
+	}
+	key, err := keys.Ensure(context.Background(), journal.DurableIDFor(jobID))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := seal.Open(key, fields["input"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != plain {
+		t.Fatal("sealed input did not open to the queued text")
 	}
 }
 

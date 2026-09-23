@@ -2,7 +2,6 @@ package com.coldharbour.controlplane;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -30,9 +29,6 @@ public class JobsController {
 
 	private static final String JOBS_STREAM = "coldharbour:jobs";
 
-	// Keep in step with runner.NewRegistry in cmd/worker/main.go.
-	private static final Set<String> JOB_TYPES = Set.of("redact", "mask");
-
 	private final JdbcTemplate jdbc;
 	private final StringRedisTemplate redis;
 	private final ObjectMapper mapper;
@@ -53,7 +49,7 @@ public class JobsController {
 			return ResponseEntity.badRequest().body(Map.of("error", "input is required"));
 		}
 		String jobType = body.get("jobType");
-		if (jobType != null && !jobType.isEmpty() && !JOB_TYPES.contains(jobType)) {
+		if (jobType != null && !jobType.isEmpty() && !JobTypes.contains(jobType)) {
 			return ResponseEntity.badRequest().body(Map.of("error", "unknown jobType"));
 		}
 		if (!limit.allow(tenantId)) {
@@ -64,9 +60,21 @@ public class JobsController {
 				"INSERT INTO job_accepts (redis_job_id, tenant_id, accepted_at) VALUES (?, ?, now())",
 				jobId, tenantId
 		);
+		String sealed;
+		try {
+			byte[] key = InputSealer.newKey();
+			sealed = InputSealer.seal(key, input);
+			jdbc.update(
+					"INSERT INTO job_keys (job_id, key_material) VALUES (?, ?)",
+					DurableID.forRedisJob(jobId), InputSealer.wrap(key)
+			);
+		} catch (RuntimeException ex) {
+			forget(jobId);
+			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "queue unavailable"));
+		}
 		Map<String, String> fields = new HashMap<>();
 		fields.put("id", jobId);
-		fields.put("input", input);
+		fields.put("input", sealed);
 		fields.put("tenant_id", tenantId.toString());
 		if (jobType != null && !jobType.isEmpty()) {
 			fields.put("job_type", jobType);
@@ -76,14 +84,19 @@ public class JobsController {
 		try {
 			added = redis.opsForStream().add(record);
 		} catch (RuntimeException ex) {
-			jdbc.update("DELETE FROM job_accepts WHERE redis_job_id = ?", jobId);
+			forget(jobId);
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "queue unavailable"));
 		}
 		if (added == null) {
-			jdbc.update("DELETE FROM job_accepts WHERE redis_job_id = ?", jobId);
+			forget(jobId);
 			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "queue unavailable"));
 		}
 		return ResponseEntity.ok(Map.of("jobId", jobId, "status", "QUEUED"));
+	}
+
+	private void forget(String jobId) {
+		jdbc.update("DELETE FROM job_keys WHERE job_id = ?", DurableID.forRedisJob(jobId));
+		jdbc.update("DELETE FROM job_accepts WHERE redis_job_id = ?", jobId);
 	}
 
 	@GetMapping("/jobs")
