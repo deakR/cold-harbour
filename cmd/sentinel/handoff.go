@@ -28,6 +28,7 @@ type handoff struct {
 	q             chan handoffItem
 	failures      atomic.Int32
 	open          atomic.Bool
+	allowProbe    atomic.Bool
 	failOpenCount atomic.Int64
 	wg            sync.WaitGroup
 }
@@ -69,6 +70,9 @@ func (h *handoff) handle(line string, failPolicy string, kinds []detect.Kind, mo
 	if h == nil || h.baseURL == "" {
 		return applyFailPolicy(line, failPolicy, kinds, mode, h)
 	}
+	if h.open.Load() && !h.allowProbe.CompareAndSwap(true, false) {
+		return applyFailPolicy(line, failPolicy, kinds, mode, h)
+	}
 	item := handoffItem{line: line, reply: make(chan handoffResult, 1)}
 	select {
 	case h.q <- item:
@@ -79,6 +83,9 @@ func (h *handoff) handle(line string, failPolicy string, kinds []detect.Kind, mo
 		}
 		return applyFailPolicy(line, failPolicy, kinds, mode, h)
 	default:
+		if h.open.Load() {
+			h.allowProbe.Store(true)
+		}
 		return applyFailPolicy(line, failPolicy, kinds, mode, h)
 	}
 }
@@ -111,27 +118,17 @@ func (h *handoff) loop() {
 			if err == nil {
 				h.failures.Store(0)
 				h.open.Store(false)
+				h.allowProbe.Store(false)
 				item.reply <- handoffResult{jobID: jobID, ok: true}
 				continue
 			}
 			handoffErrors.Inc()
 			item.reply <- handoffResult{}
+			time.AfterFunc(time.Second, func() { h.allowProbe.Store(true) })
 			continue
 		}
 		backoff := handoffBackoffStart
 		for {
-			if h.open.Load() {
-				jobID, err := h.post(item.line)
-				if err == nil {
-					h.failures.Store(0)
-					h.open.Store(false)
-					item.reply <- handoffResult{jobID: jobID, ok: true}
-					break
-				}
-				handoffErrors.Inc()
-				item.reply <- handoffResult{}
-				break
-			}
 			jobID, err := h.post(item.line)
 			if err == nil {
 				h.failures.Store(0)
@@ -143,6 +140,7 @@ func (h *handoff) loop() {
 			n := h.failures.Add(1)
 			if n >= handoffBreakerLimit {
 				h.open.Store(true)
+				h.allowProbe.Store(true)
 				item.reply <- handoffResult{}
 				break
 			}
