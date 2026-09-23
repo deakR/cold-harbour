@@ -23,6 +23,18 @@ func main() {
 }
 
 func run() error {
+	work := runLoad
+	if !profileEnabled() {
+		return work()
+	}
+	dir := filepath.Dir(baselineRel)
+	if abs, err := filepath.Abs(dir); err == nil {
+		dir = abs
+	}
+	return writeProfiles(dir, work)
+}
+
+func runLoad() error {
 	lines := make([]string, lineCount)
 	var totalBytes int64
 	for i := 0; i < lineCount; i++ {
