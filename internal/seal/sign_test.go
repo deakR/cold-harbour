@@ -32,6 +32,36 @@ func TestSignVerifyPurgeMessage(t *testing.T) {
 	}
 }
 
+func TestOutputMessageBindsJobAndTenant(t *testing.T) {
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := []byte(`{"redactedText":"ok"}`)
+	msg, err := OutputMessage("A", "T1", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sig := Sign(priv, msg)
+	if !Verify(pub, msg, sig) {
+		t.Fatal("Verify failed for the signed job")
+	}
+	swappedJob, err := OutputMessage("B", "T1", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if Verify(pub, swappedJob, sig) {
+		t.Fatal("signature verified under a different job id")
+	}
+	swappedTenant, err := OutputMessage("A", "T2", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if Verify(pub, swappedTenant, sig) {
+		t.Fatal("signature verified under a different tenant id")
+	}
+}
+
 func TestSigningKeyIDAndParse(t *testing.T) {
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {

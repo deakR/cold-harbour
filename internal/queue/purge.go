@@ -32,7 +32,7 @@ func (p *purger) run(ctx context.Context, redisJobID string) error {
 		return p.rdb.Del(ctx, memKey(redisJobID)).Err()
 	}
 
-	purgedAt := time.Now().UTC().Truncate(time.Microsecond).Truncate(time.Microsecond)
+	purgedAt := time.Now().UTC().Truncate(time.Microsecond)
 	msg, err := seal.PurgeMessage(redisJobID, purgedAt)
 	if err != nil {
 		return err
@@ -65,9 +65,14 @@ func (p *purger) run(ctx context.Context, redisJobID string) error {
 	return p.rdb.Del(ctx, memKey(redisJobID)).Err()
 }
 
-func (p *purger) signOutput(result *journal.JobResult) {
+func (p *purger) signOutput(result *journal.JobResult) error {
 	body := journal.BodyOf(result.Result)
+	msg, err := seal.OutputMessage(result.ID, result.TenantID, body)
+	if err != nil {
+		return err
+	}
 	pub := p.priv.Public().(ed25519.PublicKey)
-	result.Signature = seal.Sign(p.priv, body)
+	result.Signature = seal.Sign(p.priv, msg)
 	result.SigningKeyID = seal.SigningKeyID(pub)
+	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/events"
@@ -18,6 +19,21 @@ import (
 )
 
 const workerGroup = "worker-group"
+
+type infraError struct {
+	err error
+}
+
+func (e infraError) Error() string {
+	if e.err == nil {
+		return "infrastructure"
+	}
+	return e.err.Error()
+}
+
+func (e infraError) Unwrap() error {
+	return e.err
+}
 
 type claimed struct {
 	entry  StreamID
@@ -32,17 +48,26 @@ func parseClaim(entry StreamID, fields map[string]string) (claimed, error) {
 	if err != nil {
 		return claimed{}, err
 	}
-	crash := checkpoint.CrashNever
-	if fields["simulateCrashAtStep"] == "1" {
-		crash = checkpoint.CrashAfterStep1
-	}
 	return claimed{
 		entry:  entry,
 		job:    job,
-		crash:  crash,
-		fail:   fields["simulateFailure"] == "1",
+		crash:  checkpoint.CrashNever,
 		fields: fields,
 	}, nil
+}
+
+type Hooks struct {
+	CrashAfterStep1 func(jobID string) bool
+	Fail            func(jobID string) bool
+}
+
+func applyHooks(c *claimed, hooks Hooks) {
+	if hooks.CrashAfterStep1 != nil && hooks.CrashAfterStep1(c.job.ID) {
+		c.crash = checkpoint.CrashAfterStep1
+	}
+	if hooks.Fail != nil && hooks.Fail(c.job.ID) {
+		c.fail = true
+	}
 }
 
 func (s *jobStream) ensureGroup(ctx context.Context) error {
@@ -53,7 +78,7 @@ func (s *jobStream) ensureGroup(ctx context.Context) error {
 	return nil
 }
 
-func (s *jobStream) enqueue(ctx context.Context, job Job, crash checkpoint.CrashPoint) error {
+func (s *jobStream) enqueue(ctx context.Context, job Job) error {
 	values := map[string]any{"input": job.Input}
 	if job.ID != "" {
 		values["id"] = job.ID
@@ -61,45 +86,69 @@ func (s *jobStream) enqueue(ctx context.Context, job Job, crash checkpoint.Crash
 	if job.TenantID != "" {
 		values["tenant_id"] = job.TenantID
 	}
-	if crash == checkpoint.CrashAfterStep1 {
-		values["simulateCrashAtStep"] = "1"
-	}
 	return s.rdb.XAdd(ctx, &redis.XAddArgs{
 		Stream: jobsStreamKey,
 		Values: values,
 	}).Err()
 }
 
-func (s *jobStream) ack(ctx context.Context, id StreamID) error {
-	return s.rdb.XAck(ctx, jobsStreamKey, workerGroup, id.String()).Err()
+func (s *jobStream) finish(ctx context.Context, id StreamID) error {
+	_, err := s.rdb.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		pipe.XAck(ctx, jobsStreamKey, workerGroup, id.String())
+		pipe.XDel(ctx, jobsStreamKey, id.String())
+		return nil
+	})
+	return err
 }
 
-func PrepareGroup(ctx context.Context, stream *jobStream, jobs []Job) error {
-	if err := stream.ensureGroup(ctx); err != nil {
+func PrepareGroup(ctx context.Context, stream *jobStream) error {
+	return stream.ensureGroup(ctx)
+}
+
+type Deps struct {
+	Registry   *runner.Registry
+	Journal    journal.Journal
+	Keys       seal.KeyStore
+	Receipts   seal.ReceiptStore
+	SigningKey ed25519.PrivateKey
+	Emit       func(journal.JobResult)
+	Hooks      Hooks
+}
+
+func (d Deps) ready() error {
+	switch {
+	case d.Journal == nil:
+		return errors.New("queue: Journal is required")
+	case d.Keys == nil:
+		return errors.New("queue: Keys is required")
+	case d.Receipts == nil:
+		return errors.New("queue: Receipts is required")
+	case len(d.SigningKey) != ed25519.PrivateKeySize:
+		return errors.New("queue: SigningKey is required")
+	case d.Registry == nil:
+		return errors.New("queue: Registry is required")
+	default:
+		return nil
+	}
+}
+
+func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, deps Deps) error {
+	if err := deps.ready(); err != nil {
 		return err
-	}
-	return seedIfEmpty(ctx, stream, jobs)
-}
-
-func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, reg *runner.Registry, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult)) error {
-	if store == nil {
-		panic("nil journal")
-	}
-	if keys == nil {
-		panic("nil key store")
-	}
-	if receipts == nil {
-		panic("nil receipt store")
-	}
-	if len(priv) != ed25519.PrivateKeySize {
-		panic("nil signing key")
-	}
-	if reg == nil {
-		panic("nil registry")
 	}
 	if err := cfg.valid(); err != nil {
 		return err
 	}
+	reg := deps.Registry
+	store := deps.Journal
+	keys := deps.Keys
+	receipts := deps.Receipts
+	priv := deps.SigningKey
+	emit := deps.Emit
+	if emit == nil {
+		emit = func(journal.JobResult) {}
+	}
+	hooks := deps.Hooks
 	hash := &memHash{rdb: stream.rdb, keys: keys}
 	purge := &purger{rdb: stream.rdb, keys: keys, receipts: receipts, priv: priv}
 	for {
@@ -120,7 +169,7 @@ func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, reg *run
 			return err
 		}
 		for _, msg := range stolen {
-			if err := dispatch(ctx, stream, hash, purge, reg, msg, store, emit); err != nil {
+			if err := dispatch(ctx, stream, hash, purge, reg, msg, store, emit, hooks); err != nil {
 				return err
 			}
 		}
@@ -141,7 +190,7 @@ func RunGroup(ctx context.Context, stream *jobStream, cfg WorkerConfig, reg *run
 		}
 		for _, xs := range streams {
 			for _, msg := range xs.Messages {
-				if err := dispatch(ctx, stream, hash, purge, reg, msg, store, emit); err != nil {
+				if err := dispatch(ctx, stream, hash, purge, reg, msg, store, emit, hooks); err != nil {
 					return err
 				}
 			}
@@ -154,19 +203,19 @@ func isReadTimeout(err error) bool {
 	return errors.As(err, &to) && to.Timeout()
 }
 
-func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, msg redis.XMessage, store journal.Journal, emit func(journal.JobResult)) error {
+func dispatch(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, msg redis.XMessage, store journal.Journal, emit func(journal.JobResult), hooks Hooks) error {
 	id, err := ParseStreamID(msg.ID)
 	if err != nil {
 		return err
 	}
 	c, err := parseClaim(id, valuesToFields(msg.Values))
 	if errors.Is(err, errMissingInput) {
-		return stream.ack(context.WithoutCancel(ctx), id)
+		return stream.finish(context.WithoutCancel(ctx), id)
 	}
 	if err != nil {
 		return err
 	}
-	return handle(ctx, stream, hash, purge, reg, c, store, emit)
+	return handle(ctx, stream, hash, purge, reg, c, store, emit, hooks)
 }
 
 func jobInput(raw string) map[string]any {
@@ -177,7 +226,10 @@ func jobInput(raw string) map[string]any {
 	return map[string]any{"input": raw}
 }
 
-func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, c claimed, store journal.Journal, emit func(journal.JobResult)) error {
+func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger, reg *runner.Registry, c claimed, store journal.Journal, emit func(journal.JobResult), hooks Hooks) error {
+	started := time.Now()
+	defer observeJob(started)
+	applyHooks(&c, hooks)
 	st, err := hash.load(ctx, c.job.ID)
 	if err != nil {
 		return err
@@ -185,13 +237,10 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 	if st == nil {
 		_, loadErr := store.Load(ctx, c.job.ID)
 		if loadErr == nil {
-			return stream.ack(context.WithoutCancel(ctx), c.entry)
+			return stream.finish(context.WithoutCancel(ctx), c.entry)
 		}
 		if !errors.Is(loadErr, journal.ErrUnknownStoredJob) {
 			return loadErr
-		}
-		if _, err := hash.keys.Ensure(ctx, journal.DurableIDFor(c.job.ID)); err != nil {
-			return err
 		}
 	}
 
@@ -201,7 +250,12 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 	}
 	jr, ok := reg.Get(jobType)
 	if !ok {
-		return fmt.Errorf("unknown job_type %q", jobType)
+		return (&deadLetters{rdb: stream.rdb}).bury(ctx, c, jobType, "unknown job_type", store, purge)
+	}
+	if st == nil {
+		if _, err := hash.keys.Ensure(ctx, journal.DurableIDFor(c.job.ID)); err != nil {
+			return err
+		}
 	}
 
 	cp := runner.NewCheckpointRecorder(
@@ -220,7 +274,7 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 				err = hash.save(ctx, next)
 			}
 			if err != nil {
-				return err
+				return infraError{err: err}
 			}
 			st = &next
 			if step == 1 {
@@ -230,7 +284,7 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 					JobID:    c.job.ID,
 					Status:   string(journal.RUNNING),
 				}); err != nil {
-					return err
+					return infraError{err: err}
 				}
 				if c.crash == checkpoint.CrashAfterStep1 {
 					return checkpoint.ErrSimulatedCrash
@@ -242,7 +296,14 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 
 	out, err := jr.Run(ctx, jobInput(c.job.Input), cp)
 	if err != nil {
-		return err
+		if errors.Is(err, checkpoint.ErrSimulatedCrash) {
+			return err
+		}
+		var infra infraError
+		if errors.As(err, &infra) {
+			return err
+		}
+		return (&deadLetters{rdb: stream.rdb}).bury(ctx, c, jr.JobType(), "runner failed", store, purge)
 	}
 
 	if c.fail {
@@ -254,7 +315,9 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 	result := journal.Succeed(c.job.ID, out)
 	result.TenantID = c.job.TenantID
 	result.JobType = jr.JobType()
-	purge.signOutput(&result)
+	if err := purge.signOutput(&result); err != nil {
+		return err
+	}
 	if err := store.Record(ctx, result); err != nil {
 		return err
 	}
@@ -269,5 +332,6 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 		return err
 	}
 	emit(result)
-	return stream.ack(context.WithoutCancel(ctx), c.entry)
+	jobsCompleted.Inc()
+	return stream.finish(context.WithoutCancel(ctx), c.entry)
 }

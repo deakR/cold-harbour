@@ -70,16 +70,23 @@ func runOutput(args []string) int {
 	fs := flag.NewFlagSet("output", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 	bodyPath := fs.String("body", "", "canonical output JSON file")
+	jobID := fs.String("job-id", "", "redis job id")
+	tenantID := fs.String("tenant-id", "", "tenant id")
 	sigB64 := fs.String("sig", "", "base64 Ed25519 signature")
 	pubB64 := fs.String("pub", "", "base64 Ed25519 public key")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
-	if *bodyPath == "" || *sigB64 == "" || *pubB64 == "" {
-		fmt.Fprintln(os.Stderr, "output requires --body --sig --pub")
+	if *bodyPath == "" || *jobID == "" || *tenantID == "" || *sigB64 == "" || *pubB64 == "" {
+		fmt.Fprintln(os.Stderr, "output requires --body --job-id --tenant-id --sig --pub")
 		return 2
 	}
 	body, err := os.ReadFile(*bodyPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	msg, err := seal.OutputMessage(*jobID, *tenantID, body)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -94,7 +101,7 @@ func runOutput(args []string) int {
 		fmt.Fprintln(os.Stderr, "invalid --pub")
 		return 1
 	}
-	if !seal.Verify(pub, body, sig) {
+	if !seal.Verify(pub, msg, sig) {
 		return 1
 	}
 	return 0

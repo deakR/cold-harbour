@@ -24,7 +24,7 @@ func job5Checksum(t *testing.T) string {
 	return journal.ChecksumOf(redact.MapResult(want))
 }
 
-func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
+func TestFailJobThreeAttemptsThenBury(t *testing.T) {
 	_, stream := startStream(t)
 	ctx := context.Background()
 	if err := stream.ensureGroup(ctx); err != nil {
@@ -39,12 +39,13 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 	priv, receipts := testSigning(t)
 	wantChecksum := job5Checksum(t)
 
-	if err := consumeOne(t, stream, store, keys, receipts, priv, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, receipts, priv, nil, failThese(job.ID)); err != nil {
 		t.Fatal(err)
 	}
 	assertRetry(t, stream, job.ID, "1")
 	assertDLQLen(t, stream, 0)
 	assertPending(t, stream, 0)
+	assertMainLen(t, stream, 1)
 	if _, err := store.Load(ctx, job.ID); !errors.Is(err, journal.ErrUnknownStoredJob) {
 		t.Fatalf("Load after attempt 1 err = %v, want ErrUnknownStoredJob", err)
 	}
@@ -54,12 +55,13 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 		t.Fatalf("mem after attempt 1 exists=%d, want 1", exists)
 	}
 
-	if err := consumeOne(t, stream, store, keys, receipts, priv, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, receipts, priv, nil, failThese(job.ID)); err != nil {
 		t.Fatal(err)
 	}
 	assertRetry(t, stream, job.ID, "2")
 	assertDLQLen(t, stream, 0)
 	assertPending(t, stream, 0)
+	assertMainLen(t, stream, 1)
 	if _, err := store.Load(ctx, job.ID); !errors.Is(err, journal.ErrUnknownStoredJob) {
 		t.Fatalf("Load after attempt 2 err = %v, want ErrUnknownStoredJob", err)
 	}
@@ -69,14 +71,15 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 		t.Fatalf("mem after attempt 2 exists=%d, want 1", exists)
 	}
 
-	if err := consumeOne(t, stream, store, keys, receipts, priv, nil); err != nil {
+	if err := consumeOne(t, stream, store, keys, receipts, priv, nil, failThese(job.ID)); err != nil {
 		t.Fatal(err)
 	}
 	assertRetryGone(t, stream, job.ID)
 	assertDLQLen(t, stream, 1)
 	assertPending(t, stream, 0)
-	assertMainLen(t, stream, 3)
-	assertStreamField(t, stream, dlqStreamKey, 0, "simulateFailure", "1")
+	assertMainLen(t, stream, 0)
+	assertStreamField(t, stream, dlqStreamKey, 0, "id", job.ID)
+	assertNoStreamField(t, stream, dlqStreamKey, 0, "input")
 	row, err := store.Load(ctx, job.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -98,24 +101,6 @@ func TestFailJobThreeAttemptsThenRedrive(t *testing.T) {
 		t.Fatal("missing purge receipt after bury")
 	}
 
-	if err := Redrive(ctx, stream); err != nil {
-		t.Fatal(err)
-	}
-	assertDLQLen(t, stream, 1)
-	assertRetry(t, stream, job.ID, "0")
-	assertStreamField(t, stream, jobsStreamKey, 3, "simulateFailure", "1")
-
-	// Empty mem + journaled FAILED: XACK without re-redacting or minting a key.
-	if err := consumeOne(t, stream, store, keys, receipts, priv, nil); err != nil {
-		t.Fatal(err)
-	}
-	assertPending(t, stream, 0)
-	assertDLQLen(t, stream, 1)
-	if exists, err := stream.rdb.Exists(ctx, memKey(job.ID)).Result(); err != nil {
-		t.Fatal(err)
-	} else if exists != 0 {
-		t.Fatalf("mem after journaled reclaim exists=%d, want 0", exists)
-	}
 }
 
 func TestRunGroupBuriesWithoutEmit(t *testing.T) {
@@ -141,7 +126,7 @@ func TestRunGroupBuriesWithoutEmit(t *testing.T) {
 			return false
 		}
 		return n == 1 && pending.Count == 0
-	})
+	}, failThese("job-5"))
 	if emitted {
 		t.Fatal("emit ran on failure")
 	}
@@ -171,10 +156,10 @@ func TestReplayAtThreeBuriesAgain(t *testing.T) {
 	}
 	store := journal.NewMemoryJournal()
 	priv, receipts := testSigning(t)
-	if err := consumeOne(t, stream, store, seal.NewMemoryKeyStore(), receipts, priv, nil); err != nil {
+	if err := consumeOne(t, stream, store, seal.NewMemoryKeyStore(), receipts, priv, nil, failThese("job-5")); err != nil {
 		t.Fatal(err)
 	}
-	assertMainLen(t, stream, 1)
+	assertMainLen(t, stream, 0)
 	assertDLQLen(t, stream, 1)
 	assertPending(t, stream, 0)
 	assertRetryGone(t, stream, "job-5")
@@ -193,22 +178,17 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.rdb.XAdd(ctx, &redis.XAddArgs{
-		Stream: jobsStreamKey,
-		Values: map[string]any{
-			"id":                  "crash-fail",
-			"input":               redact.M1Fixture,
-			"simulateCrashAtStep": "1",
-			"simulateFailure":     "1",
-		},
-	}).Err(); err != nil {
+	if err := stream.Add(ctx, Job{ID: "crash-fail", Input: redact.M1Fixture}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), testRegistry(), store, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), testDeps(store, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
 		t.Error("emit after crash")
-	})
+	}, Hooks{
+		CrashAfterStep1: func(id string) bool { return id == "crash-fail" },
+		Fail:            func(id string) bool { return id == "crash-fail" },
+	}))
 	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
 		t.Fatalf("err = %v, want ErrSimulatedCrash", err)
 	}
@@ -219,26 +199,121 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 	assertPending(t, stream, 1)
 }
 
-func TestRedriveEmptyDLQ(t *testing.T) {
+func TestPoisonJobIsBuriedAndWorkerContinues(t *testing.T) {
 	_, stream := startStream(t)
-	err := Redrive(context.Background(), stream)
-	if !errors.Is(err, errEmptyDLQ) {
-		t.Fatalf("err = %v, want errEmptyDLQ", err)
+	ctx := context.Background()
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatal(err)
 	}
+	if err := stream.rdb.XAdd(ctx, &redis.XAddArgs{
+		Stream: jobsStreamKey,
+		Values: map[string]any{
+			"id":       "poison-1",
+			"input":    "x",
+			"job_type": "nope",
+		},
+	}).Err(); err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.Add(ctx, Job{ID: "ok-1", Input: redact.M1Fixture}); err != nil {
+		t.Fatal(err)
+	}
+	store := journal.NewMemoryJournal()
+	keys := seal.NewMemoryKeyStore()
+	priv, receipts := testSigning(t)
+	runCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	done := make(chan error, 1)
+	emitted := make(chan string, 1)
+	go func() {
+		done <- RunGroup(runCtx, stream, testWorkerConfig("poison"), testDeps(store, keys, receipts, priv, func(result journal.JobResult) {
+			emitted <- result.ID
+		}, Hooks{}))
+	}()
+	select {
+	case id := <-emitted:
+		if id != "ok-1" {
+			t.Fatalf("emitted %q, want ok-1", id)
+		}
+	case err := <-done:
+		t.Fatalf("RunGroup returned before ok-1: %v", err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout waiting for ok-1")
+	}
+	cancel()
+	<-done
+
+	row, err := store.Load(ctx, "poison-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if row.FinalState != journal.FAILED {
+		t.Fatalf("poison FinalState = %s, want FAILED", row.FinalState)
+	}
+	ok, err := store.Load(ctx, "ok-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok.FinalState != journal.COMPLETED {
+		t.Fatalf("ok FinalState = %s, want COMPLETED", ok.FinalState)
+	}
+	assertDLQLen(t, stream, 1)
+	assertStreamField(t, stream, dlqStreamKey, 0, "id", "poison-1")
+	assertNoStreamField(t, stream, dlqStreamKey, 0, "input")
+	assertMainLen(t, stream, 0)
+	if keys.Has(journal.DurableIDFor("poison-1")) {
+		t.Fatal("poison job created a key")
+	}
+}
+
+func TestCompletedJobLeavesNoStreamEntry(t *testing.T) {
+	_, stream := startStream(t)
+	ctx := context.Background()
+	if err := stream.ensureGroup(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := stream.Add(ctx, Job{ID: "job-ok", Input: redact.M1Fixture}); err != nil {
+		t.Fatal(err)
+	}
+	store := journal.NewMemoryJournal()
+	priv, receipts := testSigning(t)
+	if err := consumeOne(t, stream, store, seal.NewMemoryKeyStore(), receipts, priv, nil, Hooks{}); err != nil {
+		t.Fatal(err)
+	}
+	assertMainLen(t, stream, 0)
+	assertPending(t, stream, 0)
+	assertDLQLen(t, stream, 0)
+	row, err := store.Load(ctx, "job-ok")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if row.FinalState != journal.COMPLETED {
+		t.Fatalf("FinalState = %s, want COMPLETED", row.FinalState)
+	}
+}
+
+func failThese(ids ...string) Hooks {
+	want := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		want[id] = struct{}{}
+	}
+	return Hooks{Fail: func(jobID string) bool {
+		_, ok := want[jobID]
+		return ok
+	}}
 }
 
 func addFailJob(ctx context.Context, stream *jobStream, job Job) error {
 	return stream.rdb.XAdd(ctx, &redis.XAddArgs{
 		Stream: jobsStreamKey,
 		Values: map[string]any{
-			"id":              job.ID,
-			"input":           job.Input,
-			"simulateFailure": "1",
+			"id":    job.ID,
+			"input": job.Input,
 		},
 	}).Err()
 }
 
-func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult)) error {
+func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult), hooks Hooks) error {
 	t.Helper()
 	if emit == nil {
 		emit = func(journal.JobResult) {}
@@ -259,17 +334,17 @@ func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, keys sea
 	if len(streams) == 0 || len(streams[0].Messages) == 0 {
 		return errors.New("no message")
 	}
-	return dispatch(ctx, stream, hash, purge, testRegistry(), streams[0].Messages[0], store, emit)
+	return dispatch(ctx, stream, hash, purge, testRegistry(), streams[0].Messages[0], store, emit, hooks)
 }
 
-func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, emit func(journal.JobResult), pred func() bool) {
+func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, emit func(journal.JobResult), pred func() bool, hooks Hooks) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	done := make(chan error, 1)
 	priv, receipts := testSigning(t)
 	go func() {
-		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), testRegistry(), store, seal.NewMemoryKeyStore(), receipts, priv, emit)
+		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), testDeps(store, seal.NewMemoryKeyStore(), receipts, priv, emit, hooks))
 	}()
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {
@@ -334,6 +409,21 @@ func assertPending(t *testing.T, stream *jobStream, want int64) {
 	}
 	if pending.Count != want {
 		t.Fatalf("pending = %d, want %d", pending.Count, want)
+	}
+}
+
+func assertNoStreamField(t *testing.T, stream *jobStream, key string, index int64, field string) {
+	t.Helper()
+	entries, err := stream.rdb.XRange(context.Background(), key, "-", "+").Result()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if int64(len(entries)) <= index {
+		t.Fatalf("XRANGE %s len = %d, want index %d", key, len(entries), index)
+	}
+	fields := valuesToFields(entries[index].Values)
+	if _, ok := fields[field]; ok {
+		t.Fatalf("%s[%d] has %s", key, index, field)
 	}
 }
 

@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 
 type JobRow = { jobId: string; status: string; acceptedAt: string }
 type JobDetail = {

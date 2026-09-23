@@ -71,13 +71,14 @@ func unwrapKey(ctx context.Context, stored []byte) ([]byte, error) {
 }
 
 func vaultPost(ctx context.Context, path string, body []byte) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, os.Getenv("VAULT_ADDR")+path, bytes.NewReader(body))
+	// VAULT_ADDR is set by the operator, not by a request.
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, os.Getenv("VAULT_ADDR")+path, bytes.NewReader(body)) //#nosec G704
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("X-Vault-Token", os.Getenv("VAULT_TOKEN"))
 	req.Header.Set("Content-Type", "application/json")
-	res, err := http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req) //#nosec G704
 	if err != nil {
 		return nil, err
 	}

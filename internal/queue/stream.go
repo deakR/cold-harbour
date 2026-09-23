@@ -10,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"coldharbour/internal/checkpoint"
-
 	"github.com/redis/go-redis/v9"
 )
 
@@ -81,7 +79,7 @@ func OpenJobs(addr string) *jobStream {
 	if os.Getenv("REDIS_TLS") == "1" {
 		cfg := &tls.Config{MinVersion: tls.VersionTLS12}
 		if caPath := os.Getenv("REDIS_CA"); caPath != "" {
-			pem, err := os.ReadFile(caPath)
+			pem, err := os.ReadFile(caPath) //#nosec G304 G703 -- REDIS_CA is an operator path
 			if err != nil {
 				panic(err)
 			}
@@ -97,27 +95,11 @@ func OpenJobs(addr string) *jobStream {
 }
 
 func (s *jobStream) Add(ctx context.Context, job Job) error {
-	return s.enqueue(ctx, job, checkpoint.CrashNever)
+	return s.enqueue(ctx, job)
 }
 
 func (s *jobStream) Len(ctx context.Context) (int64, error) {
 	return s.rdb.XLen(ctx, jobsStreamKey).Result()
-}
-
-func seedIfEmpty(ctx context.Context, stream *jobStream, jobs []Job) error {
-	n, err := stream.Len(ctx)
-	if err != nil {
-		return err
-	}
-	if n != 0 {
-		return nil
-	}
-	for _, job := range jobs {
-		if err := stream.Add(ctx, job); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func valuesToFields(values map[string]any) map[string]string {

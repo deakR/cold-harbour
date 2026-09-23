@@ -57,6 +57,13 @@ func (s *MemoryKeyStore) Ensure(_ context.Context, durableID uuid.UUID) ([32]byt
 	return key, nil
 }
 
+func (s *MemoryKeyStore) Has(durableID uuid.UUID) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, ok := s.keys[durableID]
+	return ok
+}
+
 func (s *MemoryKeyStore) Destroy(_ context.Context, durableID uuid.UUID, at time.Time) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

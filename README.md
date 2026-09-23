@@ -79,7 +79,7 @@ You need Docker, Go 1.25, Java 21, and Maven (the `mvnw` wrapper is checked in).
 
 ### Endpoints
 
-All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing or revoked key returns `401`. A tenant that requests a job it did not create receives `403`.
+All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing or revoked key returns `401`. A tenant that requests a job it did not create receives `404`, the same as for a job that does not exist.
 
 | Method and path | What it does |
 | --- | --- |
@@ -108,12 +108,12 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 
 | Path | Contents |
 | --- | --- |
-| `cmd/worker` | The worker process. Reads `coldharbour:jobs`, runs the registered job type, signs and journals the result, then purges the key. |
-| `cmd/verify` | A standalone checker. `verify output --body --sig --pub` checks a signed job result. `verify receipt --job-id --purged-at --sig --pub` checks a purge receipt. Neither subcommand touches Redis or Postgres. |
+| `cmd/worker` | The worker process. Reads `coldharbour:jobs`, runs the registered job type, signs and journals the result, then purges the key. Serves Prometheus metrics on `:9100/metrics`. |
+| `cmd/verify` | A standalone checker. `verify output --body --job-id --tenant-id --sig --pub` checks a signed job result. `verify receipt --job-id --purged-at --sig --pub` checks a purge receipt. Neither subcommand touches Redis or Postgres. |
 | `internal/redact` | The `redact` job type: the three regular expressions and the `RedactPII` function they implement. |
 | `internal/mask` | The `mask` job type: replaces named fields in a JSON document. Added to prove the job-type registry needs no changes to add a job. |
 | `internal/runner` | The `JobRunner` interface and the registry that looks up a job type by name. |
-| `internal/queue` | The Redis stream, the consumer group, the dead-letter queue, and the encrypted checkpoint hash. |
+| `internal/queue` | The Redis stream, the consumer group, the dead-letter queue, and the encrypted checkpoint hash. A job that reaches `COMPLETED` or `FAILED` leaves no `input` field on `coldharbour:jobs` or `coldharbour:jobs:dlq`. |
 | `internal/checkpoint` | The in-memory checkpoint store used before the Redis-backed one existed. Kept for its tests. |
 | `internal/seal` | AES-GCM encryption of the checkpoint, Ed25519 signing, the key store, the purge receipt store, and the optional Vault wrapping. |
 | `internal/journal` | The Postgres audit row: one row per job with its checksum, its signature, and its final state. |

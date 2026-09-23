@@ -2,10 +2,12 @@ package com.coldharbour.controlplane;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -28,14 +30,19 @@ public class JobsController {
 
 	private static final String JOBS_STREAM = "coldharbour:jobs";
 
+	// Keep in step with runner.NewRegistry in cmd/worker/main.go.
+	private static final Set<String> JOB_TYPES = Set.of("redact", "mask");
+
 	private final JdbcTemplate jdbc;
 	private final StringRedisTemplate redis;
 	private final ObjectMapper mapper;
+	private final PostLimit limit;
 
-	public JobsController(JdbcTemplate jdbc, StringRedisTemplate redis, ObjectMapper mapper) {
+	public JobsController(JdbcTemplate jdbc, StringRedisTemplate redis, ObjectMapper mapper, PostLimit limit) {
 		this.jdbc = jdbc;
 		this.redis = redis;
 		this.mapper = mapper;
+		this.limit = limit;
 	}
 
 	@PostMapping("/jobs")
@@ -45,7 +52,11 @@ public class JobsController {
 		if (input == null || input.isEmpty()) {
 			return ResponseEntity.badRequest().body(Map.of("error", "input is required"));
 		}
-		if (!PostLimit.allow(tenantId)) {
+		String jobType = body.get("jobType");
+		if (jobType != null && !jobType.isEmpty() && !JOB_TYPES.contains(jobType)) {
+			return ResponseEntity.badRequest().body(Map.of("error", "unknown jobType"));
+		}
+		if (!limit.allow(tenantId)) {
 			return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
 		}
 		String jobId = UUID.randomUUID().toString();
@@ -57,12 +68,21 @@ public class JobsController {
 		fields.put("id", jobId);
 		fields.put("input", input);
 		fields.put("tenant_id", tenantId.toString());
-		String jobType = body.get("jobType");
 		if (jobType != null && !jobType.isEmpty()) {
 			fields.put("job_type", jobType);
 		}
 		MapRecord<String, String, String> record = StreamRecords.string(fields).withStreamKey(JOBS_STREAM);
-		redis.opsForStream().add(record);
+		RecordId added;
+		try {
+			added = redis.opsForStream().add(record);
+		} catch (RuntimeException ex) {
+			jdbc.update("DELETE FROM job_accepts WHERE redis_job_id = ?", jobId);
+			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "queue unavailable"));
+		}
+		if (added == null) {
+			jdbc.update("DELETE FROM job_accepts WHERE redis_job_id = ?", jobId);
+			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "queue unavailable"));
+		}
 		return ResponseEntity.ok(Map.of("jobId", jobId, "status", "QUEUED"));
 	}
 
@@ -98,7 +118,7 @@ public class JobsController {
 					FROM outputs o
 					LEFT JOIN jobs j ON j.id = ? AND j.tenant_id = o.tenant_id
 					WHERE o.redis_job_id = ? AND o.tenant_id = ?
-					""", (rs, rowNum) -> terminal(id, rs.getString("final_state"), rs.getString("body"),
+					""", (rs, rowNum) -> terminal(id, tenantId, rs.getString("final_state"), rs.getString("body"),
 					rs.getBytes("output_signature"), rs.getString("signing_key_id")),
 					DurableID.forRedisJob(id), id, tenantId);
 		} catch (EmptyResultDataAccessException ignored) {
@@ -110,7 +130,7 @@ public class JobsController {
 					UUID.class,
 					id
 			);
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		} catch (EmptyResultDataAccessException ignored) {
 		}
 
@@ -125,7 +145,7 @@ public class JobsController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 		if (acceptTenant == null || !tenantId.equals(acceptTenant)) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
 
 		Object step = redis.opsForHash().get("job:" + id + ":mem", "step");
@@ -135,7 +155,7 @@ public class JobsController {
 		return ResponseEntity.ok(Map.of("jobId", id, "status", "QUEUED"));
 	}
 
-	private ResponseEntity<?> terminal(String id, String finalState, String body, byte[] signature, String signingKeyId) {
+	private ResponseEntity<?> terminal(String id, UUID tenantID, String finalState, String body, byte[] signature, String signingKeyId) {
 		JsonNode result;
 		try {
 			result = mapper.readTree(body);
@@ -147,6 +167,7 @@ public class JobsController {
 				"jobId", id,
 				"status", finalState,
 				"result", result,
+				"tenantId", tenantID.toString(),
 				"signature", sig,
 				"signingKeyId", signingKeyId == null ? "" : signingKeyId
 		));
