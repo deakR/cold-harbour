@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -86,15 +87,21 @@ func runLoad() error {
 	return checkGate(got, baseline)
 }
 
+var makeLinePad = "pad " + strings.Repeat("x", lineBytes-len("pad "))
+
 func makeLine(i int) string {
-	var body string
-	if i%20 == 0 {
-		body = fmt.Sprintf("user%d@example.com ", i)
-	} else {
-		body = "pad "
+	if i%20 != 0 {
+		return makeLinePad
 	}
-	if len(body) >= lineBytes {
-		return body[:lineBytes]
+	num := strconv.Itoa(i)
+	prefix := "user" + num + "@example.com "
+	if len(prefix) >= lineBytes {
+		return prefix[:lineBytes]
 	}
-	return body + strings.Repeat("x", lineBytes-len(body))
+	b := make([]byte, lineBytes)
+	n := copy(b, prefix)
+	for ; n < lineBytes; n++ {
+		b[n] = 'x'
+	}
+	return string(b)
 }
