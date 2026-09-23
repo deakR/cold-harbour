@@ -31,13 +31,27 @@ const (
 
 type detector struct {
 	kind Kind
-	re   *regexp.Regexp
+	find func(string) []Span
 }
 
 var detectors = []detector{
-	{KindEmail, regexp.MustCompile(`[\w.]+@[\w.]+\.[A-Za-z]+`)},
-	{KindPhoneUS, regexp.MustCompile(`\(\d{3}\) \d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\+1 \d{3} \d{3} \d{4}`)},
-	{KindSSN, regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`)},
+	{KindEmail, regexSpans(KindEmail, regexp.MustCompile(`[\w.]+@[\w.]+\.[A-Za-z]+`))},
+	{KindPhoneUS, regexSpans(KindPhoneUS, regexp.MustCompile(`\(\d{3}\) \d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\+1 \d{3} \d{3} \d{4}`))},
+	{KindSSN, regexSpans(KindSSN, regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`))},
+	{KindPhoneIN, findPhoneIN},
+	{KindAadhaar, findAadhaar},
+	{KindPAN, findPAN},
+}
+
+func regexSpans(kind Kind, re *regexp.Regexp) func(string) []Span {
+	return func(s string) []Span {
+		locs := re.FindAllStringIndex(s, -1)
+		out := make([]Span, 0, len(locs))
+		for _, loc := range locs {
+			out = append(out, Span{Kind: kind, Start: loc[0], End: loc[1]})
+		}
+		return out
+	}
 }
 
 func Scan(s string, enabled []Kind) []Span {
@@ -50,9 +64,7 @@ func Scan(s string, enabled []Kind) []Span {
 		if _, ok := allow[d.kind]; !ok {
 			continue
 		}
-		for _, loc := range d.re.FindAllStringIndex(s, -1) {
-			spans = append(spans, Span{Kind: d.kind, Start: loc[0], End: loc[1]})
-		}
+		spans = append(spans, d.find(s)...)
 	}
 	return preferLonger(spans)
 }
