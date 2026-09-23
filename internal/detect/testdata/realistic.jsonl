@@ -2,242 +2,242 @@
 {"text":"GET /v1/lookup?q=user1@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":35}]}
 {"text":"10.0.0.30 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user2@example.test\"","spans":[{"kind":"email","start":74,"end":92}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=user3@example.test","spans":[{"kind":"email","start":81,"end":99}]}
-{"text":"req_id=186179 status=ok value=user4@example.test region=us","spans":[{"kind":"email","start":30,"end":48}]}
+{"text":"req_id=186179 status=ok value=user4%40example.test region=us","spans":[{"kind":"email","start":30,"end":50}]}
 {"text":"id,92233,user5@example.test,active","spans":[{"kind":"email","start":9,"end":27}]}
 {"text":"{\"ts\":1700083414,\"level\":\"info\",\"field\":\"user6@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":59}]}
 {"text":"GET /v1/lookup?q=user7@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":35}]}
 {"text":"10.0.0.16 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user8@example.test\"","spans":[{"kind":"email","start":74,"end":92}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=user9@example.test","spans":[{"kind":"email","start":81,"end":99}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=user9%40example.test","spans":[{"kind":"email","start":81,"end":101}]}
 {"text":"req_id=755077 status=ok value=user10@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
 {"text":"id,75899,user11@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
 {"text":"{\"ts\":1700025424,\"level\":\"info\",\"field\":\"user12@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
 {"text":"GET /v1/lookup?q=user13@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
-{"text":"10.0.0.170 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user14@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"10.0.0.170 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user14%40example.test\"","spans":[{"kind":"email","start":75,"end":96}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:24) detail=user15@example.test","spans":[{"kind":"email","start":81,"end":100}]}
 {"text":"req_id=300215 status=ok value=user16@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
 {"text":"id,59037,user17@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
 {"text":"{\"ts\":1700088554,\"level\":\"info\",\"field\":\"user18@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
-{"text":"GET /v1/lookup?q=user19@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"GET /v1/lookup?q=user19%40example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":38}]}
 {"text":"10.0.0.108 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user20@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=user21@example.test","spans":[{"kind":"email","start":81,"end":100}]}
 {"text":"req_id=114393 status=ok value=user22@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
 {"text":"id,89391,user23@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
-{"text":"{\"ts\":1700088468,\"level\":\"info\",\"field\":\"user24@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"{\"ts\":1700088468,\"level\":\"info\",\"field\":\"user24%40example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":62}]}
 {"text":"GET /v1/lookup?q=user25@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
 {"text":"10.0.0.190 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user26@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:60) detail=user27@example.test","spans":[{"kind":"email","start":81,"end":100}]}
 {"text":"req_id=881451 status=ok value=user28@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
-{"text":"id,43281,user29@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"id,43281,user29%40example.test,active","spans":[{"kind":"email","start":9,"end":30}]}
 {"text":"{\"ts\":1700047982,\"level\":\"info\",\"field\":\"user30@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
 {"text":"GET /v1/lookup?q=user31@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
 {"text":"10.0.0.104 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user32@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:22) detail=user33@example.test","spans":[{"kind":"email","start":81,"end":100}]}
-{"text":"req_id=192941 status=ok value=user34@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"req_id=192941 status=ok value=user34%40example.test region=us","spans":[{"kind":"email","start":30,"end":51}]}
 {"text":"id,39843,user35@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
 {"text":"{\"ts\":1700051816,\"level\":\"info\",\"field\":\"user36@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
 {"text":"GET /v1/lookup?q=user37@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
 {"text":"10.0.0.122 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user38@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:16) detail=user39@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:16) detail=user39%40example.test","spans":[{"kind":"email","start":81,"end":102}]}
 {"text":"req_id=843999 status=ok value=user40@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
 {"text":"id,78533,user41@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
 {"text":"{\"ts\":1700037506,\"level\":\"info\",\"field\":\"user42@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
 {"text":"GET /v1/lookup?q=user43@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
-{"text":"10.0.0.124 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user44@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"10.0.0.124 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user44%40example.test\"","spans":[{"kind":"email","start":75,"end":96}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:10) detail=user45@example.test","spans":[{"kind":"email","start":81,"end":100}]}
 {"text":"req_id=901121 status=ok value=user46@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
 {"text":"id,81879,user47@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
 {"text":"{\"ts\":1700063276,\"level\":\"info\",\"field\":\"user48@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
-{"text":"GET /v1/lookup?q=user49@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"GET /v1/lookup?q=user49%40example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":38}]}
 {"text":"10.0.0.166 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user50@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:68) detail=user51@example.test","spans":[{"kind":"email","start":81,"end":100}]}
 {"text":"req_id=520083 status=ok value=user52@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
 {"text":"id,16121,user53@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
-{"text":"{\"ts\":1700072326,\"level\":\"info\",\"field\":\"user54@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"{\"ts\":1700072326,\"level\":\"info\",\"field\":\"user54%40example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":62}]}
 {"text":"GET /v1/lookup?q=user55@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
 {"text":"10.0.0.192 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user56@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:78) detail=user57@example.test","spans":[{"kind":"email","start":81,"end":100}]}
 {"text":"req_id=518485 status=ok value=user58@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
-{"text":"id,38379,user59@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"id,38379,user59%40example.test,active","spans":[{"kind":"email","start":9,"end":30}]}
 {"text":"{\"ts\":1700061088,\"level\":\"info\",\"field\":\"user60@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
 {"text":"GET /v1/lookup?q=user61@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
 {"text":"10.0.0.170 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user62@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:88) detail=user63@example.test","spans":[{"kind":"email","start":81,"end":100}]}
-{"text":"req_id=336519 status=ok value=user64@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"req_id=336519 status=ok value=user64%40example.test region=us","spans":[{"kind":"email","start":30,"end":51}]}
 {"text":"id,23629,user65@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
 {"text":"{\"ts\":1700050490,\"level\":\"info\",\"field\":\"user66@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
 {"text":"GET /v1/lookup?q=user67@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
 {"text":"10.0.0.196 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user68@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:50) detail=user69@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:50) detail=user69%40example.test","spans":[{"kind":"email","start":81,"end":102}]}
 {"text":"req_id=585513 status=ok value=user70@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
 {"text":"id,41247,user71@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
 {"text":"{\"ts\":1700033684,\"level\":\"info\",\"field\":\"user72@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
 {"text":"GET /v1/lookup?q=user73@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
-{"text":"10.0.0.14 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user74@example.test\"","spans":[{"kind":"email","start":74,"end":93}]}
+{"text":"10.0.0.14 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user74%40example.test\"","spans":[{"kind":"email","start":74,"end":95}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:60) detail=user75@example.test","spans":[{"kind":"email","start":81,"end":100}]}
 {"text":"req_id=274811 status=ok value=user76@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
 {"text":"id,87713,user77@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
 {"text":"{\"ts\":1700076414,\"level\":\"info\",\"field\":\"user78@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
-{"text":"GET /v1/lookup?q=user79@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"GET /v1/lookup?q=user79%40example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":38}]}
 {"text":"10.0.0.16 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user80@example.test\"","spans":[{"kind":"email","start":74,"end":93}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:38) detail=user81@example.test","spans":[{"kind":"email","start":81,"end":100}]}
 {"text":"req_id=426941 status=ok value=user82@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
 {"text":"id,55059,user83@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
-{"text":"{\"ts\":1700049304,\"level\":\"info\",\"field\":\"user84@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"{\"ts\":1700049304,\"level\":\"info\",\"field\":\"user84%40example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":62}]}
 {"text":"GET /v1/lookup?q=user85@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
 {"text":"10.0.0.114 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user86@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:32) detail=user87@example.test","spans":[{"kind":"email","start":81,"end":100}]}
 {"text":"req_id=735663 status=ok value=user88@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
-{"text":"id,14197,user89@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"id,14197,user89%40example.test,active","spans":[{"kind":"email","start":9,"end":30}]}
 {"text":"{\"ts\":1700044290,\"level\":\"info\",\"field\":\"user90@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
 {"text":"GET /v1/lookup?q=user91@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
 {"text":"10.0.0.140 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user92@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:58) detail=user93@example.test","spans":[{"kind":"email","start":81,"end":100}]}
-{"text":"req_id=470737 status=ok value=user94@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"req_id=470737 status=ok value=user94%40example.test region=us","spans":[{"kind":"email","start":30,"end":51}]}
 {"text":"id,22247,user95@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
 {"text":"{\"ts\":1700072284,\"level\":\"info\",\"field\":\"user96@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
 {"text":"GET /v1/lookup?q=user97@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
 {"text":"10.0.0.182 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user98@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:68) detail=user99@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:68) detail=user99%40example.test","spans":[{"kind":"email","start":81,"end":102}]}
 {"text":"req_id=50339 status=ok value=user100@example.test region=us","spans":[{"kind":"email","start":29,"end":49}]}
 {"text":"id,48329,user101@example.test,active","spans":[{"kind":"email","start":9,"end":29}]}
 {"text":"{\"ts\":1700010294,\"level\":\"info\",\"field\":\"user102@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":61}]}
 {"text":"GET /v1/lookup?q=user103@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":37}]}
-{"text":"10.0.0.40 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user104@example.test\"","spans":[{"kind":"email","start":74,"end":94}]}
+{"text":"10.0.0.40 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user104%40example.test\"","spans":[{"kind":"email","start":74,"end":96}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:46) detail=user105@example.test","spans":[{"kind":"email","start":81,"end":101}]}
 {"text":"req_id=647333 status=ok value=user106@example.test region=us","spans":[{"kind":"email","start":30,"end":50}]}
 {"text":"id,67387,user107@example.test,active","spans":[{"kind":"email","start":9,"end":29}]}
 {"text":"{\"ts\":1700057376,\"level\":\"info\",\"field\":\"user108@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":61}]}
-{"text":"GET /v1/lookup?q=user109@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":37}]}
+{"text":"GET /v1/lookup?q=user109%40example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":39}]}
 {"text":"10.0.0.138 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user110@example.test\"","spans":[{"kind":"email","start":75,"end":95}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=user111@example.test","spans":[{"kind":"email","start":81,"end":101}]}
 {"text":"req_id=251863 status=ok value=user112@example.test region=us","spans":[{"kind":"email","start":30,"end":50}]}
 {"text":"id,38877,user113@example.test,active","spans":[{"kind":"email","start":9,"end":29}]}
-{"text":"{\"ts\":1700036202,\"level\":\"info\",\"field\":\"user114@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":61}]}
+{"text":"{\"ts\":1700036202,\"level\":\"info\",\"field\":\"user114%40example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":63}]}
 {"text":"GET /v1/lookup?q=user115@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":37}]}
 {"text":"10.0.0.132 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user116@example.test\"","spans":[{"kind":"email","start":75,"end":95}]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=user117@example.test","spans":[{"kind":"email","start":81,"end":101}]}
 {"text":"req_id=951801 status=ok value=user118@example.test region=us","spans":[{"kind":"email","start":30,"end":50}]}
-{"text":"id,70735,user119@example.test,active","spans":[{"kind":"email","start":9,"end":29}]}
+{"text":"id,70735,user119%40example.test,active","spans":[{"kind":"email","start":9,"end":31}]}
 {"text":"{\"ts\":1700076410,\"level\":\"info\",\"field\":\"(296) 545-8161\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
 {"text":"GET /v1/lookup?q=589-894-1416\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
 {"text":"10.0.0.144 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 329 276 7872\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=(272) 303-2543","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=998913 status=ok value=545-678-5636 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,98645,+1 472 307 6143,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
-{"text":"{\"ts\":1700021992,\"level\":\"info\",\"field\":\"(416) 349-4529\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
-{"text":"GET /v1/lookup?q=301-630-1490\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
-{"text":"10.0.0.110 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 589 636 5452\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:66) detail=(418) 383-4785","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=976919 status=ok value=309-414-9018 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,25099,+1 296 347 4105,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=272 303 2543","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=998913 status=ok value=(545) 678-5636 region=us","spans":[{"kind":"phone_us","start":30,"end":44}]}
+{"text":"id,98645,472-307-6143,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
+{"text":"{\"ts\":1700021992,\"level\":\"info\",\"field\":\"+1 416 349 4529\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":56}]}
+{"text":"GET /v1/lookup?q=301 630 1490\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.110 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"(589) 636-5452\"","spans":[{"kind":"phone_us","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:66) detail=418-383-4785","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=976919 status=ok value=+1 309 414 9018 region=us","spans":[{"kind":"phone_us","start":30,"end":45}]}
+{"text":"id,25099,296 347 4105,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
 {"text":"{\"ts\":1700028102,\"level\":\"info\",\"field\":\"(216) 183-2509\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
 {"text":"GET /v1/lookup?q=521-014-3894\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
 {"text":"10.0.0.108 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 323 414 9676\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=(232) 761-0341","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=823837 status=ok value=505-058-7432 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,63121,+1 456 981 4169,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
-{"text":"{\"ts\":1700060404,\"level\":\"info\",\"field\":\"(474) 365-8149\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
-{"text":"GET /v1/lookup?q=387-016-5478\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
-{"text":"10.0.0.122 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 503 270 3690\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=(418) 963-8121","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=942099 status=ok value=323-454-9296 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,54151,+1 258 969 6521,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=232 761 0341","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=823837 status=ok value=(505) 058-7432 region=us","spans":[{"kind":"phone_us","start":30,"end":44}]}
+{"text":"id,63121,456-981-4169,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
+{"text":"{\"ts\":1700060404,\"level\":\"info\",\"field\":\"+1 474 365 8149\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":56}]}
+{"text":"GET /v1/lookup?q=387 016 5478\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.122 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"(503) 270-3690\"","spans":[{"kind":"phone_us","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=418-963-8121","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=942099 status=ok value=+1 323 454 9296 region=us","spans":[{"kind":"phone_us","start":30,"end":45}]}
+{"text":"id,54151,258 969 6521,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
 {"text":"{\"ts\":1700020018,\"level\":\"info\",\"field\":\"(238) 167-0707\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
 {"text":"GET /v1/lookup?q=541-410-3432\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
 {"text":"10.0.0.192 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 341 236 1652\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:76) detail=(274) 581-6785","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=579257 status=ok value=583-016-7890 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,42733,+1 452 901 0385,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
-{"text":"{\"ts\":1700007808,\"level\":\"info\",\"field\":\"(492) 385-2309\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
-{"text":"GET /v1/lookup?q=361-276-5012\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
-{"text":"10.0.0.54 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 547 676 1092\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:74) detail=(450) 525-2107","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=121103 status=ok value=367-010-1892 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,48003,+1 272 561 0541,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:76) detail=274 581 6785","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=579257 status=ok value=(583) 016-7890 region=us","spans":[{"kind":"phone_us","start":30,"end":44}]}
+{"text":"id,42733,452-901-0385,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
+{"text":"{\"ts\":1700007808,\"level\":\"info\",\"field\":\"+1 492 385 2309\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":56}]}
+{"text":"GET /v1/lookup?q=361 276 5012\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.54 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"(547) 676-1092\"","spans":[{"kind":"phone_us","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:74) detail=450-525-2107","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=121103 status=ok value=+1 367 010 1892 region=us","spans":[{"kind":"phone_us","start":30,"end":45}]}
+{"text":"id,48003,272 561 0541,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
 {"text":"{\"ts\":1700045022,\"level\":\"info\",\"field\":\"(212) 127-0165\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
 {"text":"GET /v1/lookup?q=545-494-7874\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
 {"text":"10.0.0.60 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 325 214 5238\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:72) detail=(238) 903-4763","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=607893 status=ok value=543-290-1096 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,6601,+1 458 107 6947,active","spans":[{"kind":"phone_us","start":8,"end":23}]}
-{"text":"{\"ts\":1700063980,\"level\":\"info\",\"field\":\"(416) 943-2189\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
-{"text":"GET /v1/lookup?q=329-038-5690\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
-{"text":"10.0.0.18 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 563 076 5090\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:86) detail=(492) 729-0363","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=640843 status=ok value=389-816-1632 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,74815,+1 298 521 6107,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:72) detail=238 903 4763","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=607893 status=ok value=(543) 290-1096 region=us","spans":[{"kind":"phone_us","start":30,"end":44}]}
+{"text":"id,6601,458-107-6947,active","spans":[{"kind":"phone_us","start":8,"end":20}]}
+{"text":"{\"ts\":1700063980,\"level\":\"info\",\"field\":\"+1 416 943 2189\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":56}]}
+{"text":"GET /v1/lookup?q=329 038 5690\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.18 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"(563) 076-5090\"","spans":[{"kind":"phone_us","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:86) detail=492-729-0363","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=640843 status=ok value=+1 389 816 1632 region=us","spans":[{"kind":"phone_us","start":30,"end":45}]}
+{"text":"id,74815,298 521 6107,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
 {"text":"{\"ts\":1700037706,\"level\":\"info\",\"field\":\"(234) 749-6783\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
 {"text":"GET /v1/lookup?q=567-878-7434\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
 {"text":"10.0.0.160 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 387 250 9418\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:68) detail=(274) 121-2187","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=396721 status=ok value=521-278-1212 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,90789,+1 438 587 0563,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
-{"text":"{\"ts\":1700053288,\"level\":\"info\",\"field\":\"(494) 381-8569\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
-{"text":"GET /v1/lookup?q=383-878-7494\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
-{"text":"10.0.0.6 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 589 878 9270\"","spans":[{"kind":"phone_us","start":73,"end":88}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=(434) 363-0141","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=846343 status=ok value=383-832-9454 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,47899,+1 272 343 4307,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:68) detail=274 121 2187","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=396721 status=ok value=(521) 278-1212 region=us","spans":[{"kind":"phone_us","start":30,"end":44}]}
+{"text":"id,90789,438-587-0563,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
+{"text":"{\"ts\":1700053288,\"level\":\"info\",\"field\":\"+1 494 381 8569\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":56}]}
+{"text":"GET /v1/lookup?q=383 878 7494\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.6 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"(589) 878-9270\"","spans":[{"kind":"phone_us","start":73,"end":87}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=434-363-0141","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=846343 status=ok value=+1 383 832 9454 region=us","spans":[{"kind":"phone_us","start":30,"end":45}]}
+{"text":"id,47899,272 343 4307,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
 {"text":"{\"ts\":1700081142,\"level\":\"info\",\"field\":\"(276) 161-4361\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
 {"text":"GET /v1/lookup?q=521-632-9018\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
 {"text":"10.0.0.92 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 301 074 5874\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:48) detail=(238) 787-2741","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=892877 status=ok value=529-816-7050 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,29025,+1 456 581 8347,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
-{"text":"{\"ts\":1700028724,\"level\":\"info\",\"field\":\"(498) 727-4725\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
-{"text":"GET /v1/lookup?q=381-854-3458\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
-{"text":"10.0.0.178 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 567 416 9010\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=(416) 763-2161","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=956611 status=ok value=367-672-7650 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,96535,+1 212 741 8109,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:48) detail=238 787 2741","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=892877 status=ok value=(529) 816-7050 region=us","spans":[{"kind":"phone_us","start":30,"end":44}]}
+{"text":"id,29025,456-581-8347,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
+{"text":"{\"ts\":1700028724,\"level\":\"info\",\"field\":\"+1 498 727 4725\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":56}]}
+{"text":"GET /v1/lookup?q=381 854 3458\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.178 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"(567) 416-9010\"","spans":[{"kind":"phone_us","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=416-763-2161","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=956611 status=ok value=+1 367 672 7650 region=us","spans":[{"kind":"phone_us","start":30,"end":45}]}
+{"text":"id,96535,212 741 8109,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
 {"text":"{\"ts\":1700064482,\"level\":\"info\",\"field\":\"(232) 503-2525\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
 {"text":"GET /v1/lookup?q=589-652-5274\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
 {"text":"10.0.0.192 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 367 430 7476\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:76) detail=(232) 745-2903","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=42217 status=ok value=547-052-1434 region=us","spans":[{"kind":"phone_us","start":29,"end":41}]}
-{"text":"id,93565,+1 418 387 2549,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
-{"text":"{\"ts\":1700031680,\"level\":\"info\",\"field\":\"(430) 701-6989\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
-{"text":"GET /v1/lookup?q=327-292-9290\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
-{"text":"10.0.0.142 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 541 654 1854\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:58) detail=(452) 125-8183","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=608319 status=ok value=309-252-7094 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,71187,+1 298 581 0129,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:76) detail=232 745 2903","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=42217 status=ok value=(547) 052-1434 region=us","spans":[{"kind":"phone_us","start":29,"end":43}]}
+{"text":"id,93565,418-387-2549,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
+{"text":"{\"ts\":1700031680,\"level\":\"info\",\"field\":\"+1 430 701 6989\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":56}]}
+{"text":"GET /v1/lookup?q=327 292 9290\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.142 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"(541) 654-1854\"","spans":[{"kind":"phone_us","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:58) detail=452-125-8183","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=608319 status=ok value=+1 309 252 7094 region=us","spans":[{"kind":"phone_us","start":30,"end":45}]}
+{"text":"id,71187,298 581 0129,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
 {"text":"{\"ts\":1700081742,\"level\":\"info\",\"field\":\"(238) 743-2305\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
 {"text":"GET /v1/lookup?q=541-096-5278\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
 {"text":"10.0.0.4 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 349 018 3812\"","spans":[{"kind":"phone_us","start":73,"end":88}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=(270) 583-0541","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=137221 status=ok value=541-472-7090 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,95321,+1 498 727 8141,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
-{"text":"{\"ts\":1700082364,\"level\":\"info\",\"field\":\"(438) 329-4163\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
-{"text":"GET /v1/lookup?q=347-692-7270\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
-{"text":"10.0.0.106 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 563 818 9254\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:70) detail=(434) 589-4505","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=867259 status=ok value=323-814-9814 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,44495,+1 272 745 6305,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=270 583 0541","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=137221 status=ok value=(541) 472-7090 region=us","spans":[{"kind":"phone_us","start":30,"end":44}]}
+{"text":"id,95321,498-727-8141,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
+{"text":"{\"ts\":1700082364,\"level\":\"info\",\"field\":\"+1 438 329 4163\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":56}]}
+{"text":"GET /v1/lookup?q=347 692 7270\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.106 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"(563) 818-9254\"","spans":[{"kind":"phone_us","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:70) detail=434-589-4505","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=867259 status=ok value=+1 323 814 9814 region=us","spans":[{"kind":"phone_us","start":30,"end":45}]}
+{"text":"id,44495,272 745 6305,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
 {"text":"{\"ts\":1700081450,\"level\":\"info\",\"field\":\"(296) 961-8345\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
 {"text":"GET /v1/lookup?q=565-252-1474\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
 {"text":"10.0.0.16 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 305 092 1838\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:84) detail=(290) 763-0183","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=197025 status=ok value=543-874-3236 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,56469,+1 470 345 4103,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
-{"text":"{\"ts\":1700077064,\"level\":\"info\",\"field\":\"(414) 181-2589\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
-{"text":"GET /v1/lookup?q=363-058-1076\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
-{"text":"10.0.0.30 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 521 238 7094\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:50) detail=(412) 927-2709","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=471927 status=ok value=321-676-7670 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,89643,+1 270 789 6183,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:84) detail=290 763 0183","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=197025 status=ok value=(543) 874-3236 region=us","spans":[{"kind":"phone_us","start":30,"end":44}]}
+{"text":"id,56469,470-345-4103,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
+{"text":"{\"ts\":1700077064,\"level\":\"info\",\"field\":\"+1 414 181 2589\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":56}]}
+{"text":"GET /v1/lookup?q=363 058 1076\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.30 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"(521) 238-7094\"","spans":[{"kind":"phone_us","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:50) detail=412-927-2709","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=471927 status=ok value=+1 321 676 7670 region=us","spans":[{"kind":"phone_us","start":30,"end":45}]}
+{"text":"id,89643,270 789 6183,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
 {"text":"{\"ts\":1700064230,\"level\":\"info\",\"field\":\"(276) 763-0725\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
 {"text":"GET /v1/lookup?q=561-090-9416\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
 {"text":"10.0.0.92 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 343 416 3256\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:64) detail=(256) 361-2709","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=760829 status=ok value=541-016-9492 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,68049,+1 430 925 8569,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
-{"text":"{\"ts\":1700051268,\"level\":\"info\",\"field\":\"(474) 721-8527\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
-{"text":"GET /v1/lookup?q=365-496-3418\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
-{"text":"10.0.0.26 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 525 254 3498\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:30) detail=(430) 343-8709","spans":[{"kind":"phone_us","start":81,"end":95}]}
-{"text":"req_id=369139 status=ok value=301-236-5054 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
-{"text":"id,68359,+1 256 127 2321,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:64) detail=256 361 2709","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=760829 status=ok value=(541) 016-9492 region=us","spans":[{"kind":"phone_us","start":30,"end":44}]}
+{"text":"id,68049,430-925-8569,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
+{"text":"{\"ts\":1700051268,\"level\":\"info\",\"field\":\"+1 474 721 8527\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":56}]}
+{"text":"GET /v1/lookup?q=365 496 3418\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.26 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"(525) 254-3498\"","spans":[{"kind":"phone_us","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:30) detail=430-343-8709","spans":[{"kind":"phone_us","start":81,"end":93}]}
+{"text":"req_id=369139 status=ok value=+1 301 236 5054 region=us","spans":[{"kind":"phone_us","start":30,"end":45}]}
+{"text":"id,68359,256 127 2321,active","spans":[{"kind":"phone_us","start":9,"end":21}]}
 {"text":"{\"ts\":1700037266,\"level\":\"info\",\"field\":\"6743634545\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
 {"text":"GET /v1/lookup?q=+91 94107 03016\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
 {"text":"10.0.0.112 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07612387834\"","spans":[{"kind":"phone_in","start":75,"end":86}]}
@@ -723,318 +723,318 @@
 {"text":"10.0.0.21 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5490-3678-1691\"","spans":[]}
 {"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:69) detail=XQHXN4329M","spans":[]}
 {"text":"req_id=964758 status=ok value=1983854921 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user5%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700037213,\"level\":\"info\",\"field\":\"589 058 5892\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-AJQMA1070J\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.146 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1649171038\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:65) detail=1644428638","spans":[]}
-{"text":"req_id=108384 status=ok value=6341 4345 2323 region=us","spans":[]}
-{"text":"id|36|TQREX0389M|active","spans":[]}
-{"text":"{\"ts\":1700064963,\"level\":\"info\",\"field\":\"1652747212\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user13%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.159 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"278 143 6967\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:47) detail=SKU-FYLXX8367M","spans":[]}
-{"text":"req_id=481099 status=ok value=ORD-1187790533 region=us","spans":[]}
-{"text":"id|34750|1688383344|active","spans":[]}
-{"text":"{\"ts\":1700008123,\"level\":\"info\",\"field\":\"949876541614\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=IRGXU9472L\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.109 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2701634909\"","spans":[]}
-{"text":"GET /v1/lookup?email=user21%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=601947 status=ok value=361 810 9016 region=us","spans":[]}
-{"text":"id,48591,SKU-ILIOE7454J,active","spans":[]}
-{"text":"{\"ts\":1700002165,\"level\":\"info\",\"field\":\"ORD-1441865759\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1798542770\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.24 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5016-5818-9850\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:20) detail=GVCZW1474R","spans":[]}
-{"text":"req_id=65873 status=ok value=5232965270 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user29%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700087220,\"level\":\"info\",\"field\":\"454 361 0969\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-FMBOR8781S\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.153 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1220275014\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=1685868345","spans":[]}
-{"text":"req_id=542659 status=ok value=9234 1874 5894 region=us","spans":[]}
-{"text":"id,37111,UJUME3658R,active","spans":[]}
-{"text":"{\"ts\":1700036610,\"level\":\"info\",\"field\":\"5343658125\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user37%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.178 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"523 216 7878\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:22) detail=SKU-GVOME9492T","spans":[]}
-{"text":"req_id=161946 status=ok value=ORD-1404777609 region=us","spans":[]}
-{"text":"id,57625,1682742163,active","spans":[]}
-{"text":"{\"ts\":1700019962,\"level\":\"info\",\"field\":\"892587294309\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=FKTUB6569S\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.104 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"1272325670\"","spans":[]}
-{"text":"GET /v1/lookup?email=user45%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=260906 status=ok value=236 907 4163 region=us","spans":[]}
-{"text":"id|63918|SKU-TQRSX2185Y|active","spans":[]}
-{"text":"{\"ts\":1700057820,\"level\":\"info\",\"field\":\"ORD-1588093490\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1795140829\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.71 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4749-6985-4523\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:47) detail=HQJRJ6787W","spans":[]}
-{"text":"req_id=950200 status=ok value=4367276129 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user53%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700028695,\"level\":\"info\",\"field\":\"309 656 9616\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-IDYEK7676B\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.108 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1228813791\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:11) detail=1720286848","spans":[]}
-{"text":"req_id=175243 status=ok value=8589 2165 0346 region=us","spans":[]}
-{"text":"id,67775,CVMMC3476T,active","spans":[]}
-{"text":"{\"ts\":1700034410,\"level\":\"info\",\"field\":\"3727236989\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user61%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.50 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"503 692 7250\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=SKU-GBMVO1058T","spans":[]}
-{"text":"req_id=888066 status=ok value=ORD-1452717747 region=us","spans":[]}
-{"text":"id,84033,1699309467,active","spans":[]}
-{"text":"{\"ts\":1700051819,\"level\":\"info\",\"field\":\"854303092140\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=EPMEK1418P\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.173 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4781494727\"","spans":[]}
-{"text":"GET /v1/lookup?email=user69%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=236715 status=ok value=345 092 9292 region=us","spans":[]}
-{"text":"id,92383,SKU-KBQMK5616H,active","spans":[]}
-{"text":"{\"ts\":1700040613,\"level\":\"info\",\"field\":\"ORD-1180395280\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1690709762\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.152 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5876-5238-9430\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=CDIYQ3474J","spans":[]}
-{"text":"req_id=12705 status=ok value=1214303258 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user77%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700041412,\"level\":\"info\",\"field\":\"418 101 6121\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-VMTSX0783U\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.89 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1212698727\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:64) detail=1687058121","spans":[]}
-{"text":"req_id=689432 status=ok value=9014 1838 3631 region=us","spans":[]}
-{"text":"id|39516|LUBVN8503I|active","spans":[]}
-{"text":"{\"ts\":1700084219,\"level\":\"info\",\"field\":\"4650309278\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user85%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.191 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"258 327 2921\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:23) detail=SKU-VGRWD4345Y","spans":[]}
-{"text":"req_id=628771 status=ok value=ORD-1854286701 region=us","spans":[]}
-{"text":"id|31958|1714496936|active","spans":[]}
-{"text":"{\"ts\":1700005283,\"level\":\"info\",\"field\":\"921878729834\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=CDCSY3872T\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.53 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3769476141\"","spans":[]}
-{"text":"GET /v1/lookup?email=user93%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=394547 status=ok value=361 614 3494 region=us","spans":[]}
-{"text":"id,88839,SKU-ADWXG7416T,active","spans":[]}
-{"text":"{\"ts\":1700006797,\"level\":\"info\",\"field\":\"ORD-1006723709\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1798865194\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.24 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5070-3252-5698\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:12) detail=WXCIS9830D","spans":[]}
-{"text":"req_id=12841 status=ok value=1656785638 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user101%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700003420,\"level\":\"info\",\"field\":\"498 963 8325\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-TKPXL2107C\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.185 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1587361471\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:72) detail=1734436881","spans":[]}
-{"text":"req_id=847451 status=ok value=9418 1458 1072 region=us","spans":[]}
-{"text":"id,89295,GXYRY5450H,active","spans":[]}
-{"text":"{\"ts\":1700056202,\"level\":\"info\",\"field\":\"5563610383\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user109%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.42 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"589 838 1210\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=SKU-QBOVO3896D","spans":[]}
-{"text":"req_id=154514 status=ok value=ORD-1229520678 region=us","spans":[]}
-{"text":"id,11793,1763542187,active","spans":[]}
-{"text":"{\"ts\":1700049474,\"level\":\"info\",\"field\":\"830767430383\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=RWXRP2565O\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.40 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2690303874\"","spans":[]}
-{"text":"GET /v1/lookup?email=user117%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=205346 status=ok value=216 325 6129 region=us","spans":[]}
-{"text":"id|87686|SKU-HCPRF4343C|active","spans":[]}
-{"text":"{\"ts\":1700044900,\"level\":\"info\",\"field\":\"ORD-1332293508\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1679693877\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.55 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4527-0921-0965\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:87) detail=FKFDV4169S","spans":[]}
-{"text":"req_id=93680 status=ok value=3707056129 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user125%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700037119,\"level\":\"info\",\"field\":\"301 414 3432\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-GRMOU9874R\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.92 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1372508844\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:67) detail=1612570296","spans":[]}
-{"text":"req_id=635178 status=ok value=8569 2383 0923 region=us","spans":[]}
-{"text":"id|99886|LETMD0345Y|active","spans":[]}
-{"text":"{\"ts\":1700013893,\"level\":\"info\",\"field\":\"2632963434\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user133%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.73 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"432 961 0949\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:81) detail=SKU-ZGRST4501A","spans":[]}
-{"text":"req_id=633149 status=ok value=ORD-1477017125 region=us","spans":[]}
-{"text":"id|15992|1623720890|active","spans":[]}
-{"text":"{\"ts\":1700063149,\"level\":\"info\",\"field\":\"341016925814\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=CJURG9034B\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.63 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3923050905\"","spans":[]}
-{"text":"GET /v1/lookup?email=user141%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=101645 status=ok value=549 252 1630 region=us","spans":[]}
-{"text":"id,23137,SKU-SZSIW7812X,active","spans":[]}
-{"text":"{\"ts\":1700057623,\"level\":\"info\",\"field\":\"ORD-1238360137\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1683513708\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.18 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"7614-3658-5292\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:78) detail=WVEVA3074X","spans":[]}
-{"text":"req_id=772627 status=ok value=1658123472 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user149%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700012910,\"level\":\"info\",\"field\":\"254 947 4307\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-BGXDV2763O\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.187 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1768262102\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:26) detail=1689277947","spans":[]}
-{"text":"req_id=581877 status=ok value=3012 3698 1830 region=us","spans":[]}
-{"text":"id,3881,WVCVY3638J,active","spans":[]}
-{"text":"{\"ts\":1700015852,\"level\":\"info\",\"field\":\"1305014969\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user157%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.12 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"365 052 7058\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=SKU-CZCOQ1212X","spans":[]}
-{"text":"req_id=507284 status=ok value=ORD-1793420089 region=us","spans":[]}
-{"text":"id,71963,1751108869,active","spans":[]}
-{"text":"{\"ts\":1700074548,\"level\":\"info\",\"field\":\"274501274165\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=NKPML2965I\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.98 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5674529672\"","spans":[]}
-{"text":"GET /v1/lookup?email=user165%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=84708 status=ok value=414 929 6309 region=us","spans":[]}
-{"text":"id|53064|SKU-XGXKN8301A|active","spans":[]}
-{"text":"{\"ts\":1700073494,\"level\":\"info\",\"field\":\"ORD-1648710928\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1671584127\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.57 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"6329-6721-6721\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:65) detail=TGHXD2501S","spans":[]}
-{"text":"req_id=65218 status=ok value=1101014525 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user173%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700021577,\"level\":\"info\",\"field\":\"501 454 3076\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-IDSWY5834V\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.142 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1749045753\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:77) detail=1778970698","spans":[]}
-{"text":"req_id=202348 status=ok value=2767 8303 8503 region=us","spans":[]}
-{"text":"id|96208|FITXV2961E|active","spans":[]}
-{"text":"{\"ts\":1700027471,\"level\":\"info\",\"field\":\"5032387276\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user181%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.83 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"256 367 6165\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:75) detail=SKU-FAVZF4505O","spans":[]}
-{"text":"req_id=205383 status=ok value=ORD-1799336097 region=us","spans":[]}
-{"text":"id|58826|1623774588|active","spans":[]}
-{"text":"{\"ts\":1700071367,\"level\":\"info\",\"field\":\"547038729836\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=MZYRE9218H\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.81 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3147454961\"","spans":[]}
-{"text":"GET /v1/lookup?email=user189%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=866391 status=ok value=305 654 9210 region=us","spans":[]}
-{"text":"id,79435,SKU-UXGIY5494X,active","spans":[]}
-{"text":"{\"ts\":1700002257,\"level\":\"info\",\"field\":\"ORD-1029914268\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1607290334\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.132 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9096-1034-3896\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:16) detail=YLQMM9856R","spans":[]}
-{"text":"req_id=439725 status=ok value=4432767094 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user197%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700082384,\"level\":\"info\",\"field\":\"496 545 0389\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-POJDH4967U\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.61 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1404400767\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:76) detail=1689450453","spans":[]}
-{"text":"req_id=3839 status=ok value=5296 3050 1010 region=us","spans":[]}
-{"text":"id,45971,WVMXC3816P,active","spans":[]}
-{"text":"{\"ts\":1700044926,\"level\":\"info\",\"field\":\"2327034301\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user205%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.150 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"507 472 9050\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=SKU-MZEMM9038H","spans":[]}
-{"text":"req_id=753158 status=ok value=ORD-1710553878 region=us","spans":[]}
-{"text":"id,28661,1642071503,active","spans":[]}
-{"text":"{\"ts\":1700061478,\"level\":\"info\",\"field\":\"418727832963\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=TYFOX6347U\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.124 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4036501474\"","spans":[]}
-{"text":"GET /v1/lookup?email=user213%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=6102 status=ok value=250 549 0349 region=us","spans":[]}
-{"text":"id|72506|SKU-XCVDX6727C|active","spans":[]}
-{"text":"{\"ts\":1700074456,\"level\":\"info\",\"field\":\"ORD-1142190500\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1784226233\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.67 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"8187-0187-6185\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:75) detail=JUPYH0521O","spans":[]}
-{"text":"req_id=98564 status=ok value=3549056507 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user221%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700055155,\"level\":\"info\",\"field\":\"367 818 1012\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-OVWXO9816H\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.112 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1389326672\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:55) detail=1636236172","spans":[]}
-{"text":"req_id=736670 status=ok value=4529 8367 0585 region=us","spans":[]}
-{"text":"id|23650|ROFWT8723G|active","spans":[]}
-{"text":"{\"ts\":1700046393,\"level\":\"info\",\"field\":\"5236563654\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user229%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.5 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"414 783 0167\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:85) detail=SKU-XYFKP2129W","spans":[]}
-{"text":"req_id=523841 status=ok value=ORD-1802333953 region=us","spans":[]}
-{"text":"id|11948|1739510638|active","spans":[]}
-{"text":"{\"ts\":1700023521,\"level\":\"info\",\"field\":\"783278141630\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SFAWC7816Z\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.163 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3703290785\"","spans":[]}
-{"text":"GET /v1/lookup?email=user237%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=506769 status=ok value=567 030 1870 region=us","spans":[]}
-{"text":"id,71301,SKU-CLGXS7290F,active","spans":[]}
-{"text":"{\"ts\":1700015899,\"level\":\"info\",\"field\":\"ORD-1074621009\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1680139008\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.78 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3034-3632-7074\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=MVMZO1214V","spans":[]}
-{"text":"req_id=501815 status=ok value=3052367254 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user245%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700039778,\"level\":\"info\",\"field\":\"210 783 0701\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-VQVWX0729O\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.63 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1111368350\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:30) detail=1675116063","spans":[]}
-{"text":"req_id=26553 status=ok value=7076 9292 5850 region=us","spans":[]}
-{"text":"id,52589,AJSKU9014B,active","spans":[]}
-{"text":"{\"ts\":1700048704,\"level\":\"info\",\"field\":\"4743618521\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user253%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.160 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"303 836 9412\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:20) detail=SKU-CBEVG7232L","spans":[]}
-{"text":"req_id=522728 status=ok value=ORD-1199832624 region=us","spans":[]}
-{"text":"id,21471,1763760521,active","spans":[]}
-{"text":"{\"ts\":1700055256,\"level\":\"info\",\"field\":\"652789810309\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=VOJMJ6307S\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.38 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2610741618\"","spans":[]}
-{"text":"GET /v1/lookup?email=user261%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=692280 status=ok value=450 543 8929 region=us","spans":[]}
-{"text":"id|13340|SKU-NIBON2785S|active","spans":[]}
-{"text":"{\"ts\":1700086026,\"level\":\"info\",\"field\":\"ORD-1815890121\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1774753123\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.61 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2149-8545-6107\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:85) detail=JKDQV8389E","spans":[]}
-{"text":"req_id=728758 status=ok value=5965650729 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user269%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700040285,\"level\":\"info\",\"field\":\"525 016 3270\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-AHUDQ1856N\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.194 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1325601876\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:49) detail=1718302462","spans":[]}
-{"text":"req_id=467328 status=ok value=6365 6529 2363 region=us","spans":[]}
-{"text":"id|29284|LMPMZ0963W|active","spans":[]}
-{"text":"{\"ts\":1700008579,\"level\":\"info\",\"field\":\"5050149814\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user277%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.103 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"296 101 6761\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:31) detail=SKU-FCJIF6129U","spans":[]}
-{"text":"req_id=472619 status=ok value=ORD-1020983980 region=us","spans":[]}
-{"text":"id|10590|1720984592|active","spans":[]}
-{"text":"{\"ts\":1700058283,\"level\":\"info\",\"field\":\"947416927616\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=UBYIG3838Z\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.181 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4341430943\"","spans":[]}
-{"text":"GET /v1/lookup?email=user285%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=659387 status=ok value=347 038 9638 region=us","spans":[]}
-{"text":"id,74159,SKU-MNEWY7452X,active","spans":[]}
-{"text":"{\"ts\":1700033797,\"level\":\"info\",\"field\":\"ORD-1830977836\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1799731026\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.112 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5432-9832-1298\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=GHQVQ3416B","spans":[]}
-{"text":"req_id=109681 status=ok value=3454529014 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user293%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700063700,\"level\":\"info\",\"field\":\"416 927 8901\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-XAVXZ8967U\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.161 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1550164349\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:32) detail=1672439641","spans":[]}
-{"text":"req_id=99363 status=ok value=9076 7696 3298 region=us","spans":[]}
-{"text":"id,9495,UXIOA7294F,active","spans":[]}
-{"text":"{\"ts\":1700086866,\"level\":\"info\",\"field\":\"4587858187\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?email=user301%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.194 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"541 214 9630\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:54) detail=SKU-ILKOC3054X","spans":[]}
-{"text":"req_id=102778 status=ok value=ORD-1162973282 region=us","spans":[]}
-{"text":"id,99193,1664024755,active","spans":[]}
-{"text":"{\"ts\":1700056826,\"level\":\"info\",\"field\":\"878589054985\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=RARYP2705U\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.48 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2870905892\"","spans":[]}
-{"text":"GET /v1/lookup?email=user309%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"req_id=443274 status=ok value=292 745 6187 region=us","spans":[]}
-{"text":"id|78990|SKU-LOVQT6707G|active","spans":[]}
-{"text":"{\"ts\":1700060364,\"level\":\"info\",\"field\":\"ORD-1706260810\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=1725898493\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"10.0.0.127 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4709-6505-8589\"","spans":[]}
-{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:79) detail=VGBYJ6547I","spans":[]}
-{"text":"req_id=314136 status=ok value=2743454769 region=us","spans":[]}
-{"text":"GET /v1/lookup?email=user317%40example.test\u0026page=1 HTTP/1.1","spans":[]}
-{"text":"{\"ts\":1700086487,\"level\":\"info\",\"field\":\"341 834 3072\",\"ok\":true}","spans":[]}
-{"text":"GET /v1/lookup?q=SKU-AHSQU7898F\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"id,53189,build-38687,active","spans":[]}
+{"text":"{\"ts\":1700023425,\"level\":\"info\",\"field\":\"v3.15.68\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-GXAYA9490J\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.118 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1845700653\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:37) detail=1705269810","spans":[]}
+{"text":"req_id=29972 status=ok value=2585 4341 4345 region=us","spans":[]}
+{"text":"id|70648|PYPUT8769G|active","spans":[]}
+{"text":"{\"ts\":1700001847,\"level\":\"info\",\"field\":\"5676565274\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-55372\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.73 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v5.2.63\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:81) detail=SKU-NMBMX6967C","spans":[]}
+{"text":"req_id=178397 status=ok value=ORD-1378038268 region=us","spans":[]}
+{"text":"id|73528|1650159322|active","spans":[]}
+{"text":"{\"ts\":1700035869,\"level\":\"info\",\"field\":\"367074943074\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=WXMOE1614R\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.167 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2507094727\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:30) detail=build-77487","spans":[]}
+{"text":"req_id=322064 status=ok value=v3.6.3 region=us","spans":[]}
+{"text":"id|61780|SKU-DYVYJ6181A|active","spans":[]}
+{"text":"{\"ts\":1700007106,\"level\":\"info\",\"field\":\"ORD-1156593105\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1646601947\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.101 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2325-4745-4721\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:29) detail=ZCRVJ6581M","spans":[]}
+{"text":"req_id=538574 status=ok value=4503074941 region=us","spans":[]}
+{"text":"id,87293,build-87127,active","spans":[]}
+{"text":"{\"ts\":1700059513,\"level\":\"info\",\"field\":\"v9.19.32\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-EJADG7038T\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.94 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1250664931\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:61) detail=1650634026","spans":[]}
+{"text":"req_id=656268 status=ok value=2969 0981 0987 region=us","spans":[]}
+{"text":"id|17808|DSJRV0123Y|active","spans":[]}
+{"text":"{\"ts\":1700048799,\"level\":\"info\",\"field\":\"3458949298\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-87908\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.9 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v8.6.75\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:41) detail=SKU-RWRMR4365A","spans":[]}
+{"text":"req_id=410485 status=ok value=ORD-1206631143 region=us","spans":[]}
+{"text":"id|92112|1759846610|active","spans":[]}
+{"text":"{\"ts\":1700035378,\"level\":\"info\",\"field\":\"321678787459\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=XKHXT2163Q\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.144 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"1492587294\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:39) detail=build-69020","spans":[]}
+{"text":"req_id=654761 status=ok value=v1.11.52 region=us","spans":[]}
+{"text":"id,46973,SKU-UBYDI9852N,active","spans":[]}
+{"text":"{\"ts\":1700010595,\"level\":\"info\",\"field\":\"ORD-1622165300\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1730937656\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.174 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3032-3690-7416\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:42) detail=QTQYI7218J","spans":[]}
+{"text":"req_id=980879 status=ok value=3890987496 region=us","spans":[]}
+{"text":"id|3634|build-63988|active","spans":[]}
+{"text":"{\"ts\":1700042270,\"level\":\"info\",\"field\":\"v6.12.53\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-HQJRJ6787W\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.99 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1664838336\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:26) detail=1720679163","spans":[]}
+{"text":"req_id=844725 status=ok value=3276 1290 3096 region=us","spans":[]}
+{"text":"id,1737,WXGEQ5290X,active","spans":[]}
+{"text":"{\"ts\":1700009628,\"level\":\"info\",\"field\":\"2761478185\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-77709\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.146 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v9.11.76\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:22) detail=SKU-KLYRS3630D","spans":[]}
+{"text":"req_id=794954 status=ok value=ORD-1252630287 region=us","spans":[]}
+{"text":"id,97097,1641035907,active","spans":[]}
+{"text":"{\"ts\":1700034410,\"level\":\"info\",\"field\":\"852727236989\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=TEHQF2725U\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.176 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5212521058\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:47) detail=build-27332","spans":[]}
+{"text":"req_id=484033 status=ok value=v8.7.80 region=us","spans":[]}
+{"text":"id,14357,SKU-IJAKI3092D,active","spans":[]}
+{"text":"{\"ts\":1700051819,\"level\":\"info\",\"field\":\"ORD-1481883413\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1783858672\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.182 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3412-1418-7878\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:50) detail=KROIS7214F","spans":[]}
+{"text":"req_id=289639 status=ok value=5292925612 region=us","spans":[]}
+{"text":"id|56426|build-73116|active","spans":[]}
+{"text":"{\"ts\":1700040646,\"level\":\"info\",\"field\":\"v9.16.65\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-XQRRJ8765W\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.99 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1063396706\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:34) detail=1633249939","spans":[]}
+{"text":"req_id=463309 status=ok value=3014 1432 3474 region=us","spans":[]}
+{"text":"id,12705,SBUEW3032Z,active","spans":[]}
+{"text":"{\"ts\":1700041412,\"level\":\"info\",\"field\":\"4181016121\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-64613\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.26 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v6.7.28\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:30) detail=SKU-WNIYU9814H","spans":[]}
+{"text":"req_id=255874 status=ok value=ORD-1251469115 region=us","spans":[]}
+{"text":"id,35233,1793988891,active","spans":[]}
+{"text":"{\"ts\":1700088978,\"level\":\"info\",\"field\":\"836321272901\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=NYJQD6365M\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.184 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4092789658\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:87) detail=build-38252","spans":[]}
+{"text":"req_id=10201 status=ok value=v4.19.92 region=us","spans":[]}
+{"text":"id,74093,SKU-EVGQS9434F,active","spans":[]}
+{"text":"{\"ts\":1700028771,\"level\":\"info\",\"field\":\"ORD-1854286701\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1714496936\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.94 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3872-1878-7298\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:42) detail=GTCYC3238T","spans":[]}
+{"text":"req_id=152191 status=ok value=2276947614 region=us","spans":[]}
+{"text":"id|28066|build-67652|active","spans":[]}
+{"text":"{\"ts\":1700004414,\"level\":\"info\",\"field\":\"v3.16.1\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-JIJUX0307G\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.75 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1079769473\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:26) detail=1720405291","spans":[]}
+{"text":"req_id=690725 status=ok value=3096 7470 7032 region=us","spans":[]}
+{"text":"id,34489,SHYUM3478B,active","spans":[]}
+{"text":"{\"ts\":1700089148,\"level\":\"info\",\"field\":\"4303256567\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-19485\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.42 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v1.3.8\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:70) detail=SKU-GZWMO3832B","spans":[]}
+{"text":"req_id=303930 status=ok value=ORD-1711006643 region=us","spans":[]}
+{"text":"id,85369,1705728179,active","spans":[]}
+{"text":"{\"ts\":1700012858,\"level\":\"info\",\"field\":\"810761412141\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=FCTKL0721G\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.96 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"1874545052\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:15) detail=build-62084","spans":[]}
+{"text":"req_id=184881 status=ok value=v4.3.76 region=us","spans":[]}
+{"text":"id,69221,SKU-EREKC9898P,active","spans":[]}
+{"text":"{\"ts\":1700088491,\"level\":\"info\",\"field\":\"ORD-1182785774\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1626722400\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.30 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3256-5238-9612\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:34) detail=YXMSK3076V","spans":[]}
+{"text":"req_id=91799 status=ok value=4038347812 region=us","spans":[]}
+{"text":"id|29786|build-49852|active","spans":[]}
+{"text":"{\"ts\":1700086886,\"level\":\"info\",\"field\":\"v1.4.61\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-DMLDL8749Y\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.107 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1052029569\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:82) detail=1768386243","spans":[]}
+{"text":"req_id=222653 status=ok value=3612 9674 9294 region=us","spans":[]}
+{"text":"id,53457,AJCXU1076B,active","spans":[]}
+{"text":"{\"ts\":1700029876,\"level\":\"info\",\"field\":\"1921096547\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-69797\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.82 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v4.11.84\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:46) detail=SKU-SXSXG7070H","spans":[]}
+{"text":"req_id=572082 status=ok value=ORD-1650132495 region=us","spans":[]}
+{"text":"id,82929,1744245579,active","spans":[]}
+{"text":"{\"ts\":1700023474,\"level\":\"info\",\"field\":\"814143432925\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=FUBYN4781U\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.160 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3056923830\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:23) detail=build-78172","spans":[]}
+{"text":"req_id=435913 status=ok value=v6.7.32 region=us","spans":[]}
+{"text":"id,33053,SKU-ADWKI5656R,active","spans":[]}
+{"text":"{\"ts\":1700011299,\"level\":\"info\",\"field\":\"ORD-1372071731\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1725722136\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.190 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3434-3432-9610\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:10) detail=EBGRG1814F","spans":[]}
+{"text":"req_id=735151 status=ok value=2010903254 region=us","spans":[]}
+{"text":"id|16146|build-57860|active","spans":[]}
+{"text":"{\"ts\":1700037758,\"level\":\"info\",\"field\":\"v2.12.65\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-BYRKJ2769S\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.75 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1598281792\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:42) detail=1668797275","spans":[]}
+{"text":"req_id=759189 status=ok value=3230 5090 5274 region=us","spans":[]}
+{"text":"id,26377,GHWEA3058Z,active","spans":[]}
+{"text":"{\"ts\":1700063708,\"level\":\"info\",\"field\":\"5781298783\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-34413\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.194 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v2.11.44\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:86) detail=SKU-EJEDS9270V","spans":[]}
+{"text":"req_id=322922 status=ok value=ORD-1897256993 region=us","spans":[]}
+{"text":"id,18057,1647049443,active","spans":[]}
+{"text":"{\"ts\":1700074202,\"level\":\"info\",\"field\":\"818565812347\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=ROBMB4743I\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.184 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3098707276\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:15) detail=build-78436","spans":[]}
+{"text":"req_id=169505 status=ok value=v7.7.56 region=us","spans":[]}
+{"text":"id,81877,SKU-ARISS9818V,active","spans":[]}
+{"text":"{\"ts\":1700066443,\"level\":\"info\",\"field\":\"ORD-1061843834\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1744716496\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.46 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3236-3874-1030\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:50) detail=KHIZA9276H","spans":[]}
+{"text":"req_id=23495 status=ok value=1270581634 region=us","spans":[]}
+{"text":"id|65642|build-32988|active","spans":[]}
+{"text":"{\"ts\":1700062150,\"level\":\"info\",\"field\":\"v8.12.97\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-BADEX6745Y\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.123 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1723148621\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:34) detail=1776078067","spans":[]}
+{"text":"req_id=641325 status=ok value=3658 5874 7296 region=us","spans":[]}
+{"text":"id,90497,IJWIK5296L,active","spans":[]}
+{"text":"{\"ts\":1700084708,\"level\":\"info\",\"field\":\"2149296309\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-65205\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.26 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v7.19.88\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:46) detail=SKU-GRYEA5474B","spans":[]}
+{"text":"req_id=953762 status=ok value=ORD-1523270084 region=us","spans":[]}
+{"text":"id,57857,1691297659,active","spans":[]}
+{"text":"{\"ts\":1700042562,\"level\":\"info\",\"field\":\"816721650327\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=DQXRB0101E\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.56 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2452581014\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:23) detail=build-31964","spans":[]}
+{"text":"req_id=451577 status=ok value=v3.7.56 region=us","spans":[]}
+{"text":"id,79341,SKU-IDSWY5834V,active","spans":[]}
+{"text":"{\"ts\":1700015507,\"level\":\"info\",\"field\":\"ORD-1778709595\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1645547656\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.14 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3678-3038-5038\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:58) detail=ITQIK9616R","spans":[]}
+{"text":"req_id=317471 status=ok value=5032387276 region=us","spans":[]}
+{"text":"id|39906|build-76228|active","spans":[]}
+{"text":"{\"ts\":1700041326,\"level\":\"info\",\"field\":\"v3.16.57\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-VYBIF4145E\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.11 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1862657780\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:26) detail=1694418315","spans":[]}
+{"text":"req_id=319557 status=ok value=3838 3694 7038 region=us","spans":[]}
+{"text":"id,42809,QPMSI7636L,active","spans":[]}
+{"text":"{\"ts\":1700085804,\"level\":\"info\",\"field\":\"3187214745\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-56749\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.146 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v5.11.80\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:22) detail=SKU-ETMDG9210J","spans":[]}
+{"text":"req_id=717210 status=ok value=ORD-1110112086 region=us","spans":[]}
+{"text":"id,22585,1747909907,active","spans":[]}
+{"text":"{\"ts\":1700036851,\"level\":\"info\",\"field\":\"894985474106\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SXGSI9610L\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.5 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"1989856763\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:12) detail=build-96613","spans":[]}
+{"text":"req_id=258750 status=ok value=v4.16.37 region=us","spans":[]}
+{"text":"id|53058|SKU-VGVZP6545Q|active","spans":[]}
+{"text":"{\"ts\":1700082384,\"level\":\"info\",\"field\":\"ORD-1123069939\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1675831873\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.27 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"8705-4967-8103\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:51) detail=RGJEV0501O","spans":[]}
+{"text":"req_id=265836 status=ok value=1983478381 region=us","spans":[]}
+{"text":"id,45971,build-65053,active","spans":[]}
+{"text":"{\"ts\":1700084127,\"level\":\"info\",\"field\":\"v2.13.22\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-MHISM1610B\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.108 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1014972179\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:19) detail=1747423272","spans":[]}
+{"text":"req_id=690458 status=ok value=8509 8789 6903 region=us","spans":[]}
+{"text":"id|75582|HSLYH2181C|active","spans":[]}
+{"text":"{\"ts\":1700075093,\"level\":\"info\",\"field\":\"3832963818\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-53970\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.95 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v8.16.53\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:47) detail=SKU-ZULDH6501U","spans":[]}
+{"text":"req_id=857323 status=ok value=ORD-1875333613 region=us","spans":[]}
+{"text":"id|12510|1650587152|active","spans":[]}
+{"text":"{\"ts\":1700072736,\"level\":\"info\",\"field\":\"949034921297\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=LKTOJ6363A\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.86 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2870187618\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:77) detail=build-49066","spans":[]}
+{"text":"req_id=710847 status=ok value=v2.17.58 region=us","spans":[]}
+{"text":"id,61235,SKU-OVYEO5254F,active","spans":[]}
+{"text":"{\"ts\":1700055865,\"level\":\"info\",\"field\":\"ORD-1853369712\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1743334630\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.156 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9496-7818-1012\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=OVWXO9816H","spans":[]}
+{"text":"req_id=941077 status=ok value=2256529836 region=us","spans":[]}
+{"text":"id|46288|build-91410|active","spans":[]}
+{"text":"{\"ts\":1700037564,\"level\":\"info\",\"field\":\"v2.10.63\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-FMTYF2341E\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.193 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1369169341\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=1623035233","spans":[]}
+{"text":"req_id=318123 status=ok value=9636 5430 1478 region=us","spans":[]}
+{"text":"id,32191,KDIXU3898P,active","spans":[]}
+{"text":"{\"ts\":1700027018,\"level\":\"info\",\"field\":\"3905218989\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-52483\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.112 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v1.17.38\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=SKU-QRCSM1230R","spans":[]}
+{"text":"req_id=103048 status=ok value=ORD-1497308948 region=us","spans":[]}
+{"text":"id,17119,1617881641,active","spans":[]}
+{"text":"{\"ts\":1700059336,\"level\":\"info\",\"field\":\"670329078523\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=DCDDX8709C\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.102 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2874729030\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:69) detail=build-86386","spans":[]}
+{"text":"req_id=322583 status=ok value=v9.5.70 region=us","spans":[]}
+{"text":"id,15211,SKU-UZUSU7074D,active","spans":[]}
+{"text":"{\"ts\":1700050369,\"level\":\"info\",\"field\":\"ORD-1807943089\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1664500318\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.28 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9214-5870-5236\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=AJEDO1078D","spans":[]}
+{"text":"req_id=692077 status=ok value=3018329670 region=us","spans":[]}
+{"text":"id|32200|build-11242|active","spans":[]}
+{"text":"{\"ts\":1700034740,\"level\":\"info\",\"field\":\"v4.2.63\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-HUFEL2925Y\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.121 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1883590557\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=1660026553","spans":[]}
+{"text":"req_id=886467 status=ok value=9434 9014 9098 region=us","spans":[]}
+{"text":"id,50583,UVIQI5214D,active","spans":[]}
+{"text":"{\"ts\":1700007186,\"level\":\"info\",\"field\":\"4369412901\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-72875\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.184 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v7.17.22\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:12) detail=SKU-QLSEO1616H","spans":[]}
+{"text":"req_id=665728 status=ok value=ORD-1850771958 region=us","spans":[]}
+{"text":"id,56631,1683855489,active","spans":[]}
+{"text":"{\"ts\":1700088000,\"level\":\"info\",\"field\":\"630963094163\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=FSVQD0741E\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.110 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2876505438\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:29) detail=build-83082","spans":[]}
+{"text":"req_id=525231 status=ok value=v5.9.26 region=us","spans":[]}
+{"text":"id,53123,SKU-UNGXQ5490X,active","spans":[]}
+{"text":"{\"ts\":1700035401,\"level\":\"info\",\"field\":\"ORD-1597098367\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1728087254\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.156 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9854-5610-7098\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=QVCYK9854H","spans":[]}
+{"text":"req_id=447365 status=ok value=1650729892 region=us","spans":[]}
+{"text":"id|38816|build-22450|active","spans":[]}
+{"text":"{\"ts\":1700068140,\"level\":\"info\",\"field\":\"v9.2.47\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-DAHSR6185U\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.1 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1549388768\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:72) detail=1609080593","spans":[]}
+{"text":"req_id=36123 status=ok value=9636 5652 9236 region=us","spans":[]}
+{"text":"id,24943,YLMWS9096J,active","spans":[]}
+{"text":"{\"ts\":1700039274,\"level\":\"info\",\"field\":\"5905014981\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=build-18579\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.152 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"v8.9.66\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=SKU-GXOIW1216J","spans":[]}
+{"text":"req_id=246456 status=ok value=ORD-1785543608 region=us","spans":[]}
+{"text":"id,96719,1605209561,active","spans":[]}
+{"text":"{\"ts\":1700010936,\"level\":\"info\",\"field\":\"616925074741\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=LGPEN6323Y\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.22 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3638387834\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:53) detail=build-67474","spans":[]}
+{"text":"req_id=642503 status=ok value=v7.9.74 region=us","spans":[]}
+{"text":"id,59387,SKU-MXIRE3896F,active","spans":[]}
+{"text":"{\"ts\":1700029185,\"level\":\"info\",\"field\":\"ORD-1802160750\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1622557262\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.52 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9674-5212-9276\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:48) detail=WDGZE3212D","spans":[]}
+{"text":"req_id=220381 status=ok value=2294523416 region=us","spans":[]}
+{"text":"id|73464|build-27322|active","spans":[]}
+{"text":"{\"ts\":1700035572,\"level\":\"info\",\"field\":\"v8.14.15\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-FGHZN4169S\u0026page=1 HTTP/1.1","spans":[]}

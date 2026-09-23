@@ -35,8 +35,8 @@ type detector struct {
 }
 
 var detectors = []detector{
-	{KindEmail, regexSpans(KindEmail, regexp.MustCompile(`[\w.]+@[\w.]+\.[A-Za-z]+`))},
-	{KindPhoneUS, regexSpans(KindPhoneUS, regexp.MustCompile(`\(\d{3}\) \d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\+1 \d{3} \d{3} \d{4}`))},
+	{KindEmail, regexSpans(KindEmail, regexp.MustCompile(`[\w.]+(?:@|%40)[\w.]+\.[A-Za-z]+`))},
+	{KindPhoneUS, regexSpans(KindPhoneUS, regexp.MustCompile(`\(\d{3}\) \d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\+1 \d{3} \d{3} \d{4}|\d{3} \d{3} \d{4}`))},
 	{KindSSN, regexSpans(KindSSN, regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`))},
 	{KindPhoneIN, findPhoneIN},
 	{KindAadhaar, findAadhaar},

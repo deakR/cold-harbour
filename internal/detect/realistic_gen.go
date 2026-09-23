@@ -87,9 +87,12 @@ func hasKind(spans []Span, kind Kind) bool {
 func realisticValue(rng *lcg, kind Kind, n int) string {
 	switch kind {
 	case KindEmail:
+		if n%5 == 4 {
+			return "user" + strconv.Itoa(n) + "%40example.test"
+		}
 		return "user" + strconv.Itoa(n) + "@example.test"
 	case KindPhoneUS:
-		return phoneUS(rng, n%3)
+		return phoneUS(rng, n%4)
 	case KindPhoneIN:
 		return phoneIN(rng, true, n%4)
 	case KindSSN:
@@ -136,22 +139,10 @@ func realisticNearMissLine(rng *lcg, n int) string {
 	case 4:
 		return realisticShape(rng, phoneIN(rng, false, 0), n)
 	case 5:
-		return percentEncodedEmailNearMiss(n)
+		return realisticShape(rng, "build-"+strconv.Itoa(int(10000+rng.step()%90000)), n)
 	case 6:
-		return spacedUSPhoneNearMiss(rng, n)
+		return realisticShape(rng, "v"+strconv.Itoa(int(1+rng.step()%9))+"."+strconv.Itoa(int(rng.step()%20))+"."+strconv.Itoa(int(rng.step()%100)), n)
 	default:
 		return realisticShape(rng, "SKU-"+panDigits(rng, false), n)
 	}
-}
-
-func percentEncodedEmailNearMiss(n int) string {
-	return `GET /v1/lookup?email=user` + strconv.Itoa(n) + `%40example.test&page=1 HTTP/1.1`
-}
-
-func spacedUSPhoneNearMiss(rng *lcg, n int) string {
-	d := func() byte { return rng.digit() }
-	area := string([]byte{rng.from("2345", 4), d(), d()})
-	mid := string([]byte{d(), d(), d()})
-	last := string([]byte{d(), d(), d(), d()})
-	return realisticShape(rng, area+" "+mid+" "+last, n)
 }

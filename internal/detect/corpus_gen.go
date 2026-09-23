@@ -152,6 +152,8 @@ func phoneUS(rng *lcg, form int) string {
 		return string(area) + "-" + string(mid) + "-" + string(last)
 	case 2:
 		return "+1 " + string(area) + " " + string(mid) + " " + string(last)
+	case 3:
+		return string(area) + " " + string(mid) + " " + string(last)
 	default:
 		return "(" + string(area) + ") " + string(mid) + "-" + string(last)
 	}
