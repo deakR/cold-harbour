@@ -22,13 +22,14 @@ type enqueuer interface {
 }
 
 type Server struct {
-	db    *pgxpool.Pool
-	rdb   *redis.Client
-	keys  seal.KeyStore
-	jobs  enqueuer
-	types map[string]struct{}
-	hub   *hub
-	now   func() time.Time
+	db        *pgxpool.Pool
+	rdb       *redis.Client
+	keys      seal.KeyStore
+	jobs      enqueuer
+	types     map[string]struct{}
+	hub       *hub
+	now       func() time.Time
+	wsOrigins []string
 }
 
 func New(db *pgxpool.Pool, rdb *redis.Client, keys seal.KeyStore, jobs enqueuer, types []string) *Server {
@@ -46,6 +47,28 @@ func New(db *pgxpool.Pool, rdb *redis.Client, keys seal.KeyStore, jobs enqueuer,
 		now:   time.Now,
 	}
 	return s
+}
+
+func (s *Server) SetWSOrigins(patterns []string) {
+	s.wsOrigins = append([]string(nil), patterns...)
+}
+
+func ParseWSOrigins(raw string) []string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return []string{"localhost:5173"}
+	}
+	var out []string
+	for _, part := range strings.Split(raw, ",") {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	if len(out) == 0 {
+		return []string{"localhost:5173"}
+	}
+	return out
 }
 
 func (s *Server) Handler() http.Handler {
