@@ -18,6 +18,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("worker: load config: %v", err)
 	}
+	if err := seal.RequireVault(); err != nil {
+		log.Fatalf("worker: %v", err)
+	}
 	dsn := journal.PostgresDSN()
 	store, err := journal.OpenJournal(dsn)
 	if err != nil {

@@ -43,6 +43,26 @@ services:
       - "6380:6379"
     volumes:
       - ./docker/certs:/certs:ro
+  vault:
+    image: hashicorp/vault:1.18
+    container_name: coldharbour-vault
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: coldharbour-dev
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+    command: ["server", "-dev"]
+    ports:
+      - "8200:8200"
+  vault-init:
+    image: hashicorp/vault:1.18
+    depends_on:
+      - vault
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: coldharbour-dev
+    entrypoint: ["sh", "-c", "until vault status >/dev/null 2>&1; do sleep 1; done; vault secrets enable transit || true; vault write -f transit/keys/coldharbour"]
+    restart: "no"
   seed:
     profiles: ["dev"]
     image: postgres:16
@@ -60,8 +80,12 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      vault-init:
+        condition: service_completed_successfully
     environment:
       POSTGRES_DSN: "postgres://coldharbour:${POSTGRES_PASSWORD}@postgres:5432/coldharbour?sslmode=verify-full&sslrootcert=/certs/ca.crt"
       REDIS_ADDR: redis:6379
@@ -69,8 +93,8 @@ services:
       REDIS_TLS: "1"
       REDIS_CA: /certs/ca.crt
       SIGNING_KEY: ${SIGNING_KEY:?set SIGNING_KEY}
-      VAULT_ADDR: ${VAULT_ADDR:-}
-      VAULT_TOKEN: ${VAULT_TOKEN:-}
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: coldharbour-dev
     expose:
       - "9100"
     volumes:
@@ -82,16 +106,20 @@ services:
       context: .
       dockerfile: Dockerfile.controlplane
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      vault-init:
+        condition: service_completed_successfully
     environment:
       POSTGRES_DSN: "postgres://coldharbour:${POSTGRES_PASSWORD}@postgres:5432/coldharbour?sslmode=verify-full&sslrootcert=/certs/ca.crt"
       REDIS_ADDR: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_TLS: "1"
       REDIS_CA: /certs/ca.crt
-      VAULT_ADDR: ${VAULT_ADDR:-}
-      VAULT_TOKEN: ${VAULT_TOKEN:-}
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: coldharbour-dev
     ports:
       - "8081:8080"
     volumes:
