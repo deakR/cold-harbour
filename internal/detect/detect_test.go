@@ -40,6 +40,24 @@ func TestLongerSpanWins(t *testing.T) {
 	}
 }
 
+func TestPercentEncodedQueryEmail(t *testing.T) {
+	in := `GET /v1/lookup?email=user%40example.com&page=1 HTTP/1.1`
+	got := Scan(in, []Kind{KindEmail})
+	want := []Span{{Kind: KindEmail, Start: 21, End: 39}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("spans = %#v, want %#v", got, want)
+	}
+}
+
+func TestSpaceSeparatedUSPhone(t *testing.T) {
+	in := `Contact 415 555 0199 today`
+	got := Scan(in, []Kind{KindPhoneUS})
+	want := []Span{{Kind: KindPhoneUS, Start: 8, End: 20}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("spans = %#v, want %#v", got, want)
+	}
+}
+
 func TestApplyRedactAndPartial(t *testing.T) {
 	in := "xx12345678yy"
 	spans := []Span{{Kind: KindSSN, Start: 2, End: 10}}
