@@ -88,7 +88,7 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | `POST /v1/jobs/{id}/delivery-links` | Creates a link after the job has an output. Body is `{"expiresAt": RFC3339 timestamp, "maxViews": integer from 1 to 100}`. `expiresAt` must be in the future and at most 30 days ahead. A bad field returns `400` with `field` set to the name. A job with no output returns `409`. Returns the raw token once. |
 | `GET /d/{token}` | The one route with no `X-API-Key`. Resolves the token, checks `expires_at` and `max_views`, and returns the result. An expired link returns `410`. A link that has used its views returns `403`. |
 | `GET /v1/reports/compliance?from=&to=` | Returns a CSV of the calling tenant's jobs in that date range. The header is `dispatch_time,completion_time,final_state,checksum,signature_status,purge_timestamp`. A bad `from` or `to` returns `400` with `field` set to the name. |
-| `GET /v1/ws/events?apiKey=` | WebSocket. Relays each job's state transitions to the tenant that authenticated the connection. |
+| `GET /v1/ws/events?apiKey=` | WebSocket. Relays each job's state transitions to the tenant that authenticated the connection. The handshake allows the request host and the hosts in `WS_ORIGIN_PATTERNS`. The default host is `localhost:5173`, which is the dashboard dev server. An `Origin` whose host is neither the request host nor one of those patterns returns 403. |
 
 ### Keys and roles
 

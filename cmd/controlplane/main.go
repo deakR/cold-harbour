@@ -57,6 +57,7 @@ func main() {
 	defer keys.Close()
 	reg := runner.NewRegistry(redact.Runner{}, mask.Runner{})
 	srv := api.New(db, rdb, keys, queue.OpenJobs(queue.RedisAddr()), reg.Types())
+	srv.SetWSOrigins(api.ParseWSOrigins(os.Getenv("WS_ORIGIN_PATTERNS")))
 	if err := srv.StartEvents(ctx); err != nil {
 		log.Fatalf("controlplane: events: %v", err)
 	}
