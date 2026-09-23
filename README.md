@@ -115,7 +115,6 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | `internal/mask` | The `mask` job type: replaces named fields in a JSON document. Added to prove the job-type registry needs no changes to add a job. |
 | `internal/runner` | The `JobRunner` interface, the registry, and `types.txt`. That file is the only job-type list. The worker refuses to start if the registry and the file disagree. The control plane reads the same file. |
 | `internal/queue` | The Redis stream, the consumer group, the dead-letter queue, and the encrypted checkpoint hash. A new job's `input` field is AES-GCM ciphertext. An entry with no `job_keys` row is plaintext left from before sealing, and the worker still runs it. An entry whose key exists but whose input does not open is buried. A job that reaches `COMPLETED` or `FAILED` leaves no `input` field on `coldharbour:jobs` or `coldharbour:jobs:dlq`. |
-| `internal/checkpoint` | The in-memory checkpoint store used before the Redis-backed one existed. Kept for its tests. |
 | `internal/seal` | AES-GCM encryption of the checkpoint, Ed25519 signing, the key store, the purge receipt store, and the optional Vault wrapping. |
 | `internal/journal` | The Postgres audit row: one row per job with its checksum, its signature, and its final state. |
 | `internal/events` | The Redis Pub/Sub event a job publishes on each state transition. |
