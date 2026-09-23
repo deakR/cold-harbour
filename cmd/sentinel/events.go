@@ -76,6 +76,19 @@ func (w *windowCounters) take(to time.Time, failOpen int64, nodeID string, polic
 	return batch
 }
 
+func (w *windowCounters) restore(batch eventBatch) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.from.After(batch.From) {
+		w.from = batch.From
+	}
+	for kind, n := range batch.Counts {
+		w.counts[detect.Kind(kind)] += int64(n)
+	}
+	w.held += batch.Held
+	w.dropped += batch.Dropped
+}
+
 type eventsLoop struct {
 	baseURL  string
 	apiKey   string
@@ -158,7 +171,14 @@ func (e *eventsLoop) flush() {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-Key", e.apiKey)
 	res, err := e.client.Do(req)
-	if err != nil {
+	if err != nil || res.StatusCode != http.StatusOK {
+		e.window.restore(batch)
+		if e.handoff != nil && failOpen != 0 {
+			e.handoff.failOpenCount.Add(failOpen)
+		}
+		if res != nil {
+			_ = res.Body.Close()
+		}
 		return
 	}
 	_ = res.Body.Close()

@@ -11,7 +11,31 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"coldharbour/internal/detect"
 )
+
+func TestFlushRestoresWindowWhenPostFails(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+	active.Store(maskSettings{maxInline: 65536, kinds: maskKinds, mode: detect.ModeRedact, version: 1})
+	e := &eventsLoop{
+		baseURL: srv.URL,
+		apiKey:  "k",
+		nodeID:  "n",
+		client:  &http.Client{Timeout: time.Second},
+		window:  newWindowCounters(time.Now().UTC()),
+	}
+	e.record(maskResult{counts: map[detect.Kind]int{detect.KindEmail: 2}, dropped: true})
+	e.flush()
+	e.window.mu.Lock()
+	defer e.window.mu.Unlock()
+	if e.window.counts[detect.KindEmail] != 2 || e.window.dropped != 1 {
+		t.Fatal("failed post dropped the window")
+	}
+}
 
 func TestEventsBatchPosted(t *testing.T) {
 	bin := buildSentinel(t)
