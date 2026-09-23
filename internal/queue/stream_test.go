@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/events"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/redact"
@@ -144,7 +143,7 @@ func TestParseClaim(t *testing.T) {
 	if c.job != (Job{ID: "crash-1", Input: "hello"}) {
 		t.Fatalf("job = %+v", c.job)
 	}
-	if c.crash != checkpoint.CrashNever {
+	if c.crash != CrashNever {
 		t.Fatalf("crash = %v, want CrashNever", c.crash)
 	}
 
@@ -152,7 +151,7 @@ func TestParseClaim(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.crash != checkpoint.CrashNever {
+	if c.crash != CrashNever {
 		t.Fatalf("crash = %v, want CrashNever", c.crash)
 	}
 
@@ -202,33 +201,6 @@ func TestStreamPicksUpSittingJob(t *testing.T) {
 	}
 	if got.Result["redactedText"] != "Email [EMAIL_REDACTED] about the lab report." {
 		t.Fatalf("RedactedText = %q, want Email [EMAIL_REDACTED] about the lab report.", got.Result["redactedText"])
-	}
-}
-
-func TestSeedIfEmpty(t *testing.T) {
-	_, stream := startStream(t)
-	ctx := context.Background()
-
-	if err := seedIfEmpty(ctx, stream, []Job{{ID: "a", Input: "x"}}); err != nil {
-		t.Fatal(err)
-	}
-	n, err := stream.Len(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if n != 1 {
-		t.Fatalf("Len after empty seed = %d, want 1", n)
-	}
-
-	if err := seedIfEmpty(ctx, stream, []Job{{ID: "b", Input: "y"}}); err != nil {
-		t.Fatal(err)
-	}
-	n, err = stream.Len(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if n != 1 {
-		t.Fatalf("Len after second seed = %d, want 1", n)
 	}
 }
 
@@ -300,7 +272,7 @@ func TestRunGroupRecoversViaAutoClaim(t *testing.T) {
 	store := journal.NewMemoryJournal()
 	priv, receipts := testSigning(t)
 	err := RunGroup(ctx, stream, cfg1, testDeps(store, keys, receipts, priv, func(journal.JobResult) {}, Hooks{CrashAfterStep1: func(id string) bool { return id == "crash-1" }}))
-	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
+	if !errors.Is(err, ErrSimulatedCrash) {
 		t.Fatalf("worker 1 err = %v, want ErrSimulatedCrash", err)
 	}
 	if _, err := store.Load(ctx, "crash-1"); !errors.Is(err, journal.ErrUnknownStoredJob) {
@@ -711,7 +683,7 @@ func TestCrashLeavesMemHash(t *testing.T) {
 	err := RunGroup(ctx, stream, testWorkerConfig("crash-keep"), testDeps(journal.NewMemoryJournal(), keys, receipts, priv, func(journal.JobResult) {
 		t.Error("emit after crash")
 	}, Hooks{CrashAfterStep1: func(id string) bool { return id == "crash-keep" }}))
-	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
+	if !errors.Is(err, ErrSimulatedCrash) {
 		t.Fatalf("err = %v, want ErrSimulatedCrash", err)
 	}
 	exists, err := stream.rdb.Exists(ctx, memKey("crash-keep")).Result()
@@ -844,21 +816,4 @@ func TestPrepareGroupLeavesStreamEmpty(t *testing.T) {
 	if !found {
 		t.Fatal("worker-group was not created")
 	}
-}
-
-func seedIfEmpty(ctx context.Context, stream *jobStream, jobs []Job) error {
-	n, err := stream.Len(ctx)
-	if err != nil {
-		return err
-	}
-	if n != 0 {
-		return nil
-	}
-	keys := seal.NewMemoryKeyStore()
-	for _, job := range jobs {
-		if err := stream.Add(ctx, keys, job); err != nil {
-			return err
-		}
-	}
-	return nil
 }

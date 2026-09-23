@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/events"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/runner"
@@ -37,7 +36,7 @@ func (e infraError) Unwrap() error {
 type claimed struct {
 	entry  StreamID
 	job    Job
-	crash  checkpoint.CrashPoint
+	crash  CrashPoint
 	fail   bool
 	fields map[string]string
 }
@@ -50,10 +49,19 @@ func parseClaim(entry StreamID, fields map[string]string) (claimed, error) {
 	return claimed{
 		entry:  entry,
 		job:    job,
-		crash:  checkpoint.CrashNever,
+		crash:  CrashNever,
 		fields: fields,
 	}, nil
 }
+
+var ErrSimulatedCrash = errors.New("simulated crash after step 1 checkpoint")
+
+type CrashPoint int
+
+const (
+	CrashNever      CrashPoint = 0
+	CrashAfterStep1 CrashPoint = 1
+)
 
 type Hooks struct {
 	CrashAfterStep1 func(jobID string) bool
@@ -62,7 +70,7 @@ type Hooks struct {
 
 func applyHooks(c *claimed, hooks Hooks) {
 	if hooks.CrashAfterStep1 != nil && hooks.CrashAfterStep1(c.job.ID) {
-		c.crash = checkpoint.CrashAfterStep1
+		c.crash = CrashAfterStep1
 	}
 	if hooks.Fail != nil && hooks.Fail(c.job.ID) {
 		c.fail = true
@@ -302,8 +310,8 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 				}); err != nil {
 					return infraError{err: err}
 				}
-				if c.crash == checkpoint.CrashAfterStep1 {
-					return checkpoint.ErrSimulatedCrash
+				if c.crash == CrashAfterStep1 {
+					return ErrSimulatedCrash
 				}
 			}
 			return nil
@@ -312,7 +320,7 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 
 	out, err := jr.Run(ctx, jobInput(c.job.Input), cp)
 	if err != nil {
-		if errors.Is(err, checkpoint.ErrSimulatedCrash) {
+		if errors.Is(err, ErrSimulatedCrash) {
 			return err
 		}
 		var infra infraError

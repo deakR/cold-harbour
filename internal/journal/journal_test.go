@@ -80,6 +80,22 @@ func TestFormatJobLineSharesChecksumBytes(t *testing.T) {
 	}
 }
 
+func TestHistoryString(t *testing.T) {
+	done := newJobMachine()
+	done.pickup(time.Date(2026, 9, 23, 14, 5, 6, 0, time.UTC))
+	done.complete(time.Date(2026, 9, 23, 14, 5, 7, 0, time.UTC))
+	if got, want := done.history().String(), "CREATED→RUNNING (14:05:06) → RUNNING→COMPLETED (14:05:07)"; got != want {
+		t.Fatalf("String() = %q, want %q", got, want)
+	}
+
+	failed := newJobMachine()
+	failed.pickup(time.Date(2026, 9, 23, 14, 5, 6, 0, time.UTC))
+	failed.fail(time.Date(2026, 9, 23, 14, 5, 8, 0, time.UTC))
+	if got, want := failed.history().String(), "CREATED→RUNNING (14:05:06) → RUNNING→FAILED (14:05:08)"; got != want {
+		t.Fatalf("String() = %q, want %q", got, want)
+	}
+}
+
 func TestParseTerminalRejectsNonTerminal(t *testing.T) {
 	m := newJobMachine()
 	m.pickup(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC))

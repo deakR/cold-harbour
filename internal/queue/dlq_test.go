@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"coldharbour/internal/checkpoint"
 	"coldharbour/internal/journal"
 	"coldharbour/internal/redact"
 	"coldharbour/internal/seal"
@@ -192,7 +191,7 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 		CrashAfterStep1: func(id string) bool { return id == "crash-fail" },
 		Fail:            func(id string) bool { return id == "crash-fail" },
 	}))
-	if !errors.Is(err, checkpoint.ErrSimulatedCrash) {
+	if !errors.Is(err, ErrSimulatedCrash) {
 		t.Fatalf("err = %v, want ErrSimulatedCrash", err)
 	}
 	if _, err := store.Load(ctx, "crash-fail"); !errors.Is(err, journal.ErrUnknownStoredJob) {
