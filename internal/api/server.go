@@ -22,14 +22,15 @@ type enqueuer interface {
 }
 
 type Server struct {
-	db        *pgxpool.Pool
-	rdb       *redis.Client
-	keys      seal.KeyStore
-	jobs      enqueuer
-	types     map[string]struct{}
-	hub       *hub
-	now       func() time.Time
-	wsOrigins []string
+	db              *pgxpool.Pool
+	rdb             *redis.Client
+	keys            seal.KeyStore
+	jobs            enqueuer
+	types           map[string]struct{}
+	hub             *hub
+	now             func() time.Time
+	wsOrigins       []string
+	insecureCookies bool
 }
 
 func New(db *pgxpool.Pool, rdb *redis.Client, keys seal.KeyStore, jobs enqueuer, types []string) *Server {
@@ -51,6 +52,10 @@ func New(db *pgxpool.Pool, rdb *redis.Client, keys seal.KeyStore, jobs enqueuer,
 
 func (s *Server) SetWSOrigins(patterns []string) {
 	s.wsOrigins = append([]string(nil), patterns...)
+}
+
+func (s *Server) SetInsecureCookies(v bool) {
+	s.insecureCookies = v
 }
 
 func ParseWSOrigins(raw string) []string {
