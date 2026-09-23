@@ -71,7 +71,7 @@ type jobStream struct {
 	rdb *redis.Client
 }
 
-func OpenJobs(addr string) *jobStream {
+func redisOptions(addr string) *redis.Options {
 	opt := &redis.Options{Addr: addr}
 	if pw := os.Getenv("REDIS_PASSWORD"); pw != "" {
 		opt.Password = pw
@@ -91,7 +91,11 @@ func OpenJobs(addr string) *jobStream {
 		}
 		opt.TLSConfig = cfg
 	}
-	return &jobStream{rdb: redis.NewClient(opt)}
+	return opt
+}
+
+func OpenJobs(addr string) *jobStream {
+	return &jobStream{rdb: redis.NewClient(redisOptions(addr))}
 }
 
 func (s *jobStream) Add(ctx context.Context, job Job) error {

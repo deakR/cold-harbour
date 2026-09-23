@@ -5,7 +5,6 @@ import (
 	"crypto/ed25519"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -278,7 +277,6 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 			}
 			st = &next
 			if step == 1 {
-				fmt.Println("checkpoint", journal.FormatJobLine(journal.JobResult{ID: c.job.ID, Result: partial}))
 				if err := events.Publish(ctx, stream.rdb, events.JobEvent{
 					TenantID: c.job.TenantID,
 					JobID:    c.job.ID,
