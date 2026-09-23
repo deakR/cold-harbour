@@ -16,6 +16,17 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+func TestParseWSOrigins(t *testing.T) {
+	got := ParseWSOrigins(" dash.example , localhost:4173 ")
+	if len(got) != 2 || got[0] != "dash.example" || got[1] != "localhost:4173" {
+		t.Fatalf("parsed = %#v", got)
+	}
+	got = ParseWSOrigins("")
+	if len(got) != 1 || got[0] != "localhost:5173" {
+		t.Fatalf("default = %#v", got)
+	}
+}
+
 func TestWebSocketRejectsForeignOrigin(t *testing.T) {
 	pool := phaseCDB(t)
 	_, key := createTenantKey(t, pool, "app")
