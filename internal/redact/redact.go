@@ -2,6 +2,7 @@ package redact
 
 import (
 	"encoding/json"
+	"strings"
 
 	"coldharbour/internal/detect"
 )
@@ -11,8 +12,9 @@ SSN on file: 123-45-6789. Backup contact: john@company.org.
 Not a match: version 123-45 or year 1234-56-789.`
 
 type RedactResult struct {
-	RedactedText string       `json:"redactedText"`
-	Counts       RedactCounts `json:"counts"`
+	RedactedText  string       `json:"redactedText"`
+	Counts        RedactCounts `json:"counts"`
+	PolicyVersion int          `json:"policyVersion"`
 }
 
 type RedactCounts struct {
@@ -69,7 +71,7 @@ func token(kind detect.Kind) string {
 	case detect.KindSSN:
 		return "[SSN_REDACTED]"
 	default:
-		return "[" + string(kind) + "]"
+		return "[" + strings.ToUpper(string(kind)) + "]"
 	}
 }
 

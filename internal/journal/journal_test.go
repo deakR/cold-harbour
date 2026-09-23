@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const job5Checksum = "c214c3b52b17be575e3dc12a2da1b6f9206ed51807009f7410f53fd00a660851"
+const job5Checksum = "bd3dcf7ac4064b7e345ade2e23ed21d12baff7327589f51384a8144d1530a270"
 
 func job5ID() uuid.UUID {
 	return uuid.MustParse("fcf585ea-56d9-53a7-bd00-6e2560611dc2")

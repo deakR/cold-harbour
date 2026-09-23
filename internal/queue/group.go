@@ -279,12 +279,15 @@ func openJobInput(ctx context.Context, keys seal.KeyStore, jobID, raw string) (s
 	return string(plain), nil
 }
 
-func jobInput(raw string) map[string]any {
+func jobInput(raw, tenant string) map[string]any {
 	var input map[string]any
-	if err := json.Unmarshal([]byte(raw), &input); err == nil && input != nil {
-		return input
+	if err := json.Unmarshal([]byte(raw), &input); err != nil || input == nil {
+		input = map[string]any{"input": raw}
 	}
-	return map[string]any{"input": raw}
+	if tenant != "" {
+		input["tenantId"] = tenant
+	}
+	return input
 }
 
 func finishJournaled(ctx context.Context, stream *jobStream, purge *purger, c claimed, store journal.Journal) (bool, error) {
@@ -372,7 +375,7 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 		},
 	)
 
-	out, err := jr.Run(ctx, jobInput(c.job.Input), cp)
+	out, err := jr.Run(ctx, jobInput(c.job.Input, c.job.TenantID), cp)
 	if err != nil {
 		if errors.Is(err, ErrSimulatedCrash) {
 			return err

@@ -2,12 +2,15 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"flag"
 	"io"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	"coldharbour/internal/detect"
 )
 
 func main() {
@@ -22,6 +25,10 @@ func main() {
 	maxInline := fs.Int("max-inline-bytes", 65536, "drop a longer line until handoff exists")
 	shadow := fs.Bool("shadow", false, "count detections and write the line unchanged")
 	metrics := fs.String("metrics", ":9101", "Prometheus listen address")
+	control := fs.String("control-plane", "", "Cold Harbour base URL")
+	stateDir := fs.String("state-dir", "", "directory for the cached policy")
+	policyFile := fs.String("policy", "", "policy file used when the control plane is unreachable")
+	interval := fs.Duration("policy-interval", 60*time.Second, "how often to fetch the policy")
 	if err := fs.Parse(os.Args[2:]); err != nil {
 		log.Fatal("sentinel: bad flags")
 	}
@@ -30,6 +37,19 @@ func main() {
 	}
 	if err := serveMetrics(*metrics); err != nil {
 		log.Fatalf("sentinel: metrics: %v", err)
+	}
+	active.Store(maskSettings{maxInline: *maxInline, kinds: append([]detect.Kind(nil), maskKinds...), mode: detect.ModeRedact})
+	if *control != "" || *policyFile != "" {
+		doc, etag, err := loadInitial(*control, *stateDir, *policyFile, os.Getenv("SENTINEL_API_KEY"))
+		if err != nil {
+			log.Fatalf("sentinel: %v", err)
+		}
+		active.Store(settingsFrom(doc, etag))
+		if *control != "" {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			go poll(ctx, *control, *stateDir, os.Getenv("SENTINEL_API_KEY"), *interval)
+		}
 	}
 	in, err := openIn(*inPath)
 	if err != nil {
@@ -43,7 +63,8 @@ func main() {
 	defer out.Close()
 	if err := readLines(in, *follow, func(line string) error {
 		start := time.Now()
-		result := maskLine(line, *maxInline, *shadow)
+		st := active.Load().(maskSettings)
+		result := maskWith(line, st.maxInline, *shadow, st.kinds, st.mode)
 		if _, err := out.WriteString(result.line + "\n"); err != nil {
 			return err
 		}
