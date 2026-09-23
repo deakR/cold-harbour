@@ -2,6 +2,7 @@ package redact
 
 import (
 	"encoding/json"
+	"strings"
 
 	"coldharbour/internal/detect"
 )
@@ -70,7 +71,7 @@ func token(kind detect.Kind) string {
 	case detect.KindSSN:
 		return "[SSN_REDACTED]"
 	default:
-		return "[" + string(kind) + "]"
+		return "[" + strings.ToUpper(string(kind)) + "]"
 	}
 }
 

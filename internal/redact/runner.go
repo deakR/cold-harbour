@@ -56,20 +56,21 @@ func (r Runner) Run(ctx context.Context, input map[string]any, cp *runner.Checkp
 }
 
 func applyPolicy(text string, doc policy.Doc) RedactResult {
-	mode := detect.ModeRedact
 	if doc.Mode == string(detect.ModePartial) {
-		mode = detect.ModePartial
+		masked, counts := detect.Apply(text, detect.Scan(text, doc.Detectors), detect.ModePartial)
+		return RedactResult{
+			RedactedText: masked,
+			Counts: RedactCounts{
+				EmailsRedacted: counts[detect.KindEmail],
+				PhonesRedacted: counts[detect.KindPhoneUS],
+				SSNRedacted:    counts[detect.KindSSN],
+			},
+			PolicyVersion: doc.Version,
+		}
 	}
-	masked, counts := detect.Apply(text, detect.Scan(text, doc.Detectors), mode)
-	return RedactResult{
-		RedactedText: masked,
-		Counts: RedactCounts{
-			EmailsRedacted: counts[detect.KindEmail],
-			PhonesRedacted: counts[detect.KindPhoneUS],
-			SSNRedacted:    counts[detect.KindSSN],
-		},
-		PolicyVersion: doc.Version,
-	}
+	var counts RedactCounts
+	masked := applySpans(text, &counts, detect.Scan(text, doc.Detectors))
+	return RedactResult{RedactedText: masked, Counts: counts, PolicyVersion: doc.Version}
 }
 
 func MapResult(result RedactResult) map[string]any {

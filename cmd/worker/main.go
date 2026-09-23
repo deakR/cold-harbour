@@ -8,6 +8,7 @@ import (
 	"coldharbour/internal/journal"
 	"coldharbour/internal/mask"
 	"coldharbour/internal/policy"
+	"coldharbour/internal/policystore"
 	"coldharbour/internal/queue"
 	"coldharbour/internal/redact"
 	"coldharbour/internal/runner"
@@ -55,7 +56,7 @@ func main() {
 		if err != nil {
 			return policy.Doc{}, false, err
 		}
-		return policy.Load(ctx, pool, id)
+		return policystore.Load(ctx, pool, id)
 	}}, mask.Runner{})
 	stream := queue.OpenJobs(queue.RedisAddr())
 	if err := queue.PrepareGroup(context.Background(), stream); err != nil {

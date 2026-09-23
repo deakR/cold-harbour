@@ -8,10 +8,11 @@ import (
 
 	"coldharbour/internal/keys"
 	"coldharbour/internal/policy"
+	"coldharbour/internal/policystore"
 )
 
 func (s *Server) getPolicy(w http.ResponseWriter, r *http.Request, p keys.Principal) {
-	doc, _, err := policy.Load(r.Context(), s.db, p.TenantID)
+	doc, _, err := policystore.Load(r.Context(), s.db, p.TenantID)
 	if err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "policy unavailable"})
 		return
@@ -47,7 +48,7 @@ func (s *Server) putPolicy(w http.ResponseWriter, r *http.Request, p keys.Princi
 		return
 	}
 	defer tx.Rollback(r.Context())
-	stored, err := policy.Put(r.Context(), tx, p.TenantID, doc)
+	stored, err := policystore.Put(r.Context(), tx, p.TenantID, doc)
 	if err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "policy unavailable"})
 		return

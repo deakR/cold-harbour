@@ -2,16 +2,9 @@ package policy
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
-	"errors"
-	"time"
 
 	"coldharbour/internal/detect"
-	"coldharbour/internal/ledger"
-
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 type Doc struct {
@@ -70,60 +63,6 @@ func Parse(raw []byte) (Doc, error) {
 	}
 	if doc.MaxInlineBytes < 1 {
 		return Doc{}, &FieldError{Field: "maxInlineBytes"}
-	}
-	return doc, nil
-}
-
-type rowQuery interface {
-	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
-}
-
-func Load(ctx context.Context, q rowQuery, tenant uuid.UUID) (Doc, bool, error) {
-	var version int
-	var raw []byte
-	err := q.QueryRow(ctx, `SELECT version, document FROM tenant_policies WHERE tenant_id = $1`, tenant).Scan(&version, &raw)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return Default(), false, nil
-	}
-	if err != nil {
-		return Doc{}, false, err
-	}
-	var doc Doc
-	if err := json.Unmarshal(raw, &doc); err != nil {
-		return Doc{}, false, err
-	}
-	doc.Version = version
-	return doc, true, nil
-}
-
-func Put(ctx context.Context, tx pgx.Tx, tenant uuid.UUID, doc Doc) (Doc, error) {
-	doc.Version = 0
-	body, err := json.Marshal(doc)
-	if err != nil {
-		return Doc{}, err
-	}
-	var version int
-	if err := tx.QueryRow(ctx, `
-		INSERT INTO tenant_policies (tenant_id, version, document)
-		VALUES ($1, 1, $2)
-		ON CONFLICT (tenant_id) DO UPDATE
-		SET version = tenant_policies.version + 1,
-		    document = EXCLUDED.document,
-		    updated_at = now()
-		RETURNING version
-	`, tenant, body).Scan(&version); err != nil {
-		return Doc{}, err
-	}
-	doc.Version = version
-	stored, err := json.Marshal(doc)
-	if err != nil {
-		return Doc{}, err
-	}
-	if _, err := tx.Exec(ctx, `UPDATE tenant_policies SET document = $2 WHERE tenant_id = $1`, tenant, stored); err != nil {
-		return Doc{}, err
-	}
-	if err := ledger.Append(ctx, tx, tenant, "policy_changed", stored, time.Now()); err != nil {
-		return Doc{}, err
 	}
 	return doc, nil
 }

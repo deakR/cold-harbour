@@ -32,6 +32,8 @@ func TestNoControlPlaneImports(t *testing.T) {
 		"coldharbour/internal/seal",
 		"coldharbour/internal/api",
 		"coldharbour/internal/journal",
+		"coldharbour/internal/ledger",
+		"github.com/jackc/pgx/v5",
 	} {
 		if _, ok := have[banned]; ok {
 			t.Fatalf("cmd/sentinel depends on %s", banned)
