@@ -126,7 +126,7 @@ func apiKey() string {
 	if path == "" {
 		return ""
 	}
-	raw, err := os.ReadFile(path) //#nosec G304 -- operator key file path
+	raw, err := os.ReadFile(path) //#nosec G304 G703 -- operator key file path
 	if err != nil {
 		log.Fatalf("sentinel: read SENTINEL_API_KEY_FILE: %v", err)
 	}
