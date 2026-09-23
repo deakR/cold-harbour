@@ -13,8 +13,9 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 final class InputSealer {
 
@@ -22,7 +23,7 @@ final class InputSealer {
 	private static final int NONCE_BYTES = 12;
 	private static final int TAG_BITS = 128;
 	private static final SecureRandom RANDOM = new SecureRandom();
-	private static final ObjectMapper MAPPER = new ObjectMapper();
+	private static final ObjectMapper MAPPER = JsonMapper.builder().build();
 
 	private InputSealer() {
 	}
@@ -74,10 +75,10 @@ final class InputSealer {
 				throw new IllegalStateException("vault encrypt status " + res.statusCode());
 			}
 			JsonNode ciphertext = MAPPER.readTree(res.body()).path("data").path("ciphertext");
-			if (ciphertext.asText().isEmpty()) {
+			if (ciphertext.asString().isEmpty()) {
 				throw new IllegalStateException("vault encrypt returned an empty ciphertext");
 			}
-			return ciphertext.asText().getBytes(StandardCharsets.UTF_8);
+			return ciphertext.asString().getBytes(StandardCharsets.UTF_8);
 		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {

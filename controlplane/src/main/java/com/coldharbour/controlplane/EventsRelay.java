@@ -6,8 +6,8 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 public final class EventsRelay implements MessageListener {
@@ -26,10 +26,10 @@ public final class EventsRelay implements MessageListener {
 		try {
 			JsonNode node = mapper.readTree(payload);
 			JsonNode tenantNode = node.get("tenantId");
-			if (tenantNode == null || tenantNode.isNull() || tenantNode.asText().isEmpty()) {
+			if (tenantNode == null || tenantNode.isNull() || tenantNode.asString().isEmpty()) {
 				return;
 			}
-			UUID tenantId = UUID.fromString(tenantNode.asText());
+			UUID tenantId = UUID.fromString(tenantNode.asString());
 			hub.deliver(tenantId, payload);
 		} catch (Exception ignored) {
 		}
