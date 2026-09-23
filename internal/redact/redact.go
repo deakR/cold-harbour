@@ -2,7 +2,8 @@ package redact
 
 import (
 	"encoding/json"
-	"regexp"
+
+	"coldharbour/internal/detect"
 )
 
 const M1Fixture = `Contact jane.doe@example.com or (555) 123-4567 for details.
@@ -20,84 +21,75 @@ type RedactCounts struct {
 	SSNRedacted    int `json:"ssnRedacted"`
 }
 
-type patternClass struct {
-	re          *regexp.Regexp
-	placeholder string
-	countField  func(*RedactCounts) *int
-}
-
-var classes = []patternClass{
-	{
-		re:          regexp.MustCompile(`[\w.]+@[\w.]+\.[A-Za-z]+`),
-		placeholder: "[EMAIL_REDACTED]",
-		countField:  func(c *RedactCounts) *int { return &c.EmailsRedacted },
-	},
-	{
-		re:          regexp.MustCompile(`\(\d{3}\) \d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\+1 \d{3} \d{3} \d{4}`),
-		placeholder: "[PHONE_REDACTED]",
-		countField:  func(c *RedactCounts) *int { return &c.PhonesRedacted },
-	},
-	{
-		re:          regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),
-		placeholder: "[SSN_REDACTED]",
-		countField:  func(c *RedactCounts) *int { return &c.SSNRedacted },
-	},
-}
-
-type classWindow struct {
-	start int
-	end   int
-}
-
-var stepWindows = [...]classWindow{
-	{0, 2},
-	{2, 3},
+var stepKinds = [][]detect.Kind{
+	{detect.KindEmail, detect.KindPhoneUS},
+	{detect.KindSSN},
 }
 
 func init() {
-	if stepWindows[0].start != 0 {
-		panic("step windows must start at classes index 0")
-	}
-	end := 0
-	for _, w := range stepWindows {
-		if w.start != end || w.end <= w.start {
-			panic("step windows must be contiguous half-open ranges")
+	seen := map[detect.Kind]int{}
+	for _, kinds := range stepKinds {
+		for _, kind := range kinds {
+			seen[kind]++
 		}
-		end = w.end
 	}
-	if end != len(classes) {
-		panic("step windows must cover every classes entry")
+	for _, kind := range []detect.Kind{detect.KindEmail, detect.KindPhoneUS, detect.KindSSN} {
+		if seen[kind] != 1 {
+			panic("redact windows must cover " + string(kind) + " once")
+		}
 	}
 }
 
-func applyClass(text string, counts *RedactCounts, pc *patternClass) string {
-	n := 0
-	text = pc.re.ReplaceAllStringFunc(text, func(string) string {
-		n++
-		return pc.placeholder
-	})
-	*pc.countField(counts) = n
-	return text
+func applySpans(text string, counts *RedactCounts, spans []detect.Span) string {
+	var b []byte
+	prev := 0
+	for _, sp := range spans {
+		b = append(b, text[prev:sp.Start]...)
+		b = append(b, token(sp.Kind)...)
+		switch sp.Kind {
+		case detect.KindEmail:
+			counts.EmailsRedacted++
+		case detect.KindPhoneUS:
+			counts.PhonesRedacted++
+		case detect.KindSSN:
+			counts.SSNRedacted++
+		}
+		prev = sp.End
+	}
+	b = append(b, text[prev:]...)
+	return string(b)
 }
 
-func applyClassWindow(in RedactResult, w classWindow) RedactResult {
+func token(kind detect.Kind) string {
+	switch kind {
+	case detect.KindEmail:
+		return "[EMAIL_REDACTED]"
+	case detect.KindPhoneUS:
+		return "[PHONE_REDACTED]"
+	case detect.KindSSN:
+		return "[SSN_REDACTED]"
+	default:
+		return "[" + string(kind) + "]"
+	}
+}
+
+func applyClassWindow(in RedactResult, windowIndex int) RedactResult {
 	text := in.RedactedText
 	counts := in.Counts
-	for i := w.start; i < w.end; i++ {
-		text = applyClass(text, &counts, &classes[i])
-	}
-	return RedactResult{RedactedText: text, Counts: counts}
+	spans := detect.Scan(text, stepKinds[windowIndex])
+	return RedactResult{RedactedText: applySpans(text, &counts, spans), Counts: counts}
 }
 
 func ApplyClassWindow(in RedactResult, windowIndex int) RedactResult {
-	return applyClassWindow(in, stepWindows[windowIndex])
+	return applyClassWindow(in, windowIndex)
 }
 
 func RedactPII(input string) (RedactResult, error) {
 	text := input
 	var counts RedactCounts
-	for i := range classes {
-		text = applyClass(text, &counts, &classes[i])
+	for i := range stepKinds {
+		spans := detect.Scan(text, stepKinds[i])
+		text = applySpans(text, &counts, spans)
 	}
 	return RedactResult{RedactedText: text, Counts: counts}, nil
 }

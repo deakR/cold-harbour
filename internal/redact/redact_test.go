@@ -1,7 +1,6 @@
 package redact
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -19,19 +18,9 @@ func TestRedactPII(t *testing.T) {
 	if got.Counts.SSNRedacted != 1 {
 		t.Errorf("SSNRedacted = %d, want 1", got.Counts.SSNRedacted)
 	}
-	if !strings.Contains(got.RedactedText, "version 123-45") {
-		t.Errorf("RedactedText missing %q: %q", "version 123-45", got.RedactedText)
-	}
-	if !strings.Contains(got.RedactedText, "year 1234-56-789") {
-		t.Errorf("RedactedText missing %q: %q", "year 1234-56-789", got.RedactedText)
-	}
-	if !strings.Contains(got.RedactedText, "[EMAIL_REDACTED]") {
-		t.Errorf("RedactedText missing %q: %q", "[EMAIL_REDACTED]", got.RedactedText)
-	}
-	if !strings.Contains(got.RedactedText, "[PHONE_REDACTED]") {
-		t.Errorf("RedactedText missing %q: %q", "[PHONE_REDACTED]", got.RedactedText)
-	}
-	if !strings.Contains(got.RedactedText, "[SSN_REDACTED]") {
-		t.Errorf("RedactedText missing %q: %q", "[SSN_REDACTED]", got.RedactedText)
+	if got.RedactedText != `Contact [EMAIL_REDACTED] or [PHONE_REDACTED] for details.
+SSN on file: [SSN_REDACTED]. Backup contact: [EMAIL_REDACTED].
+Not a match: version 123-45 or year 1234-56-789.` {
+		t.Errorf("RedactedText = %q", got.RedactedText)
 	}
 }
