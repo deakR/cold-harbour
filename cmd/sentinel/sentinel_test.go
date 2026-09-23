@@ -95,8 +95,11 @@ func TestLongLineIsDropped(t *testing.T) {
 	bin := buildSentinel(t)
 	in := "jane.doe@example.com\n"
 	stdout, _, metrics := runBatch(t, bin, []string{"--max-inline-bytes", "8"}, in, 1)
-	if strings.TrimSpace(stdout) != "[DROPPED reason=too_large]" {
-		t.Fatal("long line was not dropped")
+	if strings.TrimSpace(stdout) != "[DROPPED reason=handoff_unavailable]" {
+		t.Fatalf("long line stdout = %q", strings.TrimSpace(stdout))
+	}
+	if strings.Contains(stdout, "jane.doe@example.com") {
+		t.Fatal("dropped path kept the raw value")
 	}
 	if metric(t, metrics, "sentinel_dropped_total", "") != 1 {
 		t.Fatalf("dropped = %g", metric(t, metrics, "sentinel_dropped_total", ""))
