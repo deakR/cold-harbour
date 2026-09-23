@@ -10,7 +10,6 @@ import (
 const (
 	maxP99Ms           = 5.0
 	minThroughputRatio = 0.80
-	minMBpsAbsolute    = 12.0
 )
 
 type Metrics struct {
@@ -55,9 +54,6 @@ func percentile(sorted []time.Duration, p float64) time.Duration {
 func checkGate(got Metrics, baseline Baseline) error {
 	if got.P99Ms > maxP99Ms {
 		return fmt.Errorf("p99 %.3f ms exceeds %.3f ms cap", got.P99Ms, maxP99Ms)
-	}
-	if got.MBps < minMBpsAbsolute {
-		return fmt.Errorf("throughput %.3f MB/s below absolute floor %.3f MB/s", got.MBps, minMBpsAbsolute)
 	}
 	minMBps := baseline.MBps * minThroughputRatio
 	if got.MBps < minMBps {

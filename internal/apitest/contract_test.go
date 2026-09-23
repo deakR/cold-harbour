@@ -344,6 +344,37 @@ func TestDeliveryBeforeOutputIs409(t *testing.T) {
 	}
 }
 
+func sessionCookieHeader(t *testing.T, apiKey string) string {
+	t.Helper()
+	raw, err := json.Marshal(map[string]string{"apiKey": apiKey})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err := http.NewRequest(http.MethodPost, baseURL(t)+apiPath("/session/login"), bytes.NewReader(raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("POST /session/login = %d, body %s", res.StatusCode, body)
+	}
+	cookies := res.Cookies()
+	if len(cookies) == 0 {
+		t.Fatal("login missing Set-Cookie")
+	}
+	// Secure cookies are not stored by a jar against http://; set Cookie ourselves.
+	return cookies[0].Name + "=" + cookies[0].Value
+}
+
 func TestWebSocketFiltersByTenant(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -351,8 +382,10 @@ func TestWebSocketFiltersByTenant(t *testing.T) {
 		t.Helper()
 		ws := strings.Replace(baseURL(t), "http://", "ws://", 1)
 		ws = strings.Replace(ws, "https://", "wss://", 1)
-		u := ws + apiPath("/ws/events") + "?apiKey=" + url.QueryEscape(key)
-		conn, _, err := websocket.Dial(ctx, u, nil)
+		u := ws + apiPath("/ws/events")
+		conn, _, err := websocket.Dial(ctx, u, &websocket.DialOptions{
+			HTTPHeader: http.Header{"Cookie": []string{sessionCookieHeader(t, key)}},
+		})
 		if err != nil {
 			t.Fatal(err)
 		}
