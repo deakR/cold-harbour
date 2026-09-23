@@ -107,6 +107,21 @@ func OpenJobs(addr string) *jobStream {
 	return &jobStream{rdb: redis.NewClient(redisOptions(addr))}
 }
 
+func NewRedisClient(addr string) *redis.Client {
+	return redis.NewClient(redisOptions(addr))
+}
+
+func JobRunning(ctx context.Context, rdb redis.Cmdable, jobID string) (bool, error) {
+	step, err := rdb.HGet(ctx, memKey(jobID), memFieldStep).Result()
+	if errors.Is(err, redis.Nil) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return step != "", nil
+}
+
 func (s *jobStream) Add(ctx context.Context, keys seal.KeyStore, job Job) error {
 	if keys == nil {
 		return errors.New("key store is required")

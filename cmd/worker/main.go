@@ -39,9 +39,6 @@ func main() {
 		log.Fatalf("worker: load signing key: %v", err)
 	}
 	reg := runner.NewRegistry(redact.Runner{}, mask.Runner{})
-	if err := reg.RequireListedTypes(); err != nil {
-		log.Fatalf("worker: job types: %v", err)
-	}
 	stream := queue.OpenJobs(queue.RedisAddr())
 	if err := queue.PrepareGroup(context.Background(), stream); err != nil {
 		log.Fatalf("worker: prepare group: %v", err)

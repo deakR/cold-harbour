@@ -2,9 +2,7 @@ package runner
 
 import (
 	"context"
-	_ "embed"
-	"fmt"
-	"strings"
+	"slices"
 )
 
 type CheckpointRecorder struct {
@@ -58,36 +56,14 @@ func (r *Registry) Get(jobType string) (JobRunner, bool) {
 	return jr, ok
 }
 
-//go:embed types.txt
-var typeList string
-
-// ListedTypes is the job-type allowlist shared with the control plane.
-func ListedTypes() []string {
-	var out []string
-	for _, line := range strings.Split(typeList, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		out = append(out, line)
+func (r *Registry) Types() []string {
+	if r == nil {
+		return nil
 	}
+	out := make([]string, 0, len(r.byType))
+	for name := range r.byType {
+		out = append(out, name)
+	}
+	slices.Sort(out)
 	return out
-}
-
-// RequireListedTypes fails when the registry and types.txt disagree.
-func (r *Registry) RequireListedTypes() error {
-	listed := ListedTypes()
-	n := 0
-	if r != nil {
-		n = len(r.byType)
-	}
-	if n != len(listed) {
-		return fmt.Errorf("registered %d job types, types.txt lists %d", n, len(listed))
-	}
-	for _, name := range listed {
-		if _, ok := r.Get(name); !ok {
-			return fmt.Errorf("types.txt lists %s, which is not registered", name)
-		}
-	}
-	return nil
 }

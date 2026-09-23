@@ -5,10 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/jobs': 'http://127.0.0.1:8080',
-      '/d': 'http://127.0.0.1:8080',
-      '/reports': 'http://127.0.0.1:8080',
-      '/ws': { target: 'http://127.0.0.1:8080', ws: true },
+      '/v1': { target: 'http://127.0.0.1:8081', ws: true },
+      '/d': 'http://127.0.0.1:8081',
     },
   },
 })

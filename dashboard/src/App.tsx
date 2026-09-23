@@ -23,7 +23,7 @@ export default function App() {
   const [notice, setNotice] = useState('')
 
   async function loadJobs() {
-    const res = await fetch('/jobs', { headers: { 'X-API-Key': apiKey } })
+    const res = await fetch('/v1/jobs', { headers: { 'X-API-Key': apiKey } })
     if (!res.ok) {
       setNotice(`job list ${res.status}`)
       return
@@ -34,7 +34,7 @@ export default function App() {
   useEffect(() => {
     if (!apiKey) return
     const proto = location.protocol === 'https:' ? 'wss' : 'ws'
-    const ws = new WebSocket(`${proto}://${location.host}/ws/events?apiKey=${encodeURIComponent(apiKey)}`)
+    const ws = new WebSocket(`${proto}://${location.host}/v1/ws/events?apiKey=${encodeURIComponent(apiKey)}`)
     ws.onmessage = (ev) => {
       const msg = JSON.parse(ev.data) as LiveEvent
       setEvents((prev) => [msg, ...prev].slice(0, 20))
@@ -46,7 +46,7 @@ export default function App() {
   async function submit(e: FormEvent) {
     e.preventDefault()
     setNotice('')
-    const res = await fetch('/jobs', {
+    const res = await fetch('/v1/jobs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
       body: JSON.stringify({ input, jobType }),
@@ -61,7 +61,7 @@ export default function App() {
   }
 
   async function openJob(jobId: string) {
-    const res = await fetch(`/jobs/${jobId}`, { headers: { 'X-API-Key': apiKey } })
+    const res = await fetch(`/v1/jobs/${jobId}`, { headers: { 'X-API-Key': apiKey } })
     if (!res.ok) {
       setNotice(`job ${res.status}`)
       return
@@ -73,7 +73,7 @@ export default function App() {
   async function makeLink() {
     if (!selected) return
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()
-    const res = await fetch(`/jobs/${selected.jobId}/delivery-links`, {
+    const res = await fetch(`/v1/jobs/${selected.jobId}/delivery-links`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
       body: JSON.stringify({ expiresAt, maxViews: '3' }),
@@ -89,7 +89,7 @@ export default function App() {
   function downloadReport() {
     const from = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     const to = new Date(Date.now() + 60 * 60 * 1000).toISOString()
-    const url = `/reports/compliance?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
+    const url = `/v1/reports/compliance?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
     fetch(url, { headers: { 'X-API-Key': apiKey } })
       .then((res) => res.blob())
       .then((blob) => {
