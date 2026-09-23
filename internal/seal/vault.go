@@ -11,13 +11,16 @@ import (
 	"os"
 )
 
-func vaultOn() bool {
-	return os.Getenv("VAULT_ADDR") != "" && os.Getenv("VAULT_TOKEN") != ""
+func RequireVault() error {
+	if os.Getenv("VAULT_ADDR") == "" || os.Getenv("VAULT_TOKEN") == "" {
+		return fmt.Errorf("VAULT_ADDR and VAULT_TOKEN are required")
+	}
+	return nil
 }
 
 func wrapKey(ctx context.Context, plain []byte) ([]byte, error) {
-	if !vaultOn() {
-		return plain, nil
+	if err := RequireVault(); err != nil {
+		return nil, err
 	}
 	body, _ := json.Marshal(map[string]string{
 		"plaintext": base64.StdEncoding.EncodeToString(plain),
@@ -41,11 +44,8 @@ func wrapKey(ctx context.Context, plain []byte) ([]byte, error) {
 }
 
 func unwrapKey(ctx context.Context, stored []byte) ([]byte, error) {
-	if !vaultOn() {
-		if len(stored) != 32 {
-			return nil, fmt.Errorf("%w: got %d", errKeyWrongLength, len(stored))
-		}
-		return stored, nil
+	if err := RequireVault(); err != nil {
+		return nil, err
 	}
 	body, _ := json.Marshal(map[string]string{"ciphertext": string(stored)})
 	raw, err := vaultPost(ctx, "/v1/transit/decrypt/coldharbour", body)

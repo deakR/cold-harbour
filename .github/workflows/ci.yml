@@ -97,4 +97,10 @@ jobs:
           echo "API_KEY_A=$(go run ./cmd/coldharbour admin create-tenant --name tenant-a)" >> "$GITHUB_ENV"
           echo "API_KEY_B=$(go run ./cmd/coldharbour admin create-tenant --name tenant-b)" >> "$GITHUB_ENV"
       - name: Contract tests
-        run: API_BASE=http://127.0.0.1:8081 API_PREFIX=/v1 COLDHARBOUR_WORKER_CONTAINER=coldharbour-worker go test ./internal/apitest -count=1 -timeout 180s
+        run: |
+          API_BASE=http://127.0.0.1:8081 API_PREFIX=/v1 COLDHARBOUR_WORKER_CONTAINER=coldharbour-worker go test ./internal/apitest -count=1 -timeout 180s
+          export POSTGRES_DSN="postgres://coldharbour:ci-postgres@127.0.0.1:5433/coldharbour?sslmode=verify-full&sslrootcert=docker/certs/ca.crt"
+          ids=$(docker exec coldharbour-m7-postgres psql -U coldharbour -d coldharbour -tA -c "SELECT id FROM tenants")
+          for id in $ids; do
+            go run ./cmd/verify ledger --tenant "$id"
+          done

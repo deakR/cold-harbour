@@ -9,6 +9,18 @@ import (
 	"github.com/google/uuid"
 )
 
+func TestWrapKeyRequiresVault(t *testing.T) {
+	t.Setenv("VAULT_ADDR", "")
+	t.Setenv("VAULT_TOKEN", "")
+	_, err := wrapKey(context.Background(), bytes.Repeat([]byte{1}, 32))
+	if err == nil {
+		t.Fatal("wrapKey succeeded without Vault")
+	}
+	if err := RequireVault(); err == nil {
+		t.Fatal("RequireVault succeeded without Vault")
+	}
+}
+
 func TestSealOpenRoundTrip(t *testing.T) {
 	var key [32]byte
 	copy(key[:], []byte("0123456789abcdef0123456789abcdef"))

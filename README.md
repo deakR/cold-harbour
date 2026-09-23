@@ -90,6 +90,12 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | `GET /v1/reports/compliance?from=&to=` | Returns a CSV of the calling tenant's jobs in that date range. The header is `dispatch_time,completion_time,final_state,checksum,signature_status,purge_timestamp`. A bad `from` or `to` returns `400` with `field` set to the name. |
 | `GET /v1/ws/events?apiKey=` | WebSocket. Relays each job's state transitions to the tenant that authenticated the connection. |
 
+### Keys and roles
+
+`coldharbour admin create-tenant --name paykochi` creates a tenant and prints one `admin` key. That key calls `POST /v1/keys` with `{"name","role"}`. `role` is `admin`, `app`, or `sentinel`.
+
+`admin` manages keys and can call every `app` route. `app` submits and reads jobs, creates delivery links, downloads the compliance report, and opens the event socket. `sentinel` submits jobs. `DELETE /v1/keys/{id}` sets `revoked_at`. The next request with that key returns 401. `verify ledger --tenant <id>` checks the tenant's audit chain and exits non-zero on the first mismatch.
+
 ### Environment variables
 
 | Variable | Read by | Meaning |
@@ -101,7 +107,7 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | `REDIS_CA` | `cmd/worker`, `cmd/controlplane` | Path to the CA certificate that signed the Redis server certificate. Required when `REDIS_TLS=1`. |
 | `SIGNING_KEY` | `cmd/worker`, `cmd/verify` | Base64 of a 64-byte Ed25519 private key. The worker signs every job output and every purge receipt with this key. |
 | `CONSUMER` | `cmd/worker` | Consumer name inside the `worker-group` Redis consumer group. Two worker processes must use different names. If this and `-consumer` are both unset, the worker uses the machine hostname. |
-| `VAULT_ADDR`, `VAULT_TOKEN` | `cmd/worker`, `cmd/controlplane` | If both are set, each job's AES key is wrapped through Vault Transit at `$VAULT_ADDR/v1/transit/{encrypt,decrypt}/coldharbour`. If either is unset, the raw 32-byte key is stored. Set both on the control plane and the worker, or on neither. |
+| `VAULT_ADDR`, `VAULT_TOKEN` | `cmd/worker`, `cmd/controlplane` | Required. Each job's AES key is wrapped through Vault Transit at `$VAULT_ADDR/v1/transit/{encrypt,decrypt}/coldharbour`. Compose starts Vault in development mode and creates the `coldharbour` transit key. |
 
 ### Repository layout
 

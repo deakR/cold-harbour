@@ -25,6 +25,9 @@ func main() {
 	if dsn == "" {
 		log.Fatal("controlplane: POSTGRES_DSN is required")
 	}
+	if err := seal.RequireVault(); err != nil {
+		log.Fatalf("controlplane: %v", err)
+	}
 	ctx := context.Background()
 	sqldb, err := sql.Open("pgx", dsn)
 	if err != nil {
