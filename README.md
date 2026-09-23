@@ -114,6 +114,7 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | Path | Contents |
 | --- | --- |
 | `cmd/worker` | The worker process. Reads `coldharbour:jobs`, runs the registered job type, signs and journals the result, then purges the key. Serves Prometheus metrics on port 9100. Compose does not publish that port on the host, so more than one worker can run. Scrape `http://<worker-container>:9100/metrics` on the Compose network. |
+| `cmd/sentinel` | Masks personal data in log lines. `sentinel run --in - --out -` reads stdin and writes masked lines. Lines longer than `--max-inline-bytes` (default 65536) become `[DROPPED reason=too_large]`. `--shadow` counts detections and writes the line unchanged. Metrics are served at `--metrics` (default `:9101`). |
 | `cmd/verify` | A standalone checker. `verify output --body --job-id --tenant-id --sig --pub` checks a signed job result. `verify receipt --job-id --purged-at --sig --pub` checks a purge receipt. Neither subcommand touches Redis or Postgres. |
 | `internal/detect` | Finds email, US phone, Indian phone, SSN, Aadhaar, and PAN spans. Aadhaar must pass the Verhoeff check. `Apply` writes `[KIND]` or keeps the last four characters of the span. |
 | `internal/redact` | The `redact` job type. Calls `detect` and writes `[EMAIL_REDACTED]`, `[PHONE_REDACTED]`, and `[SSN_REDACTED]`. |

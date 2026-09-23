@@ -94,7 +94,7 @@ func TestLongLineIsDropped(t *testing.T) {
 	in := "jane.doe@example.com\n"
 	stdout, _, metrics := runBatch(t, bin, []string{"--max-inline-bytes", "8"}, in, 1)
 	if strings.TrimSpace(stdout) != "[DROPPED reason=too_large]" {
-		t.Fatalf("stdout = %q", strings.TrimSpace(stdout))
+		t.Fatal("long line was not dropped")
 	}
 	if metric(t, metrics, "sentinel_dropped_total", "") != 1 {
 		t.Fatalf("dropped = %g", metric(t, metrics, "sentinel_dropped_total", ""))
