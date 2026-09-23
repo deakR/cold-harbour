@@ -79,7 +79,7 @@ func OpenJobs(addr string) *jobStream {
 	if os.Getenv("REDIS_TLS") == "1" {
 		cfg := &tls.Config{MinVersion: tls.VersionTLS12}
 		if caPath := os.Getenv("REDIS_CA"); caPath != "" {
-			pem, err := os.ReadFile(caPath)
+			pem, err := os.ReadFile(caPath) //#nosec G304 G703 -- REDIS_CA is an operator path
 			if err != nil {
 				panic(err)
 			}
