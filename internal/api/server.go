@@ -59,10 +59,14 @@ func (s *Server) SetInsecureCookies(v bool) {
 	s.insecureCookies = v
 }
 
+func defaultDevOrigins() []string {
+	return []string{"localhost:5173", "127.0.0.1:5173"}
+}
+
 func ParseWSOrigins(raw string) []string {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
-		return []string{"localhost:5173"}
+		return defaultDevOrigins()
 	}
 	var out []string
 	for _, part := range strings.Split(raw, ",") {
@@ -72,7 +76,7 @@ func ParseWSOrigins(raw string) []string {
 		}
 	}
 	if len(out) == 0 {
-		return []string{"localhost:5173"}
+		return defaultDevOrigins()
 	}
 	return out
 }

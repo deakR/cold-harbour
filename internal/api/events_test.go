@@ -23,7 +23,7 @@ func TestParseWSOrigins(t *testing.T) {
 		t.Fatalf("parsed = %#v", got)
 	}
 	got = ParseWSOrigins("")
-	if len(got) != 1 || got[0] != "localhost:5173" {
+	if len(got) != 2 || got[0] != "localhost:5173" || got[1] != "127.0.0.1:5173" {
 		t.Fatalf("default = %#v", got)
 	}
 }

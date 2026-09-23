@@ -232,7 +232,7 @@ func (s *Server) originAllowed(origin string) bool {
 	}
 	patterns := s.wsOrigins
 	if len(patterns) == 0 {
-		patterns = []string{"localhost:5173"}
+		patterns = defaultDevOrigins()
 	}
 	host := u.Host
 	for _, p := range patterns {

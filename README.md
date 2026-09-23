@@ -116,7 +116,7 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | `GET /v1/reports/compliance?from=&to=` | Returns a CSV of the calling tenant's jobs in that date range. The header is `dispatch_time,completion_time,final_state,checksum,signature_status,purge_timestamp,source`. Existing rows default to `cold-harbour`. A bad `from` or `to` returns `400` with `field` set to the name. |
 | `GET /v1/policy` | Returns the tenant policy. `app` and `sentinel` may call it. The response includes an `ETag`. `If-None-Match` with that tag returns `304`. With no stored policy the body is version 0 and the detectors `email`, `phone_us`, and `ssn`. |
 | `PUT /v1/policy` | `admin` only. Body is `detectors`, `mode` (`redact` or `partial`), `failPolicy` (`closed`, `inline`, or `open`), and `maxInlineBytes`. Stores the next version and appends a `policy_changed` ledger entry. |
-| `GET /v1/ws/events?apiKey=` | WebSocket. Relays each job's state transitions to the tenant that authenticated the connection. The handshake allows the request host and the hosts in `WS_ORIGIN_PATTERNS`. The default host is `localhost:5173`, which is the dashboard dev server. An `Origin` whose host is neither the request host nor one of those patterns returns 403. |
+| `GET /v1/ws/events` | WebSocket. Relays each job's state transitions to the tenant that authenticated the connection. The browser sends the session cookie. The handshake allows the request host and the hosts in `WS_ORIGIN_PATTERNS`. The default hosts are `localhost:5173` and `127.0.0.1:5173`. An `Origin` whose host is neither the request host nor one of those patterns returns 403. |
 
 ### Keys and roles
 
