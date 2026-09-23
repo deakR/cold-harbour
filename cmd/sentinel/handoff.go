@@ -79,7 +79,7 @@ func (h *handoff) handle(line string, failPolicy string, kinds []detect.Kind, mo
 		out := <-item.reply
 		if out.ok {
 			heldTotal.Inc()
-			return maskResult{line: "[HELD job=" + out.jobID + "]"}
+			return maskResult{line: "[HELD job=" + out.jobID + "]", held: true}
 		}
 		return applyFailPolicy(line, failPolicy, kinds, mode, h)
 	default:
