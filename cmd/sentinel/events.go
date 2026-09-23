@@ -164,13 +164,13 @@ func (e *eventsLoop) flush() {
 	if err != nil {
 		return
 	}
-	req, err := http.NewRequest(http.MethodPost, e.baseURL+"/v1/sentinel/events", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, e.baseURL+"/v1/sentinel/events", bytes.NewReader(body)) //#nosec G704 -- operator control-plane URL
 	if err != nil {
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-Key", e.apiKey)
-	res, err := e.client.Do(req)
+	res, err := e.client.Do(req) //#nosec G704 -- operator control-plane URL
 	if err != nil || res.StatusCode != http.StatusOK {
 		e.window.restore(batch)
 		if e.handoff != nil && failOpen != 0 {
