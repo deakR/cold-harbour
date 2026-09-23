@@ -124,3 +124,79 @@ services:
       - "8081:8080"
     volumes:
       - ./docker/certs:/certs:ro
+  sentinel-fs-init:
+    profiles: ["sentinel"]
+    image: busybox:1.37
+    user: "0:0"
+    volumes:
+      - sentinel-logs:/logs
+      - sentinel-keys:/keys
+    entrypoint: ["sh", "-c", "mkdir -p /logs /keys && chown -R 65532:65532 /logs /keys"]
+    restart: "no"
+  sentinel-bootstrap:
+    profiles: ["sentinel"]
+    build:
+      context: .
+      dockerfile: Dockerfile.coldharbour
+    depends_on:
+      controlplane:
+        condition: service_started
+      sentinel-fs-init:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_DSN: "postgres://coldharbour:${POSTGRES_PASSWORD}@postgres:5432/coldharbour?sslmode=verify-full&sslrootcert=/certs/ca.crt"
+    volumes:
+      - ./docker/certs:/certs:ro
+      - sentinel-keys:/keys
+    command: ["admin", "ensure-sentinel-key", "--tenant-name", "sentinel-demo", "--out", "/keys/sentinel.key"]
+    restart: "no"
+  example-logger:
+    profiles: ["sentinel"]
+    build:
+      context: ./examples/sentinel-logger
+    depends_on:
+      sentinel-fs-init:
+        condition: service_completed_successfully
+    volumes:
+      - sentinel-logs:/logs
+    restart: unless-stopped
+  sentinel:
+    profiles: ["sentinel"]
+    container_name: coldharbour-sentinel
+    build:
+      context: .
+      dockerfile: Dockerfile.sentinel
+    depends_on:
+      controlplane:
+        condition: service_started
+      sentinel-bootstrap:
+        condition: service_completed_successfully
+      example-logger:
+        condition: service_started
+    environment:
+      SENTINEL_API_KEY_FILE: /keys/sentinel.key
+    volumes:
+      - sentinel-logs:/logs
+      - sentinel-keys:/keys:ro
+    command:
+      - run
+      - --in
+      - /logs/app.log
+      - --follow
+      - --out
+      - /logs/app.masked.log
+      - --control-plane
+      - http://controlplane:8080
+      - --events-interval
+      - 5s
+      - --node-id
+      - compose-sentinel
+      - --state-dir
+      - /tmp/sentinel-state
+      - --metrics
+      - "127.0.0.1:9101"
+    restart: unless-stopped
+
+volumes:
+  sentinel-logs:
+  sentinel-keys:
