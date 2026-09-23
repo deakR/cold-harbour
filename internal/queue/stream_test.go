@@ -81,27 +81,27 @@ func TestParseJob(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	job, err := parseJob(entry, map[string]string{"id": "job-cli", "input": "hello"})
+	job, err := parseJob(entry, map[string]string{"id": "job-cli", "input": "hello", "tenant_id": testTenantID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if job != (Job{ID: "job-cli", Input: "hello"}) {
+	if job != (Job{ID: "job-cli", Input: "hello", TenantID: testTenantID}) {
 		t.Fatalf("got %+v, want id field", job)
 	}
 
-	job, err = parseJob(entry, map[string]string{"input": "hello"})
+	job, err = parseJob(entry, map[string]string{"input": "hello", "tenant_id": testTenantID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if job != (Job{ID: "99-1", Input: "hello"}) {
+	if job != (Job{ID: "99-1", Input: "hello", TenantID: testTenantID}) {
 		t.Fatalf("got %+v, want entry id 99-1", job)
 	}
 
-	job, err = parseJob(entry, map[string]string{"id": "", "input": "hello"})
+	job, err = parseJob(entry, map[string]string{"id": "", "input": "hello", "tenant_id": testTenantID})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if job != (Job{ID: "99-1", Input: "hello"}) {
+	if job != (Job{ID: "99-1", Input: "hello", TenantID: testTenantID}) {
 		t.Fatalf("got %+v, want entry id when id is empty", job)
 	}
 
@@ -122,12 +122,8 @@ func TestParseJob(t *testing.T) {
 		t.Fatalf("TenantID = %q, want seeded tenant-a", job.TenantID)
 	}
 
-	job, err = parseJob(entry, map[string]string{"id": "job-t", "input": "hello"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if job.TenantID != "" {
-		t.Fatalf("TenantID = %q, want empty when tenant_id absent", job.TenantID)
+	if _, err = parseJob(entry, map[string]string{"id": "job-t", "input": "hello"}); !errors.Is(err, errMissingTenant) {
+		t.Fatalf("missing tenant err = %v, want errMissingTenant", err)
 	}
 }
 
@@ -136,18 +132,18 @@ func TestParseClaim(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c, err := parseClaim(entry, map[string]string{"id": "crash-1", "input": "hello", "simulateCrashAtStep": "1"})
+	c, err := parseClaim(entry, map[string]string{"id": "crash-1", "input": "hello", "tenant_id": testTenantID, "simulateCrashAtStep": "1"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.job != (Job{ID: "crash-1", Input: "hello"}) {
+	if c.job != (Job{ID: "crash-1", Input: "hello", TenantID: testTenantID}) {
 		t.Fatalf("job = %+v", c.job)
 	}
 	if c.crash != CrashNever {
 		t.Fatalf("crash = %v, want CrashNever", c.crash)
 	}
 
-	c, err = parseClaim(entry, map[string]string{"input": "hello", "simulateCrashAtStep": "2"})
+	c, err = parseClaim(entry, map[string]string{"input": "hello", "tenant_id": testTenantID, "simulateCrashAtStep": "2"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,14 +151,14 @@ func TestParseClaim(t *testing.T) {
 		t.Fatalf("crash = %v, want CrashNever", c.crash)
 	}
 
-	c, err = parseClaim(entry, map[string]string{"id": "fail-1", "input": "hello", "simulateFailure": "1"})
+	c, err = parseClaim(entry, map[string]string{"id": "fail-1", "input": "hello", "tenant_id": testTenantID, "simulateFailure": "1"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if c.fail {
 		t.Fatal("fail = true, want false")
 	}
-	if c.job != (Job{ID: "fail-1", Input: "hello"}) {
+	if c.job != (Job{ID: "fail-1", Input: "hello", TenantID: testTenantID}) {
 		t.Fatalf("job = %+v", c.job)
 	}
 	if c.fields["simulateFailure"] != "1" {
@@ -179,7 +175,7 @@ func TestStreamPicksUpSittingJob(t *testing.T) {
 
 	input := "Email alice.nguyen@school.edu about the lab report."
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: input}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: input, TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -220,7 +216,7 @@ func TestRunGroupSkipsBadEntry(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "good", Input: "Email a@b.com x"}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "good", Input: "Email a@b.com x", TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -265,7 +261,7 @@ func TestRunGroupRecoversViaAutoClaim(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "crash-1", Input: redact.M1Fixture}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "crash-1", Input: redact.M1Fixture, TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -454,7 +450,7 @@ func TestRunGroupRecordsThenEmitsThenAcks(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: "Email a@b.com x"}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: "Email a@b.com x", TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
@@ -530,7 +526,7 @@ func TestRecordErrorSkipsEmitAndAck(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: "Email a@b.com x"}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: "Email a@b.com x", TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 	forced := errors.New("forced record failure")
@@ -562,7 +558,7 @@ func TestOutputsSurviveRedisFlushAll(t *testing.T) {
 	}
 	input := "Email alice.nguyen@school.edu about the lab report."
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: input}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "job-cli", Input: input, TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
@@ -613,7 +609,7 @@ func TestSuccessfulJobDeletesMemHash(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "job-purge", Input: "Email a@b.com x"}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "job-purge", Input: "Email a@b.com x", TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 	receipts := seal.NewMemoryReceiptStore()
@@ -676,7 +672,7 @@ func TestCrashLeavesMemHash(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := seal.NewMemoryKeyStore()
-	if err := stream.Add(ctx, keys, Job{ID: "crash-keep", Input: redact.M1Fixture}); err != nil {
+	if err := stream.Add(ctx, keys, Job{ID: "crash-keep", Input: redact.M1Fixture, TenantID: testTenantID}); err != nil {
 		t.Fatal(err)
 	}
 	priv, receipts := testSigning(t)
@@ -757,37 +753,6 @@ func TestAddStoresCiphertext(t *testing.T) {
 	if string(got) != plain {
 		t.Fatalf("Open = %q, want plaintext", got)
 	}
-}
-
-func TestLegacyPlaintextCompletesWithoutAKey(t *testing.T) {
-	_, stream := startStream(t)
-	ctx := context.Background()
-	if err := stream.ensureGroup(ctx); err != nil {
-		t.Fatal(err)
-	}
-	const plain = "Email a@b.com x"
-	if err := stream.rdb.XAdd(ctx, &redis.XAddArgs{
-		Stream: jobsStreamKey,
-		Values: map[string]any{"id": "legacy-1", "input": plain},
-	}).Err(); err != nil {
-		t.Fatal(err)
-	}
-	keys := seal.NewMemoryKeyStore()
-	got, err := runGroupOnce(t, stream, testWorkerConfig("legacy"), journal.NewMemoryJournal(), keys)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got.ID != "legacy-1" {
-		t.Fatalf("ID = %q, want legacy-1", got.ID)
-	}
-	want, err := redact.RedactPII(plain)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(got.Result, redact.MapResult(want)) {
-		t.Fatalf("Result = %+v", got.Result)
-	}
-	assertMainLen(t, stream, 0)
 }
 
 func TestPrepareGroupLeavesStreamEmpty(t *testing.T) {

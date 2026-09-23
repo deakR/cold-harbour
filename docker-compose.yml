@@ -44,6 +44,7 @@ services:
     volumes:
       - ./docker/certs:/certs:ro
   worker:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile.worker
@@ -64,6 +65,7 @@ services:
     volumes:
       - ./docker/certs:/certs:ro
   controlplane:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: controlplane/Dockerfile
