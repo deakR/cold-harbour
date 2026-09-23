@@ -74,6 +74,30 @@ You need Docker and Go 1.25.
 
    The dashboard submits jobs, reads live status over the `/v1/ws/events` WebSocket, and downloads the compliance report.
 
+## Run the Sentinel profile
+
+You need the same certs and env vars as above (`POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and `SIGNING_KEY`).
+
+```shell
+docker compose --profile sentinel up
+```
+
+That command starts Postgres, Redis, Vault, the control plane, the worker, an example logger, and Sentinel. The logger appends lines that contain `user1@example.com` to a shared volume. Sentinel follows that file and writes masked lines to `/logs/app.masked.log` in the same volume.
+
+You should see `[EMAIL]` in the masked file and no raw `user1@example.com`. Read it with:
+
+```shell
+docker run --rm -v coldharbour_sentinel-logs:/logs busybox:1.37 cat /logs/app.masked.log
+```
+
+A one-shot bootstrap writes a sentinel API key. On a later start it keeps the file when that key still authenticates, and replaces the file when Postgres rejects it. The key is not printed into Compose logs. Read it for the dashboard Sentinel view with:
+
+```shell
+docker run --rm -v coldharbour_sentinel-keys:/keys busybox:1.37 cat /keys/sentinel.key
+```
+
+Paste that key into the dashboard, open the Sentinel view, and confirm a node named `compose-sentinel` appears after a few seconds.
+
 ## Reference
 
 ### Endpoints
@@ -116,7 +140,8 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | Path | Contents |
 | --- | --- |
 | `cmd/worker` | The worker process. Reads `coldharbour:jobs`, runs the registered job type, signs and journals the result, then purges the key. Serves Prometheus metrics on port 9100. Compose does not publish that port on the host, so more than one worker can run. Scrape `http://<worker-container>:9100/metrics` on the Compose network. |
-| `cmd/sentinel` | Masks personal data in log lines. `sentinel run --in - --out -` reads stdin and writes masked lines. Lines longer than `--max-inline-bytes` (default 65536) are posted to Cold Harbour when `--control-plane` is set, and stdout gets `[HELD job=<id>]`. When handoff is unavailable, `failPolicy` chooses `[DROPPED reason=handoff_unavailable]`, inline masking, or unmasked output with `--allow-fail-open`. `--shadow` counts detections and writes the line unchanged. Metrics are served at `--metrics` (default `:9101`). |
+| `cmd/sentinel` | Masks personal data in log lines. `sentinel run --in - --out -` reads stdin and writes masked lines. Lines longer than `--max-inline-bytes` (default 65536) are posted to Cold Harbour when `--control-plane` is set, and stdout gets `[HELD job=<id>]`. When handoff is unavailable, `failPolicy` chooses `[DROPPED reason=handoff_unavailable]`, inline masking, or unmasked output with `--allow-fail-open`. `--shadow` counts detections and writes the line unchanged. Metrics are served at `--metrics` (default `:9101`). Set `SENTINEL_API_KEY`, or set `SENTINEL_API_KEY_FILE` to a path that holds the key. |
+| `cmd/coldharbour` | `migrate` applies goose migrations. `admin create-tenant` creates a tenant and prints one admin key. `admin ensure-sentinel-key --tenant-name --out` writes a sentinel key to a file without printing the key. It keeps the file when the key still authenticates as sentinel, and replaces the file when the database rejects it. |
 | `cmd/verify` | A standalone checker. `verify output --body --job-id --tenant-id --sig --pub` checks a signed job result. `verify receipt --job-id --purged-at --sig --pub` checks a purge receipt. Neither subcommand touches Redis or Postgres. |
 | `internal/detect` | Finds email, US phone, Indian phone, SSN, Aadhaar, and PAN spans. Aadhaar must pass the Verhoeff check. `Apply` writes `[KIND]` or keeps the last four characters of the span. |
 | `internal/redact` | The `redact` job type. Calls `detect` and writes `[EMAIL_REDACTED]`, `[PHONE_REDACTED]`, and `[SSN_REDACTED]`. |
@@ -128,5 +153,6 @@ All endpoints except `GET /d/{token}` require the header `X-API-Key`. A missing 
 | `internal/events` | The Redis Pub/Sub event a job publishes on each state transition. |
 | `cmd/controlplane` | The HTTP API. `POST /v1/jobs`, `GET /v1/jobs`, `GET /v1/jobs/{id}`, delivery links, the compliance report, and the WebSocket relay. |
 | `dashboard` | A React and TypeScript page that drives the API above: submit a job, watch it live, download the result, generate a link, and download the report. |
-| `docker-compose.yml` | Local Postgres and Redis, both with a password and TLS. |
+| `docker-compose.yml` | Local Postgres and Redis, both with a password and TLS. Profile `sentinel` adds the log masker, an example logger, and key bootstrap. |
+| `Dockerfile.sentinel` | Static `cmd/sentinel` binary on `gcr.io/distroless/static-debian12` as user `nonroot`. |
 | `docker/init.sql` | The schema and the two seeded tenants. |

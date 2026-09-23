@@ -48,9 +48,10 @@ func main() {
 	if err := serveMetrics(*metrics); err != nil {
 		log.Fatalf("sentinel: metrics: %v", err)
 	}
+	key := apiKey()
 	active.Store(maskSettings{maxInline: *maxInline, kinds: append([]detect.Kind(nil), maskKinds...), mode: detect.ModeRedact, failPolicy: "closed"})
 	if *control != "" || *policyFile != "" {
-		doc, etag, err := loadInitial(*control, *stateDir, *policyFile, os.Getenv("SENTINEL_API_KEY"))
+		doc, etag, err := loadInitial(*control, *stateDir, *policyFile, key)
 		if err != nil {
 			log.Fatalf("sentinel: %v", err)
 		}
@@ -58,12 +59,12 @@ func main() {
 		if *control != "" {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			go poll(ctx, *control, *stateDir, os.Getenv("SENTINEL_API_KEY"), *interval)
+			go poll(ctx, *control, *stateDir, key, *interval)
 		}
 	}
-	h := newHandoff(*control, os.Getenv("SENTINEL_API_KEY"), *allowFailOpen)
+	h := newHandoff(*control, key, *allowFailOpen)
 	defer h.close()
-	events := newEventsLoop(*control, os.Getenv("SENTINEL_API_KEY"), *nodeID, *eventsInterval, h)
+	events := newEventsLoop(*control, key, *nodeID, *eventsInterval, h)
 	defer events.close()
 	in, err := openIn(*inPath)
 	if err != nil {
@@ -115,6 +116,21 @@ func (f flushWriter) Close() error {
 		}
 	}
 	return err
+}
+
+func apiKey() string {
+	if v := os.Getenv("SENTINEL_API_KEY"); v != "" {
+		return v
+	}
+	path := os.Getenv("SENTINEL_API_KEY_FILE")
+	if path == "" {
+		return ""
+	}
+	raw, err := os.ReadFile(path) //#nosec G304 G703 -- operator key file path
+	if err != nil {
+		log.Fatalf("sentinel: read SENTINEL_API_KEY_FILE: %v", err)
+	}
+	return strings.TrimSpace(string(raw))
 }
 
 func openIn(path string) (io.ReadCloser, error) {
