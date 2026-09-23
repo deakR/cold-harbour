@@ -90,7 +90,7 @@ func (h *hub) read(ctx context.Context, sub *redis.PubSub) {
 }
 
 func (s *Server) events(w http.ResponseWriter, r *http.Request) {
-	p, ok := s.authenticate(r)
+	p, _, _, ok := s.authenticate(r)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
 		return

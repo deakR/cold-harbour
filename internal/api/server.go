@@ -47,6 +47,7 @@ func New(db *pgxpool.Pool, rdb *redis.Client, keys seal.KeyStore, jobs enqueuer,
 		hub:   newHub(),
 		now:   time.Now,
 	}
+	s.applyInsecureCookieEnv()
 	return s
 }
 
@@ -78,6 +79,9 @@ func ParseWSOrigins(raw string) []string {
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("POST /v1/session/login", s.login)
+	mux.HandleFunc("POST /v1/session/logout", s.authed([]string{"admin", "app"}, s.logout))
+	mux.HandleFunc("GET /v1/session", s.authed([]string{"admin", "app"}, s.getSession))
 	mux.HandleFunc("POST /v1/jobs", s.authed([]string{"admin", "app", "sentinel"}, s.postJob))
 	mux.HandleFunc("GET /v1/jobs", s.authed([]string{"admin", "app"}, s.listJobs))
 	mux.HandleFunc("GET /v1/jobs/{id}", s.authed([]string{"admin", "app"}, s.getJob))
@@ -97,7 +101,7 @@ func (s *Server) Handler() http.Handler {
 
 func (s *Server) authed(roles []string, next func(http.ResponseWriter, *http.Request, keys.Principal)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		p, ok := s.authenticate(r)
+		p, viaCookie, csrf, ok := s.authenticate(r)
 		if !ok {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
@@ -105,6 +109,13 @@ func (s *Server) authed(roles []string, next func(http.ResponseWriter, *http.Req
 		if !roleAllowed(p.Role, roles) {
 			w.WriteHeader(http.StatusForbidden)
 			return
+		}
+		if viaCookie {
+			if !s.requireCookieCSRF(r, csrf) {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+			r = r.WithContext(context.WithValue(r.Context(), sessionCSRFKey, csrf))
 		}
 		next(w, r, p)
 	}
@@ -117,14 +128,6 @@ func roleAllowed(role string, roles []string) bool {
 		}
 	}
 	return false
-}
-
-func (s *Server) authenticate(r *http.Request) (keys.Principal, bool) {
-	raw := r.Header.Get("X-API-Key")
-	if raw == "" && strings.HasPrefix(r.URL.Path, "/v1/ws/") {
-		raw = r.URL.Query().Get("apiKey")
-	}
-	return keys.Authenticate(r.Context(), s.db, raw)
 }
 
 func writeJSON(w http.ResponseWriter, status int, body any) {
