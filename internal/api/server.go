@@ -83,6 +83,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /v1/keys", s.authed([]string{"admin"}, s.createKey))
 	mux.HandleFunc("GET /v1/keys", s.authed([]string{"admin"}, s.listKeys))
 	mux.HandleFunc("DELETE /v1/keys/{id}", s.authed([]string{"admin"}, s.revokeKey))
+	mux.HandleFunc("POST /v1/sentinel/events", s.authed([]string{"sentinel"}, s.postSentinelEvents))
+	mux.HandleFunc("GET /v1/sentinel/nodes", s.authed([]string{"admin", "app", "sentinel"}, s.listSentinelNodes))
 	mux.HandleFunc("GET /v1/ws/events", s.events)
 	mux.HandleFunc("GET /d/{token}", s.openLink)
 	return mux

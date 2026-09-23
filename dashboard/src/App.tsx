@@ -9,16 +9,29 @@ type JobDetail = {
   signingKeyId?: string
 }
 type LiveEvent = { tenantId: string; jobId: string; status: string }
+type SentinelNode = {
+  nodeId: string
+  lastSeen: string
+  policyVersion: number
+  counts: Record<string, number>
+  held: number
+  dropped: number
+  failOpen: number
+}
+
+type View = 'jobs' | 'sentinel'
 
 const maskSample = '{"document":{"email":"a@b.com","name":"Ann"},"fields":["email"]}'
 
 export default function App() {
+  const [view, setView] = useState<View>('jobs')
   const [apiKey, setApiKey] = useState('')
   const [jobType, setJobType] = useState('redact')
   const [input, setInput] = useState('Call 415-555-0199 before noon.')
   const [jobs, setJobs] = useState<JobRow[]>([])
   const [selected, setSelected] = useState<JobDetail | null>(null)
   const [events, setEvents] = useState<LiveEvent[]>([])
+  const [nodes, setNodes] = useState<SentinelNode[]>([])
   const [link, setLink] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -29,6 +42,15 @@ export default function App() {
       return
     }
     setJobs(await res.json())
+  }
+
+  async function loadNodes() {
+    const res = await fetch('/v1/sentinel/nodes', { headers: { 'X-API-Key': apiKey } })
+    if (!res.ok) {
+      setNotice(`sentinel nodes ${res.status}`)
+      return
+    }
+    setNodes(await res.json())
   }
 
   useEffect(() => {
@@ -100,64 +122,110 @@ export default function App() {
       })
   }
 
+  function formatCounts(counts: Record<string, number>) {
+    const keys = Object.keys(counts).sort()
+    if (keys.length === 0) return '-'
+    return keys.map((k) => `${k}:${counts[k]}`).join(' ')
+  }
+
   return (
     <main>
       <h1>Cold Harbour</h1>
-      <form onSubmit={submit}>
-        <label>
-          API key
-          <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
-        </label>
-        <label>
-          Job type
-          <select value={jobType} onChange={(e) => {
-            setJobType(e.target.value)
-            setInput(e.target.value === 'mask' ? maskSample : 'Call 415-555-0199 before noon.')
-          }}>
-            <option value="redact">redact</option>
-            <option value="mask">mask</option>
-          </select>
-        </label>
-        <label>
-          Input
-          <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={4} />
-        </label>
-        <button type="submit">Submit job</button>
-      </form>
+      <nav>
+        <button type="button" onClick={() => setView('jobs')}>Jobs</button>
+        <button type="button" onClick={() => { setView('sentinel'); void loadNodes() }}>Sentinel</button>
+      </nav>
+      <label>
+        API key
+        <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+      </label>
       <p>{notice}</p>
-      <h2>Live events</h2>
-      <ul>
-        {events.map((ev, i) => (
-          <li key={`${ev.jobId}-${ev.status}-${i}`}>{ev.jobId} {ev.status}</li>
-        ))}
-      </ul>
-      <h2>Jobs</h2>
-      <button type="button" onClick={() => void loadJobs()}>Refresh</button>
-      <table>
-        <thead>
-          <tr><th>Job</th><th>Status</th><th>Accepted</th></tr>
-        </thead>
-        <tbody>
-          {jobs.map((job) => (
-            <tr key={job.jobId} onClick={() => void openJob(job.jobId)}>
-              <td>{job.jobId}</td>
-              <td>{job.status}</td>
-              <td>{job.acceptedAt}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {selected && (
+      {view === 'jobs' && (
+        <>
+          <form onSubmit={submit}>
+            <label>
+              Job type
+              <select value={jobType} onChange={(e) => {
+                setJobType(e.target.value)
+                setInput(e.target.value === 'mask' ? maskSample : 'Call 415-555-0199 before noon.')
+              }}>
+                <option value="redact">redact</option>
+                <option value="mask">mask</option>
+              </select>
+            </label>
+            <label>
+              Input
+              <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={4} />
+            </label>
+            <button type="submit">Submit job</button>
+          </form>
+          <h2>Live events</h2>
+          <ul>
+            {events.map((ev, i) => (
+              <li key={`${ev.jobId}-${ev.status}-${i}`}>{ev.jobId} {ev.status}</li>
+            ))}
+          </ul>
+          <h2>Jobs</h2>
+          <button type="button" onClick={() => void loadJobs()}>Refresh</button>
+          <table>
+            <thead>
+              <tr><th>Job</th><th>Status</th><th>Accepted</th></tr>
+            </thead>
+            <tbody>
+              {jobs.map((job) => (
+                <tr key={job.jobId} onClick={() => void openJob(job.jobId)}>
+                  <td>{job.jobId}</td>
+                  <td>{job.status}</td>
+                  <td>{job.acceptedAt}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {selected && (
+            <section>
+              <h2>Signed result</h2>
+              <pre>{JSON.stringify(selected.result, null, 2)}</pre>
+              <p>Signature {selected.signature}</p>
+              <p>Key {selected.signingKeyId}</p>
+              <button type="button" onClick={() => void makeLink()}>Delivery link</button>
+              {link && <p><a href={link}>{link}</a></p>}
+            </section>
+          )}
+          <button type="button" onClick={downloadReport}>Download compliance CSV</button>
+        </>
+      )}
+      {view === 'sentinel' && (
         <section>
-          <h2>Signed result</h2>
-          <pre>{JSON.stringify(selected.result, null, 2)}</pre>
-          <p>Signature {selected.signature}</p>
-          <p>Key {selected.signingKeyId}</p>
-          <button type="button" onClick={() => void makeLink()}>Delivery link</button>
-          {link && <p><a href={link}>{link}</a></p>}
+          <h2>Sentinel nodes</h2>
+          <button type="button" onClick={() => void loadNodes()}>Refresh</button>
+          <table>
+            <thead>
+              <tr>
+                <th>Node</th>
+                <th>Last seen</th>
+                <th>Policy</th>
+                <th>Counts</th>
+                <th>Held</th>
+                <th>Dropped</th>
+                <th>Fail open</th>
+              </tr>
+            </thead>
+            <tbody>
+              {nodes.map((node) => (
+                <tr key={node.nodeId}>
+                  <td>{node.nodeId}</td>
+                  <td>{node.lastSeen}</td>
+                  <td>{node.policyVersion}</td>
+                  <td>{formatCounts(node.counts ?? {})}</td>
+                  <td>{node.held}</td>
+                  <td>{node.dropped}</td>
+                  <td>{node.failOpen}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
       )}
-      <button type="button" onClick={downloadReport}>Download compliance CSV</button>
     </main>
   )
 }

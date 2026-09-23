@@ -22,6 +22,7 @@ type maskSettings struct {
 	mode       detect.Mode
 	failPolicy string
 	etag       string
+	version    int
 }
 
 var active atomic.Value
@@ -126,6 +127,7 @@ func settingsFrom(doc policy.Doc, etag string) maskSettings {
 		mode:       mode,
 		failPolicy: fail,
 		etag:       etag,
+		version:    doc.Version,
 	}
 }
 

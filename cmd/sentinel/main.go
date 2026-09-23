@@ -29,12 +29,21 @@ func main() {
 	stateDir := fs.String("state-dir", "", "directory for the cached policy")
 	policyFile := fs.String("policy", "", "policy file used when the control plane is unreachable")
 	interval := fs.Duration("policy-interval", 60*time.Second, "how often to fetch the policy")
+	eventsInterval := fs.Duration("events-interval", 10*time.Second, "how often to POST a node event batch")
+	nodeID := fs.String("node-id", "", "node id reported in event batches")
 	allowFailOpen := fs.Bool("allow-fail-open", false, "allow failPolicy open to write unmasked lines")
 	if err := fs.Parse(os.Args[2:]); err != nil {
 		log.Fatal("sentinel: bad flags")
 	}
 	if *follow && *inPath == "-" {
 		log.Fatal("sentinel: --follow needs a file")
+	}
+	if *nodeID == "" {
+		host, err := os.Hostname()
+		if err != nil {
+			log.Fatalf("sentinel: hostname: %v", err)
+		}
+		*nodeID = host
 	}
 	if err := serveMetrics(*metrics); err != nil {
 		log.Fatalf("sentinel: metrics: %v", err)
@@ -54,6 +63,8 @@ func main() {
 	}
 	h := newHandoff(*control, os.Getenv("SENTINEL_API_KEY"), *allowFailOpen)
 	defer h.close()
+	events := newEventsLoop(*control, os.Getenv("SENTINEL_API_KEY"), *nodeID, *eventsInterval, h)
+	defer events.close()
 	in, err := openIn(*inPath)
 	if err != nil {
 		log.Fatalf("sentinel: input: %v", err)
@@ -68,6 +79,7 @@ func main() {
 		start := time.Now()
 		st := active.Load().(maskSettings)
 		result := maskWith(line, st.maxInline, *shadow, st.kinds, st.mode, h, st.failPolicy)
+		events.record(result)
 		if _, err := out.WriteString(result.line + "\n"); err != nil {
 			return err
 		}

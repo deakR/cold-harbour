@@ -15,6 +15,7 @@ type maskResult struct {
 	line    string
 	counts  map[detect.Kind]int
 	dropped bool
+	held    bool
 }
 
 func maskLine(line string, maxInline int, shadow bool) maskResult {
