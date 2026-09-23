@@ -157,7 +157,43 @@ func TestFullQueueOrBreakerDoesNotBlockReader(t *testing.T) {
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
-	t.Fatalf("reader blocked; started posts=%d out=%q", started.Load(), out.String())
+	t.Fatalf("reader blocked; started posts=%d", started.Load())
+}
+
+func TestBreakerProbeCloses(t *testing.T) {
+	var posts atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/jobs" {
+			http.NotFound(w, r)
+			return
+		}
+		if posts.Add(1) <= 5 {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"jobId":"job-recovered","status":"QUEUED"}`))
+	}))
+	t.Cleanup(srv.Close)
+	bin := buildSentinel(t)
+	policy := filepath.Join(t.TempDir(), "policy.json")
+	writePolicyFile(t, policy, `{"version":1,"detectors":["email"],"mode":"redact","failPolicy":"closed","maxInlineBytes":8}`)
+	long := "jane.doe@example.com" + strings.Repeat("z", 40)
+	stdout, stderr, _ := runBatch(t, bin, []string{
+		"--max-inline-bytes", "8",
+		"--policy", policy,
+		"--control-plane", srv.URL,
+		"--policy-interval", "1h",
+	}, long+"\n"+long+"\n", 2)
+	if strings.Contains(stderr, "jane.doe@example.com") {
+		t.Fatal("breaker probe logged the raw value")
+	}
+	if !strings.Contains(stdout, "[DROPPED reason=handoff_unavailable]") {
+		t.Fatal("first long line was not dropped after the breaker opened")
+	}
+	if !strings.Contains(stdout, "[HELD job=job-recovered]") {
+		t.Fatal("breaker stayed open after Cold Harbour recovered")
+	}
 }
 
 func writePolicyFile(t *testing.T, path, body string) {

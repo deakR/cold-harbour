@@ -66,7 +66,7 @@ func (h *handoff) close() {
 }
 
 func (h *handoff) handle(line string, failPolicy string, kinds []detect.Kind, mode detect.Mode) maskResult {
-	if h == nil || h.baseURL == "" || h.open.Load() {
+	if h == nil || h.baseURL == "" {
 		return applyFailPolicy(line, failPolicy, kinds, mode, h)
 	}
 	item := handoffItem{line: line, reply: make(chan handoffResult, 1)}
@@ -107,12 +107,28 @@ func (h *handoff) loop() {
 	defer h.wg.Done()
 	for item := range h.q {
 		if h.open.Load() {
+			jobID, err := h.post(item.line)
+			if err == nil {
+				h.failures.Store(0)
+				h.open.Store(false)
+				item.reply <- handoffResult{jobID: jobID, ok: true}
+				continue
+			}
+			handoffErrors.Inc()
 			item.reply <- handoffResult{}
 			continue
 		}
 		backoff := handoffBackoffStart
 		for {
 			if h.open.Load() {
+				jobID, err := h.post(item.line)
+				if err == nil {
+					h.failures.Store(0)
+					h.open.Store(false)
+					item.reply <- handoffResult{jobID: jobID, ok: true}
+					break
+				}
+				handoffErrors.Inc()
 				item.reply <- handoffResult{}
 				break
 			}
