@@ -255,7 +255,7 @@ func matchOriginPattern(host, pattern string) bool {
 }
 
 func (s *Server) sessionCookie(token string, expires time.Time) *http.Cookie {
-	c := &http.Cookie{
+	c := &http.Cookie{ //#nosec G124 -- Secure is true unless ALLOW_INSECURE_SESSION_COOKIE=1
 		Name:     s.sessionCookieName(),
 		Value:    token,
 		Path:     "/",
@@ -268,7 +268,7 @@ func (s *Server) sessionCookie(token string, expires time.Time) *http.Cookie {
 }
 
 func (s *Server) clearSessionCookie(w http.ResponseWriter) {
-	c := &http.Cookie{
+	c := &http.Cookie{ //#nosec G124 -- Secure is true unless ALLOW_INSECURE_SESSION_COOKIE=1
 		Name:     s.sessionCookieName(),
 		Value:    "",
 		Path:     "/",
