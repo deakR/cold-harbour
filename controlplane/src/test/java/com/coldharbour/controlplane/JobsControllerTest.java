@@ -3,6 +3,7 @@ package com.coldharbour.controlplane;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,7 +32,8 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import jakarta.servlet.FilterChain;
 
@@ -42,6 +44,7 @@ class JobsControllerTest {
 	private PostLimit limit;
 	private JobsController jobs;
 	private DeliveryController delivery;
+	private ObjectMapper mapper;
 
 	@BeforeEach
 	void setUp() {
@@ -49,7 +52,7 @@ class JobsControllerTest {
 		redis = mock(StringRedisTemplate.class);
 		limit = mock(PostLimit.class);
 		when(limit.allow(any())).thenReturn(true);
-		ObjectMapper mapper = new ObjectMapper();
+		mapper = JsonMapper.builder().build();
 		jobs = new JobsController(jdbc, redis, mapper, limit);
 		delivery = new DeliveryController(jdbc, mapper);
 	}
@@ -93,6 +96,19 @@ class JobsControllerTest {
 		assertFalse(body.containsKey("jobId"));
 		verify(jdbc).update(eq("DELETE FROM job_keys WHERE job_id = ?"), any(Object.class));
 		verify(jdbc).update(eq("DELETE FROM job_accepts WHERE redis_job_id = ?"), any(Object.class));
+	}
+
+	@Test
+	void deliveredResultSerializesAsTheStoredJson() {
+		when(jdbc.queryForObject(anyString(), eq(String.class), anyString())).thenReturn("job-a");
+		when(jdbc.queryForMap(anyString(), eq(DurableID.forRedisJob("job-a")), eq("job-a"))).thenReturn(Map.of(
+				"tenant_id", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+				"body", "{\"redactedText\":\"[EMAIL_REDACTED]\"}",
+				"output_signature", new byte[] {1},
+				"signing_key_id", "k1"));
+		ResponseEntity<?> res = delivery.open("token");
+		String json = mapper.writeValueAsString(res.getBody());
+		assertTrue(json.contains("\"result\":{\"redactedText\":\"[EMAIL_REDACTED]\"}"), json);
 	}
 
 	@Test
