@@ -467,7 +467,7 @@ loop:
 func startStream(t *testing.T) (*miniredis.Miniredis, *jobStream) {
 	t.Helper()
 	mr := miniredis.RunT(t)
-	stream := OpenJobs(mr.Addr())
+	stream := &jobStream{rdb: redis.NewClient(&redis.Options{Addr: mr.Addr()})}
 	t.Cleanup(func() { _ = stream.rdb.Close() })
 	return mr, stream
 }
