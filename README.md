@@ -84,6 +84,8 @@ docker compose --profile sentinel up
 
 That command starts Postgres, Redis, Vault, the control plane, the worker, an example logger, and Sentinel. The logger appends lines that contain `user1@example.com` to a shared volume. Sentinel follows that file and writes masked lines to `/logs/app.masked.log` in the same volume.
 
+The `postgres` service mounts the named volume `postgres-data` at `/var/lib/postgresql/data`. After that volume exists, tenants and `api_keys` survive `docker compose down` and a later `docker compose up`. `ensure-sentinel-key` keeps `/keys/sentinel.key` when that key still authenticates. Data that already sits only in the old container filesystem is not copied into `postgres-data`, and no script deletes it.
+
 You should see `[EMAIL]` in the masked file and no raw `user1@example.com`. Read it with:
 
 ```shell

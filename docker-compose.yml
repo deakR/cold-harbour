@@ -7,6 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       POSTGRES_DB: coldharbour
     volumes:
+      - postgres-data:/var/lib/postgresql/data
       - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - ./docker/certs:/certs:ro
       - ./docker/pg_hba.conf:/pg_hba.conf:ro
@@ -200,3 +201,4 @@ services:
 volumes:
   sentinel-logs:
   sentinel-keys:
+  postgres-data:
