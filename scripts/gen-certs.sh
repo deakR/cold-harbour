@@ -23,5 +23,4 @@ EOF
 
 openssl req -newkey rsa:2048 -nodes -keyout "$out/server.key" -out "$tmp/server.csr" -config "$tmp/server.cnf"
 openssl x509 -req -in "$tmp/server.csr" -CA "$out/ca.crt" -CAkey "$tmp/ca.key" -CAcreateserial -out "$out/server.crt" -days 825 -extfile "$tmp/server.cnf" -extensions ext
-chmod 644 "$out/server.crt" "$out/ca.crt"
-chmod 600 "$out/server.key"
+chmod 644 "$out/server.crt" "$out/ca.crt" "$out/server.key"
