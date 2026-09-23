@@ -49,6 +49,22 @@ func TestPercentEncodedQueryEmail(t *testing.T) {
 	}
 }
 
+func TestSyntheticEmailStillMatches(t *testing.T) {
+	in := "user0@example.com " + strings.Repeat("x", 100)
+	got := Scan(in, []Kind{KindEmail})
+	want := []Span{at(in, "user0@example.com", KindEmail)}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("spans = %#v, want %#v", got, want)
+	}
+	out, _ := Apply(in, got, ModeRedact)
+	if strings.Contains(out, "user0@example.com") {
+		t.Fatalf("raw email remained in %q", out)
+	}
+	if !strings.Contains(out, "[EMAIL]") {
+		t.Fatalf("missing [EMAIL] placeholder in %q", out)
+	}
+}
+
 func TestSpaceSeparatedUSPhone(t *testing.T) {
 	in := `Contact 415 555 0199 today`
 	got := Scan(in, []Kind{KindPhoneUS})

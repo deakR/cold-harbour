@@ -45,10 +45,23 @@ var detectors = []detector{
 
 func regexSpans(kind Kind, re *regexp.Regexp) func(string) []Span {
 	return func(s string) []Span {
+		switch kind {
+		case KindEmail:
+			if !strings.Contains(s, "@") && !strings.Contains(s, "%40") {
+				return nil
+			}
+		case KindPhoneUS, KindSSN:
+			if !strings.ContainsAny(s, "0123456789") {
+				return nil
+			}
+		}
 		locs := re.FindAllStringIndex(s, -1)
-		out := make([]Span, 0, len(locs))
-		for _, loc := range locs {
-			out = append(out, Span{Kind: kind, Start: loc[0], End: loc[1]})
+		if len(locs) == 0 {
+			return nil
+		}
+		out := make([]Span, len(locs))
+		for i, loc := range locs {
+			out[i] = Span{Kind: kind, Start: loc[0], End: loc[1]}
 		}
 		return out
 	}
