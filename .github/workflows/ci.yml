@@ -30,7 +30,7 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - run: ./mvnw -q verify
+      - run: bash ./mvnw -q verify
         working-directory: controlplane
       - uses: actions/setup-node@v4
         with:
