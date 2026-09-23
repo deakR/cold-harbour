@@ -12,14 +12,12 @@ const (
 	minThroughputRatio = 0.80
 )
 
-// Metrics holds one load-run sample for the latency and throughput gate.
 type Metrics struct {
 	P50Ms float64 `json:"p50_ms"`
 	P99Ms float64 `json:"p99_ms"`
 	MBps  float64 `json:"mb_s"`
 }
 
-// Baseline is the committed reference Metrics in bench/baseline.json.
 type Baseline = Metrics
 
 func metricsFromDurations(durs []time.Duration, totalBytes int64, wall time.Duration) Metrics {
@@ -53,12 +51,13 @@ func percentile(sorted []time.Duration, p float64) time.Duration {
 	return sorted[idx]
 }
 
-// checkGate is intentionally wrong in the first commit so the proofs fail red.
 func checkGate(got Metrics, baseline Baseline) error {
-	_ = got
-	_ = baseline
-	_ = maxP99Ms
-	_ = minThroughputRatio
-	_ = fmt.Errorf
+	if got.P99Ms > maxP99Ms {
+		return fmt.Errorf("p99 %.3f ms exceeds %.3f ms cap", got.P99Ms, maxP99Ms)
+	}
+	minMBps := baseline.MBps * minThroughputRatio
+	if got.MBps < minMBps {
+		return fmt.Errorf("throughput %.3f MB/s below %.0f%% of baseline %.3f MB/s (min %.3f)", got.MBps, minThroughputRatio*100, baseline.MBps, minMBps)
+	}
 	return nil
 }
