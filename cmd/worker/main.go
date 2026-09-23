@@ -7,10 +7,14 @@ import (
 
 	"coldharbour/internal/journal"
 	"coldharbour/internal/mask"
+	"coldharbour/internal/policy"
 	"coldharbour/internal/queue"
 	"coldharbour/internal/redact"
 	"coldharbour/internal/runner"
 	"coldharbour/internal/seal"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -41,7 +45,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("worker: load signing key: %v", err)
 	}
-	reg := runner.NewRegistry(redact.Runner{}, mask.Runner{})
+	pool, err := pgxpool.New(context.Background(), dsn)
+	if err != nil {
+		log.Fatalf("worker: policy: %v", err)
+	}
+	defer pool.Close()
+	reg := runner.NewRegistry(redact.Runner{Load: func(ctx context.Context, tenant string) (policy.Doc, bool, error) {
+		id, err := uuid.Parse(tenant)
+		if err != nil {
+			return policy.Doc{}, false, err
+		}
+		return policy.Load(ctx, pool, id)
+	}}, mask.Runner{})
 	stream := queue.OpenJobs(queue.RedisAddr())
 	if err := queue.PrepareGroup(context.Background(), stream); err != nil {
 		log.Fatalf("worker: prepare group: %v", err)

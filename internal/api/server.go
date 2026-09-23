@@ -78,6 +78,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/jobs/{id}", s.authed([]string{"admin", "app"}, s.getJob))
 	mux.HandleFunc("POST /v1/jobs/{id}/delivery-links", s.authed([]string{"admin", "app"}, s.createLink))
 	mux.HandleFunc("GET /v1/reports/compliance", s.authed([]string{"admin", "app"}, s.compliance))
+	mux.HandleFunc("GET /v1/policy", s.authed([]string{"admin", "app", "sentinel"}, s.getPolicy))
+	mux.HandleFunc("PUT /v1/policy", s.authed([]string{"admin"}, s.putPolicy))
 	mux.HandleFunc("POST /v1/keys", s.authed([]string{"admin"}, s.createKey))
 	mux.HandleFunc("GET /v1/keys", s.authed([]string{"admin"}, s.listKeys))
 	mux.HandleFunc("DELETE /v1/keys/{id}", s.authed([]string{"admin"}, s.revokeKey))

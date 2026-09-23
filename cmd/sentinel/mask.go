@@ -18,10 +18,20 @@ type maskResult struct {
 }
 
 func maskLine(line string, maxInline int, shadow bool) maskResult {
+	return maskWith(line, maxInline, shadow, maskKinds, detect.ModeRedact)
+}
+
+func maskWith(line string, maxInline int, shadow bool, kinds []detect.Kind, mode detect.Mode) maskResult {
 	if len(line) > maxInline {
 		return maskResult{line: "[DROPPED reason=too_large]", dropped: true}
 	}
-	spans := detect.Scan(line, maskKinds)
+	if len(kinds) == 0 {
+		kinds = maskKinds
+	}
+	if mode == "" {
+		mode = detect.ModeRedact
+	}
+	spans := detect.Scan(line, kinds)
 	if shadow {
 		counts := map[detect.Kind]int{}
 		for _, sp := range spans {
@@ -29,6 +39,6 @@ func maskLine(line string, maxInline int, shadow bool) maskResult {
 		}
 		return maskResult{line: line, counts: counts}
 	}
-	out, counts := detect.Apply(line, spans, detect.ModeRedact)
+	out, counts := detect.Apply(line, spans, mode)
 	return maskResult{line: out, counts: counts}
 }

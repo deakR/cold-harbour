@@ -5,18 +5,35 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"coldharbour/internal/detect"
+	"coldharbour/internal/policy"
 	"coldharbour/internal/runner"
 )
 
-type Runner struct{}
+type Loader func(ctx context.Context, tenantID string) (policy.Doc, bool, error)
+
+type Runner struct {
+	Load Loader
+}
 
 func (Runner) JobType() string { return "redact" }
 
-func (Runner) Run(ctx context.Context, input map[string]any, cp *runner.CheckpointRecorder) (map[string]any, error) {
+func (r Runner) Run(ctx context.Context, input map[string]any, cp *runner.CheckpointRecorder) (map[string]any, error) {
 	_ = ctx
 	text, ok := input["input"].(string)
 	if !ok {
 		return nil, fmt.Errorf("redact: input[\"input\"] must be a string")
+	}
+	if r.Load != nil {
+		if tenant, _ := input["tenantId"].(string); tenant != "" {
+			doc, found, err := r.Load(ctx, tenant)
+			if err != nil {
+				return nil, err
+			}
+			if found {
+				return MapResult(applyPolicy(text, doc)), nil
+			}
+		}
 	}
 
 	var partial RedactResult
@@ -36,6 +53,23 @@ func (Runner) Run(ctx context.Context, input map[string]any, cp *runner.Checkpoi
 
 	done := ApplyClassWindow(partial, 1)
 	return MapResult(done), nil
+}
+
+func applyPolicy(text string, doc policy.Doc) RedactResult {
+	mode := detect.ModeRedact
+	if doc.Mode == string(detect.ModePartial) {
+		mode = detect.ModePartial
+	}
+	masked, counts := detect.Apply(text, detect.Scan(text, doc.Detectors), mode)
+	return RedactResult{
+		RedactedText: masked,
+		Counts: RedactCounts{
+			EmailsRedacted: counts[detect.KindEmail],
+			PhonesRedacted: counts[detect.KindPhoneUS],
+			SSNRedacted:    counts[detect.KindSSN],
+		},
+		PolicyVersion: doc.Version,
+	}
 }
 
 func MapResult(result RedactResult) map[string]any {
