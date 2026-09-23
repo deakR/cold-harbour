@@ -1,0 +1,1040 @@
+{"text":"{\"ts\":1700017804,\"level\":\"info\",\"field\":\"user0@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":59}]}
+{"text":"GET /v1/lookup?q=user1@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":35}]}
+{"text":"10.0.0.30 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user2@example.test\"","spans":[{"kind":"email","start":74,"end":92}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=user3@example.test","spans":[{"kind":"email","start":81,"end":99}]}
+{"text":"req_id=186179 status=ok value=user4@example.test region=us","spans":[{"kind":"email","start":30,"end":48}]}
+{"text":"id,92233,user5@example.test,active","spans":[{"kind":"email","start":9,"end":27}]}
+{"text":"{\"ts\":1700083414,\"level\":\"info\",\"field\":\"user6@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":59}]}
+{"text":"GET /v1/lookup?q=user7@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":35}]}
+{"text":"10.0.0.16 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user8@example.test\"","spans":[{"kind":"email","start":74,"end":92}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=user9@example.test","spans":[{"kind":"email","start":81,"end":99}]}
+{"text":"req_id=755077 status=ok value=user10@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,75899,user11@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700025424,\"level\":\"info\",\"field\":\"user12@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user13@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.170 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user14@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:24) detail=user15@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=300215 status=ok value=user16@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,59037,user17@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700088554,\"level\":\"info\",\"field\":\"user18@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user19@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.108 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user20@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=user21@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=114393 status=ok value=user22@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,89391,user23@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700088468,\"level\":\"info\",\"field\":\"user24@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user25@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.190 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user26@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:60) detail=user27@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=881451 status=ok value=user28@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,43281,user29@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700047982,\"level\":\"info\",\"field\":\"user30@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user31@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.104 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user32@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:22) detail=user33@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=192941 status=ok value=user34@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,39843,user35@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700051816,\"level\":\"info\",\"field\":\"user36@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user37@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.122 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user38@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:16) detail=user39@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=843999 status=ok value=user40@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,78533,user41@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700037506,\"level\":\"info\",\"field\":\"user42@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user43@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.124 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user44@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:10) detail=user45@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=901121 status=ok value=user46@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,81879,user47@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700063276,\"level\":\"info\",\"field\":\"user48@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user49@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.166 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user50@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:68) detail=user51@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=520083 status=ok value=user52@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,16121,user53@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700072326,\"level\":\"info\",\"field\":\"user54@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user55@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.192 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user56@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:78) detail=user57@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=518485 status=ok value=user58@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,38379,user59@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700061088,\"level\":\"info\",\"field\":\"user60@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user61@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.170 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user62@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:88) detail=user63@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=336519 status=ok value=user64@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,23629,user65@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700050490,\"level\":\"info\",\"field\":\"user66@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user67@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.196 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user68@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:50) detail=user69@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=585513 status=ok value=user70@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,41247,user71@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700033684,\"level\":\"info\",\"field\":\"user72@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user73@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.14 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user74@example.test\"","spans":[{"kind":"email","start":74,"end":93}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:60) detail=user75@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=274811 status=ok value=user76@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,87713,user77@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700076414,\"level\":\"info\",\"field\":\"user78@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user79@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.16 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user80@example.test\"","spans":[{"kind":"email","start":74,"end":93}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:38) detail=user81@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=426941 status=ok value=user82@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,55059,user83@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700049304,\"level\":\"info\",\"field\":\"user84@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user85@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.114 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user86@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:32) detail=user87@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=735663 status=ok value=user88@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,14197,user89@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700044290,\"level\":\"info\",\"field\":\"user90@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user91@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.140 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user92@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:58) detail=user93@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=470737 status=ok value=user94@example.test region=us","spans":[{"kind":"email","start":30,"end":49}]}
+{"text":"id,22247,user95@example.test,active","spans":[{"kind":"email","start":9,"end":28}]}
+{"text":"{\"ts\":1700072284,\"level\":\"info\",\"field\":\"user96@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":60}]}
+{"text":"GET /v1/lookup?q=user97@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":36}]}
+{"text":"10.0.0.182 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user98@example.test\"","spans":[{"kind":"email","start":75,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:68) detail=user99@example.test","spans":[{"kind":"email","start":81,"end":100}]}
+{"text":"req_id=50339 status=ok value=user100@example.test region=us","spans":[{"kind":"email","start":29,"end":49}]}
+{"text":"id,48329,user101@example.test,active","spans":[{"kind":"email","start":9,"end":29}]}
+{"text":"{\"ts\":1700010294,\"level\":\"info\",\"field\":\"user102@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":61}]}
+{"text":"GET /v1/lookup?q=user103@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":37}]}
+{"text":"10.0.0.40 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user104@example.test\"","spans":[{"kind":"email","start":74,"end":94}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:46) detail=user105@example.test","spans":[{"kind":"email","start":81,"end":101}]}
+{"text":"req_id=647333 status=ok value=user106@example.test region=us","spans":[{"kind":"email","start":30,"end":50}]}
+{"text":"id,67387,user107@example.test,active","spans":[{"kind":"email","start":9,"end":29}]}
+{"text":"{\"ts\":1700057376,\"level\":\"info\",\"field\":\"user108@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":61}]}
+{"text":"GET /v1/lookup?q=user109@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":37}]}
+{"text":"10.0.0.138 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user110@example.test\"","spans":[{"kind":"email","start":75,"end":95}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=user111@example.test","spans":[{"kind":"email","start":81,"end":101}]}
+{"text":"req_id=251863 status=ok value=user112@example.test region=us","spans":[{"kind":"email","start":30,"end":50}]}
+{"text":"id,38877,user113@example.test,active","spans":[{"kind":"email","start":9,"end":29}]}
+{"text":"{\"ts\":1700036202,\"level\":\"info\",\"field\":\"user114@example.test\",\"ok\":true}","spans":[{"kind":"email","start":41,"end":61}]}
+{"text":"GET /v1/lookup?q=user115@example.test\u0026page=1 HTTP/1.1","spans":[{"kind":"email","start":17,"end":37}]}
+{"text":"10.0.0.132 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"user116@example.test\"","spans":[{"kind":"email","start":75,"end":95}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=user117@example.test","spans":[{"kind":"email","start":81,"end":101}]}
+{"text":"req_id=951801 status=ok value=user118@example.test region=us","spans":[{"kind":"email","start":30,"end":50}]}
+{"text":"id,70735,user119@example.test,active","spans":[{"kind":"email","start":9,"end":29}]}
+{"text":"{\"ts\":1700076410,\"level\":\"info\",\"field\":\"(296) 545-8161\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=589-894-1416\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.144 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 329 276 7872\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=(272) 303-2543","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=998913 status=ok value=545-678-5636 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,98645,+1 472 307 6143,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700021992,\"level\":\"info\",\"field\":\"(416) 349-4529\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=301-630-1490\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.110 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 589 636 5452\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:66) detail=(418) 383-4785","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=976919 status=ok value=309-414-9018 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,25099,+1 296 347 4105,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700028102,\"level\":\"info\",\"field\":\"(216) 183-2509\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=521-014-3894\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.108 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 323 414 9676\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=(232) 761-0341","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=823837 status=ok value=505-058-7432 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,63121,+1 456 981 4169,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700060404,\"level\":\"info\",\"field\":\"(474) 365-8149\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=387-016-5478\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.122 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 503 270 3690\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=(418) 963-8121","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=942099 status=ok value=323-454-9296 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,54151,+1 258 969 6521,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700020018,\"level\":\"info\",\"field\":\"(238) 167-0707\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=541-410-3432\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.192 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 341 236 1652\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:76) detail=(274) 581-6785","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=579257 status=ok value=583-016-7890 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,42733,+1 452 901 0385,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700007808,\"level\":\"info\",\"field\":\"(492) 385-2309\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=361-276-5012\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.54 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 547 676 1092\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:74) detail=(450) 525-2107","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=121103 status=ok value=367-010-1892 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,48003,+1 272 561 0541,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700045022,\"level\":\"info\",\"field\":\"(212) 127-0165\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=545-494-7874\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.60 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 325 214 5238\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:72) detail=(238) 903-4763","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=607893 status=ok value=543-290-1096 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,6601,+1 458 107 6947,active","spans":[{"kind":"phone_us","start":8,"end":23}]}
+{"text":"{\"ts\":1700063980,\"level\":\"info\",\"field\":\"(416) 943-2189\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=329-038-5690\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.18 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 563 076 5090\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:86) detail=(492) 729-0363","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=640843 status=ok value=389-816-1632 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,74815,+1 298 521 6107,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700037706,\"level\":\"info\",\"field\":\"(234) 749-6783\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=567-878-7434\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.160 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 387 250 9418\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:68) detail=(274) 121-2187","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=396721 status=ok value=521-278-1212 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,90789,+1 438 587 0563,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700053288,\"level\":\"info\",\"field\":\"(494) 381-8569\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=383-878-7494\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.6 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 589 878 9270\"","spans":[{"kind":"phone_us","start":73,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=(434) 363-0141","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=846343 status=ok value=383-832-9454 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,47899,+1 272 343 4307,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700081142,\"level\":\"info\",\"field\":\"(276) 161-4361\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=521-632-9018\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.92 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 301 074 5874\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:48) detail=(238) 787-2741","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=892877 status=ok value=529-816-7050 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,29025,+1 456 581 8347,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700028724,\"level\":\"info\",\"field\":\"(498) 727-4725\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=381-854-3458\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.178 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 567 416 9010\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=(416) 763-2161","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=956611 status=ok value=367-672-7650 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,96535,+1 212 741 8109,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700064482,\"level\":\"info\",\"field\":\"(232) 503-2525\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=589-652-5274\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.192 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 367 430 7476\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:76) detail=(232) 745-2903","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=42217 status=ok value=547-052-1434 region=us","spans":[{"kind":"phone_us","start":29,"end":41}]}
+{"text":"id,93565,+1 418 387 2549,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700031680,\"level\":\"info\",\"field\":\"(430) 701-6989\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=327-292-9290\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.142 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 541 654 1854\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:58) detail=(452) 125-8183","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=608319 status=ok value=309-252-7094 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,71187,+1 298 581 0129,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700081742,\"level\":\"info\",\"field\":\"(238) 743-2305\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=541-096-5278\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.4 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 349 018 3812\"","spans":[{"kind":"phone_us","start":73,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=(270) 583-0541","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=137221 status=ok value=541-472-7090 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,95321,+1 498 727 8141,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700082364,\"level\":\"info\",\"field\":\"(438) 329-4163\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=347-692-7270\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.106 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 563 818 9254\"","spans":[{"kind":"phone_us","start":75,"end":90}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:70) detail=(434) 589-4505","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=867259 status=ok value=323-814-9814 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,44495,+1 272 745 6305,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700081450,\"level\":\"info\",\"field\":\"(296) 961-8345\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=565-252-1474\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.16 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 305 092 1838\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:84) detail=(290) 763-0183","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=197025 status=ok value=543-874-3236 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,56469,+1 470 345 4103,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700077064,\"level\":\"info\",\"field\":\"(414) 181-2589\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=363-058-1076\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.30 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 521 238 7094\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:50) detail=(412) 927-2709","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=471927 status=ok value=321-676-7670 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,89643,+1 270 789 6183,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700064230,\"level\":\"info\",\"field\":\"(276) 763-0725\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=561-090-9416\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.92 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 343 416 3256\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:64) detail=(256) 361-2709","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=760829 status=ok value=541-016-9492 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,68049,+1 430 925 8569,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700051268,\"level\":\"info\",\"field\":\"(474) 721-8527\",\"ok\":true}","spans":[{"kind":"phone_us","start":41,"end":55}]}
+{"text":"GET /v1/lookup?q=365-496-3418\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_us","start":17,"end":29}]}
+{"text":"10.0.0.26 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"+1 525 254 3498\"","spans":[{"kind":"phone_us","start":74,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:30) detail=(430) 343-8709","spans":[{"kind":"phone_us","start":81,"end":95}]}
+{"text":"req_id=369139 status=ok value=301-236-5054 region=us","spans":[{"kind":"phone_us","start":30,"end":42}]}
+{"text":"id,68359,+1 256 127 2321,active","spans":[{"kind":"phone_us","start":9,"end":24}]}
+{"text":"{\"ts\":1700037266,\"level\":\"info\",\"field\":\"6743634545\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=+91 94107 03016\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
+{"text":"10.0.0.112 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07612387834\"","spans":[{"kind":"phone_in","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:44) detail=69858-98323","spans":[{"kind":"phone_in","start":81,"end":92}]}
+{"text":"req_id=959065 status=ok value=9670747432 region=us","spans":[{"kind":"phone_in","start":30,"end":40}]}
+{"text":"id,56045,+91 87874 30709,active","spans":[{"kind":"phone_in","start":9,"end":24}]}
+{"text":"{\"ts\":1700089312,\"level\":\"info\",\"field\":\"08987630127\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=74323-61472\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":28}]}
+{"text":"10.0.0.38 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9872389836\"","spans":[{"kind":"phone_in","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:10) detail=+91 87414 34741","spans":[{"kind":"phone_in","start":81,"end":96}]}
+{"text":"req_id=978991 status=ok value=07416121290 region=us","spans":[{"kind":"phone_in","start":30,"end":41}]}
+{"text":"id,3555,69634-16107,active","spans":[{"kind":"phone_in","start":8,"end":19}]}
+{"text":"{\"ts\":1700026334,\"level\":\"info\",\"field\":\"6527230921\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=+91 92325 47078\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
+{"text":"10.0.0.108 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07854703276\"","spans":[{"kind":"phone_in","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:40) detail=69858-12741","spans":[{"kind":"phone_in","start":81,"end":92}]}
+{"text":"req_id=871797 status=ok value=9410181014 region=us","spans":[{"kind":"phone_in","start":30,"end":40}]}
+{"text":"id,6377,+91 87850 92381,active","spans":[{"kind":"phone_in","start":8,"end":23}]}
+{"text":"{\"ts\":1700014252,\"level\":\"info\",\"field\":\"08103452385\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=70363-61290\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":28}]}
+{"text":"10.0.0.114 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9032187656\"","spans":[{"kind":"phone_in","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:38) detail=+91 85814 70327","spans":[{"kind":"phone_in","start":81,"end":96}]}
+{"text":"req_id=447339 status=ok value=07298305278 region=us","spans":[{"kind":"phone_in","start":30,"end":41}]}
+{"text":"id,77983,67816-30503,active","spans":[{"kind":"phone_in","start":9,"end":20}]}
+{"text":"{\"ts\":1700030298,\"level\":\"info\",\"field\":\"6525632389\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=+91 96327 65290\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
+{"text":"10.0.0.192 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07098727870\"","spans":[{"kind":"phone_in","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:36) detail=69434-32561","spans":[{"kind":"phone_in","start":81,"end":92}]}
+{"text":"req_id=205393 status=ok value=9496987478 region=us","spans":[{"kind":"phone_in","start":30,"end":40}]}
+{"text":"id,11365,+91 85498 70543,active","spans":[{"kind":"phone_in","start":9,"end":24}]}
+{"text":"{\"ts\":1700017848,\"level\":\"info\",\"field\":\"08945050983\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=70929-61858\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":28}]}
+{"text":"10.0.0.126 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9612787076\"","spans":[{"kind":"phone_in","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:66) detail=+91 89616 32503","spans":[{"kind":"phone_in","start":81,"end":96}]}
+{"text":"req_id=788903 status=ok value=07230789894 region=us","spans":[{"kind":"phone_in","start":30,"end":41}]}
+{"text":"id,81403,67276-74927,active","spans":[{"kind":"phone_in","start":9,"end":20}]}
+{"text":"{\"ts\":1700049558,\"level\":\"info\",\"field\":\"6347098121\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=+91 92925 21634\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
+{"text":"10.0.0.12 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07458369630\"","spans":[{"kind":"phone_in","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:48) detail=69014-30301","spans":[{"kind":"phone_in","start":81,"end":92}]}
+{"text":"req_id=647149 status=ok value=9076507854 region=us","spans":[{"kind":"phone_in","start":30,"end":40}]}
+{"text":"id,8705,+91 89676 70305,active","spans":[{"kind":"phone_in","start":8,"end":23}]}
+{"text":"{\"ts\":1700082884,\"level\":\"info\",\"field\":\"08341074103\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=76725-89054\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":28}]}
+{"text":"10.0.0.122 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9276303070\"","spans":[{"kind":"phone_in","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:78) detail=+91 81010 56705","spans":[{"kind":"phone_in","start":81,"end":96}]}
+{"text":"req_id=400803 status=ok value=07470505052 region=us","spans":[{"kind":"phone_in","start":30,"end":41}]}
+{"text":"id,8439,65012-34781,active","spans":[{"kind":"phone_in","start":8,"end":19}]}
+{"text":"{\"ts\":1700066402,\"level\":\"info\",\"field\":\"6505030903\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=+91 96589 25096\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
+{"text":"10.0.0.168 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07490947692\"","spans":[{"kind":"phone_in","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:60) detail=65214-54527","spans":[{"kind":"phone_in","start":81,"end":92}]}
+{"text":"req_id=477321 status=ok value=9676925638 region=us","spans":[{"kind":"phone_in","start":30,"end":40}]}
+{"text":"id,89725,+91 83614 76985,active","spans":[{"kind":"phone_in","start":9,"end":24}]}
+{"text":"{\"ts\":1700074176,\"level\":\"info\",\"field\":\"08369658343\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=70347-69896\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":28}]}
+{"text":"10.0.0.174 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9854305014\"","spans":[{"kind":"phone_in","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:10) detail=+91 89054 30745","spans":[{"kind":"phone_in","start":81,"end":96}]}
+{"text":"req_id=2655 status=ok value=07810987458 region=us","spans":[{"kind":"phone_in","start":28,"end":39}]}
+{"text":"id,40499,69038-74907,active","spans":[{"kind":"phone_in","start":9,"end":20}]}
+{"text":"{\"ts\":1700076510,\"level\":\"info\",\"field\":\"6387452727\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=+91 90105 61278\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
+{"text":"10.0.0.52 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07454305492\"","spans":[{"kind":"phone_in","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:24) detail=63276-34941","spans":[{"kind":"phone_in","start":81,"end":92}]}
+{"text":"req_id=814629 status=ok value=9878705012 region=us","spans":[{"kind":"phone_in","start":30,"end":40}]}
+{"text":"id,5913,+91 83676 38781,active","spans":[{"kind":"phone_in","start":8,"end":23}]}
+{"text":"{\"ts\":1700042268,\"level\":\"info\",\"field\":\"08303216701\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=70349-21812\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":28}]}
+{"text":"10.0.0.82 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9618709878\"","spans":[{"kind":"phone_in","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:54) detail=+91 85216 32187","spans":[{"kind":"phone_in","start":81,"end":96}]}
+{"text":"req_id=809755 status=ok value=07696127454 region=us","spans":[{"kind":"phone_in","start":30,"end":41}]}
+{"text":"id,76079,61652-52727,active","spans":[{"kind":"phone_in","start":9,"end":20}]}
+{"text":"{\"ts\":1700050634,\"level\":\"info\",\"field\":\"6903852105\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=+91 92167 81692\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
+{"text":"10.0.0.112 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07272589676\"","spans":[{"kind":"phone_in","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:36) detail=69254-50107","spans":[{"kind":"phone_in","start":81,"end":92}]}
+{"text":"req_id=492993 status=ok value=9058547056 region=us","spans":[{"kind":"phone_in","start":30,"end":40}]}
+{"text":"id,82101,+91 81218 90747,active","spans":[{"kind":"phone_in","start":9,"end":24}]}
+{"text":"{\"ts\":1700060376,\"level\":\"info\",\"field\":\"08149476985\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=70567-85052\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":28}]}
+{"text":"10.0.0.70 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9892987836\"","spans":[{"kind":"phone_in","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:82) detail=+91 85638 52183","spans":[{"kind":"phone_in","start":81,"end":96}]}
+{"text":"req_id=553559 status=ok value=07250965896 region=us","spans":[{"kind":"phone_in","start":30,"end":41}]}
+{"text":"id,38251,67670-54787,active","spans":[{"kind":"phone_in","start":9,"end":20}]}
+{"text":"{\"ts\":1700009046,\"level\":\"info\",\"field\":\"6149438561\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=+91 96305 05432\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
+{"text":"10.0.0.108 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07890149818\"","spans":[{"kind":"phone_in","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:64) detail=69894-92787","spans":[{"kind":"phone_in","start":81,"end":92}]}
+{"text":"req_id=693533 status=ok value=9872749234 region=us","spans":[{"kind":"phone_in","start":30,"end":40}]}
+{"text":"id,10097,+91 85092 12165,active","spans":[{"kind":"phone_in","start":9,"end":24}]}
+{"text":"{\"ts\":1700087716,\"level\":\"info\",\"field\":\"08189672909\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=74543-43830\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":28}]}
+{"text":"10.0.0.66 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9032983490\"","spans":[{"kind":"phone_in","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=+91 85414 38967","spans":[{"kind":"phone_in","start":81,"end":96}]}
+{"text":"req_id=331475 status=ok value=07678501058 region=us","spans":[{"kind":"phone_in","start":30,"end":41}]}
+{"text":"id,12263,61674-36589,active","spans":[{"kind":"phone_in","start":9,"end":20}]}
+{"text":"{\"ts\":1700061154,\"level\":\"info\",\"field\":\"6149656749\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=+91 92965 63670\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
+{"text":"10.0.0.56 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07612387490\"","spans":[{"kind":"phone_in","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:60) detail=63272-72743","spans":[{"kind":"phone_in","start":81,"end":92}]}
+{"text":"req_id=338169 status=ok value=9092127438 region=us","spans":[{"kind":"phone_in","start":30,"end":40}]}
+{"text":"id,68109,+91 83450 10581,active","spans":[{"kind":"phone_in","start":9,"end":24}]}
+{"text":"{\"ts\":1700051088,\"level\":\"info\",\"field\":\"08127032329\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=72527-23012\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":28}]}
+{"text":"10.0.0.94 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9430969096\"","spans":[{"kind":"phone_in","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:42) detail=+91 81278 14345","spans":[{"kind":"phone_in","start":81,"end":96}]}
+{"text":"req_id=381775 status=ok value=07432505230 region=us","spans":[{"kind":"phone_in","start":30,"end":41}]}
+{"text":"id,81443,61830-50163,active","spans":[{"kind":"phone_in","start":9,"end":20}]}
+{"text":"{\"ts\":1700069342,\"level\":\"info\",\"field\":\"6961876307\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=+91 96981 61836\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":32}]}
+{"text":"10.0.0.108 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"07892307496\"","spans":[{"kind":"phone_in","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:88) detail=67496-70763","spans":[{"kind":"phone_in","start":81,"end":92}]}
+{"text":"req_id=869909 status=ok value=9214925652 region=us","spans":[{"kind":"phone_in","start":30,"end":40}]}
+{"text":"id,51977,+91 81474 50145,active","spans":[{"kind":"phone_in","start":9,"end":24}]}
+{"text":"{\"ts\":1700054940,\"level\":\"info\",\"field\":\"08941010127\",\"ok\":true}","spans":[{"kind":"phone_in","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=78523-21614\u0026page=1 HTTP/1.1","spans":[{"kind":"phone_in","start":17,"end":28}]}
+{"text":"10.0.0.194 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9432387438\"","spans":[{"kind":"phone_in","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:86) detail=+91 83490 30921","spans":[{"kind":"phone_in","start":81,"end":96}]}
+{"text":"req_id=742283 status=ok value=07690983230 region=us","spans":[{"kind":"phone_in","start":30,"end":41}]}
+{"text":"id,99391,69878-78901,active","spans":[{"kind":"phone_in","start":9,"end":20}]}
+{"text":"{\"ts\":1700060269,\"level\":\"info\",\"field\":\"690-16-7634\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=410-74-9830\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.57 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"509-01-6945\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:24) detail=589-69-0187","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=43492 status=ok value=169-21-4729 region=us","spans":[{"kind":"ssn","start":29,"end":40}]}
+{"text":"id,52387,369-83-6345,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700012017,\"level\":\"info\",\"field\":\"876-54-9294\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=690-90-5618\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.141 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"549-45-8107\"","spans":[{"kind":"ssn","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:76) detail=905-29-0725","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=555672 status=ok value=547-27-4183 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,91111,903-23-0785,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700074053,\"level\":\"info\",\"field\":\"816-76-1256\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=258-34-1294\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.49 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"187-07-4987\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=741-89-6523","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=522572 status=ok value=123-63-2729 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,44299,129-07-4525,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700026905,\"level\":\"info\",\"field\":\"250-18-7870\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=690-74-5672\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.85 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"941-03-4705\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=509-61-6969","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=836608 status=ok value=965-09-0703 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,73359,109-01-4189,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700088189,\"level\":\"info\",\"field\":\"052-74-3674\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=090-18-9238\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.153 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"569-49-2509\"","spans":[{"kind":"ssn","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:40) detail=101-01-8325","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=591668 status=ok value=585-25-8783 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,94899,745-41-0547,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700077585,\"level\":\"info\",\"field\":\"232-12-1472\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=470-76-7858\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.93 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"147-43-4383\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:60) detail=745-41-6383","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=426792 status=ok value=165-41-0961 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,70327,383-65-0723,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700049221,\"level\":\"info\",\"field\":\"414-90-1896\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=278-56-1698\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.105 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"541-49-4365\"","spans":[{"kind":"ssn","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:48) detail=141-41-0925","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=364188 status=ok value=307-27-6783 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,43099,507-45-8109,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700025881,\"level\":\"info\",\"field\":\"232-74-5672\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=672-12-5812\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.45 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"905-67-6125\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:84) detail=583-87-0181","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=99600 status=ok value=521-09-0567 region=us","spans":[{"kind":"ssn","start":29,"end":40}]}
+{"text":"id,11487,589-23-6961,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700012013,\"level\":\"info\",\"field\":\"432-30-9252\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=874-70-9430\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.89 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"705-21-4583\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:88) detail=703-47-2589","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=512772 status=ok value=567-85-6329 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,47395,101-81-4545,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700014369,\"level\":\"info\",\"field\":\"478-50-5816\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=056-92-1896\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.189 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"761-01-2501\"","spans":[{"kind":"ssn","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:28) detail=781-43-0583","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=956152 status=ok value=507-25-4707 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,37799,905-25-4985,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700049813,\"level\":\"info\",\"field\":\"412-18-9876\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=292-70-5290\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.161 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"505-63-4705\"","spans":[{"kind":"ssn","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:64) detail=905-29-4769","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=465516 status=ok value=381-81-4187 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,78955,149-05-4709,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700010617,\"level\":\"info\",\"field\":\"238-54-3270\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=098-32-5630\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.133 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"341-81-8589\"","spans":[{"kind":"ssn","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:84) detail=385-65-2583","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=545952 status=ok value=563-03-4743 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,95919,789-23-6507,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700056829,\"level\":\"info\",\"field\":\"858-56-3278\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=294-38-7456\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.25 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"105-43-2583\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:72) detail=903-25-4147","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=475220 status=ok value=101-01-2923 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,75507,361-83-4141,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700011793,\"level\":\"info\",\"field\":\"898-94-9854\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=472-30-9870\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.181 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"147-65-0107\"","spans":[{"kind":"ssn","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:12) detail=981-83-6925","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=967560 status=ok value=545-27-6745 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,56567,547-49-8989,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700027957,\"level\":\"info\",\"field\":\"492-34-5290\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=272-36-3456\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.113 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"389-87-0383\"","spans":[{"kind":"ssn","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=783-25-0761","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=861052 status=ok value=385-45-2745 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,89371,967-27-4323,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700015753,\"level\":\"info\",\"field\":\"258-58-7038\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=630-52-1810\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.93 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"583-09-2721\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:36) detail=523-47-4129","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=709808 status=ok value=989-29-2569 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,33983,547-03-0343,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700042829,\"level\":\"info\",\"field\":\"478-30-9812\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=036-12-5030\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.121 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"985-87-2983\"","spans":[{"kind":"ssn","start":75,"end":86}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=547-85-8569","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=19172 status=ok value=361-47-2967 region=us","spans":[{"kind":"ssn","start":29,"end":40}]}
+{"text":"id,88195,581-49-4349,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700032913,\"level\":\"info\",\"field\":\"814-92-5290\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=210-30-3874\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.69 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"947-07-0147\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:60) detail=541-01-6123","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=476504 status=ok value=529-07-4169 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,65447,549-07-4303,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700085237,\"level\":\"info\",\"field\":\"214-74-7470\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=832-10-3236\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.17 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"189-63-2123\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:16) detail=981-43-6727","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=375500 status=ok value=147-43-4345 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,41067,363-05-0127,active","spans":[{"kind":"ssn","start":9,"end":20}]}
+{"text":"{\"ts\":1700010969,\"level\":\"info\",\"field\":\"832-14-1698\",\"ok\":true}","spans":[{"kind":"ssn","start":41,"end":52}]}
+{"text":"GET /v1/lookup?q=618-36-7456\u0026page=1 HTTP/1.1","spans":[{"kind":"ssn","start":17,"end":28}]}
+{"text":"10.0.0.29 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"107-67-8549\"","spans":[{"kind":"ssn","start":74,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:36) detail=783-29-2565","spans":[{"kind":"ssn","start":81,"end":92}]}
+{"text":"req_id=749696 status=ok value=729-21-2509 region=us","spans":[{"kind":"ssn","start":30,"end":41}]}
+{"text":"id,303,509-23-0741,active","spans":[{"kind":"ssn","start":7,"end":18}]}
+{"text":"{\"ts\":1700080227,\"level\":\"info\",\"field\":\"672527230764\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2361 2345 2382\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.155 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9030-5052-9096\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:64) detail=549810507833","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=625242 status=ok value=9238 3816 9257 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,91975,5018-7696-5279,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700058443,\"level\":\"info\",\"field\":\"652789476142\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2187 0905 8367\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.187 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9292-5896-5654\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:40) detail=541672525892","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=213810 status=ok value=9492 5270 7839 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,80703,5810-7636-5079,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700078179,\"level\":\"info\",\"field\":\"692741070900\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2343 6125 2165\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.179 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9472-7692-5652\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=589078705237","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=935178 status=ok value=9892 5692 9815 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,96311,5016-1492-9696,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700004139,\"level\":\"info\",\"field\":\"676121676569\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2549 0987 8503\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.131 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9210-1898-7293\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:72) detail=567678525413","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=242146 status=ok value=9812 9010 3693 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,97967,5830-3230-3679,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700029427,\"level\":\"info\",\"field\":\"694729290385\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2349 2525 0965\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.35 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9210-3270-1655\"","spans":[{"kind":"aadhaar","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:32) detail=547416181293","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=388346 status=ok value=9838 9890 9630 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,72455,5072-1610-1215,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700032939,\"level\":\"info\",\"field\":\"634729218721\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2305 8943 4168\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.123 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9414-3436-5619\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:24) detail=507090503252","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=167570 status=ok value=9670 1670 3478 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,13855,5496-1070-9691,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700018691,\"level\":\"info\",\"field\":\"694985038182\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2103 2347 4305\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.3 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9290-5012-9492\"","spans":[{"kind":"aadhaar","start":73,"end":87}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=523852701633","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=484906 status=ok value=9290 1012 3419 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,38199,5416-7410-9679,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700051531,\"level\":\"info\",\"field\":\"614383618124\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2165 4365 0929\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.187 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9850-3872-1498\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:88) detail=507470729013","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=313346 status=ok value=9276 5616 7637 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,33007,5290-9450-7252,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700050963,\"level\":\"info\",\"field\":\"618983850722\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2943 0325 6964\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.91 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9470-1272-3079\"","spans":[{"kind":"aadhaar","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=583034549035","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=99610 status=ok value=9618 3878 7256 region=us","spans":[{"kind":"aadhaar","start":29,"end":43}]}
+{"text":"id,47815,5098-9258-1898,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700013675,\"level\":\"info\",\"field\":\"670989016707\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2983 8149 6148\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.99 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9814-1012-3096\"","spans":[{"kind":"aadhaar","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:24) detail=563410945836","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=702002 status=ok value=9290 9492 1230 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,56415,5230-3454-7810,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700058403,\"level\":\"info\",\"field\":\"674921634328\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2745 8501 2361\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.179 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9670-9072-1013\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:48) detail=527496983257","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=475402 status=ok value=9252 5650 5617 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,4023,5458-5478-3455,active","spans":[{"kind":"aadhaar","start":8,"end":22}]}
+{"text":"{\"ts\":1700041627,\"level\":\"info\",\"field\":\"614761274527\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2107 2147 0521\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.35 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9492-7270-1293\"","spans":[{"kind":"aadhaar","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:88) detail=547896123411","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=483362 status=ok value=9814 9074 9035 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,85263,5650-5276-1215,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700005411,\"level\":\"info\",\"field\":\"672183216966\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2145 2109 4346\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.19 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9696-5256-1456\"","spans":[{"kind":"aadhaar","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=589870129673","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=572218 status=ok value=9018 7672 3452 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,94439,5096-5890-5656,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700080411,\"level\":\"info\",\"field\":\"630367850365\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2789 2525 6368\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.115 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9034-5212-1698\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:24) detail=507292181655","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=274962 status=ok value=9056 9478 5678 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,62399,5250-1496-9634,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700035251,\"level\":\"info\",\"field\":\"616945894369\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2329 0169 6107\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.187 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9216-7478-1073\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:64) detail=545014987895","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=877098 status=ok value=9856 3670 7411 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,70455,5076-3296-9630,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700004251,\"level\":\"info\",\"field\":\"652187450189\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2329 2187 6506\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.123 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9836-3438-7014\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:24) detail=565056367858","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=280898 status=ok value=9016 3850 3014 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,33519,5094-5696-9678,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700013939,\"level\":\"info\",\"field\":\"632509856928\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2123 0901 2329\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.107 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9690-3436-7210\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:48) detail=545418947250","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=576538 status=ok value=9452 7290 3871 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,8679,5092-5474-1478,active","spans":[{"kind":"aadhaar","start":8,"end":22}]}
+{"text":"{\"ts\":1700029259,\"level\":\"info\",\"field\":\"676527098368\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2709 0983 4587\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.99 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9092-1474-3898\"","spans":[{"kind":"aadhaar","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=589876121432","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=103986 status=ok value=9638 5236 3497 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,75967,5612-7270-7613,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700087475,\"level\":\"info\",\"field\":\"634767632162\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2941 4165 0383\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.155 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9216-1650-5216\"","spans":[{"kind":"aadhaar","start":75,"end":89}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:48) detail=503872145079","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=129354 status=ok value=9898 7674 5272 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,33623,5470-3674-5836,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700085643,\"level\":\"info\",\"field\":\"696705816184\",\"ok\":true}","spans":[{"kind":"aadhaar","start":41,"end":53}]}
+{"text":"GET /v1/lookup?q=2901 6143 8986\u0026page=1 HTTP/1.1","spans":[{"kind":"aadhaar","start":17,"end":31}]}
+{"text":"10.0.0.35 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9478-1812-9896\"","spans":[{"kind":"aadhaar","start":74,"end":88}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:56) detail=527612541613","spans":[{"kind":"aadhaar","start":81,"end":93}]}
+{"text":"req_id=285410 status=ok value=9474 3078 7894 region=us","spans":[{"kind":"aadhaar","start":30,"end":44}]}
+{"text":"id,95663,5210-7692-3099,active","spans":[{"kind":"aadhaar","start":9,"end":23}]}
+{"text":"{\"ts\":1700061498,\"level\":\"info\",\"field\":\"ITYHW1092J\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=PSNPD4141S\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.72 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"RGXLR6745S\"","spans":[{"kind":"pan","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:68) detail=YVETU3618L","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=762785 status=ok value=DILLF0703A region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,92725,YLKFU5676V,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700029000,\"level\":\"info\",\"field\":\"CZEBU3472F\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=TGRLP8945M\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.38 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"JETPR6123C\"","spans":[{"kind":"pan","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:66) detail=ADYBA5452P","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=308471 status=ok value=LAXCD4329S region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,95787,AVATE3876J,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700035222,\"level\":\"info\",\"field\":\"OJUHS5078B\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=LYDLT6141S\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.188 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"BITLV6921Q\"","spans":[{"kind":"pan","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=QFOBQ9056D","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=314493 status=ok value=BGRAF6505Q region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,58001,QVSJS9016Z,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700070196,\"level\":\"info\",\"field\":\"EXMHW3470J\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=ZWBPZ2521Q\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.106 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"XELCB4787M\"","spans":[{"kind":"pan","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:14) detail=CNEJU5614X","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=638899 status=ok value=NANAR0541Y region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,31623,MZUHI5878L,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700088322,\"level\":\"info\",\"field\":\"SHIFS9090J\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=DULPD2385C\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.168 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ZQRAF0567E\"","spans":[{"kind":"pan","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:76) detail=GPQHA1676F","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=962585 status=ok value=LGBCJ8327A region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,49741,AZWJG3272N,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700015760,\"level\":\"info\",\"field\":\"WFATG9470D\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=ZYVGT0745C\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.46 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"PGTAH0381C\"","spans":[{"kind":"pan","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:10) detail=ENUBK9414B","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=455791 status=ok value=RSFCF8761W region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,65859,UVWJC7236P,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700055678,\"level\":\"info\",\"field\":\"KVCFI1094X\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=VGDPB0183M\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.36 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"TQHGX6983Q\"","spans":[{"kind":"pan","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:40) detail=KHSTU3814T","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=730357 status=ok value=VWFGJ8969O region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,62121,YRSHG7658R,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700075644,\"level\":\"info\",\"field\":\"YBIFC5816Z\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=JYVCR6903Q\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.194 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"LWNLN0347A\"","spans":[{"kind":"pan","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:38) detail=ORUFM5638P","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=523243 status=ok value=POLLB4383W region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,66207,KPWJG5098X,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700080090,\"level\":\"info\",\"field\":\"MJATM5638D\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=TONPR4929O\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.24 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"JCVLR4167E\"","spans":[{"kind":"pan","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:20) detail=ULIJK7010R","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=477841 status=ok value=RCJLH6369K region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,78277,GZMHY1450Z,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700028456,\"level\":\"info\",\"field\":\"QRMBM5210J\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=NGDPX0107A\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.94 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"VGHPT2703K\"","spans":[{"kind":"pan","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:82) detail=AFQJA5450F","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=732007 status=ok value=JCJGP0143I region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,11355,MNCFY9078F,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700032838,\"level\":\"info\",\"field\":\"SJEHC7676P\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=JKRCD0305Y\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.148 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"NGNGN2103A\"","spans":[{"kind":"pan","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=UFAFQ9878N","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=193133 status=ok value=BAJPD8385Q region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,89953,QHQTM5892P,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700066116,\"level\":\"info\",\"field\":\"MZOFY3634N\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=TULGP6587K\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.34 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"TSFGX0729Q\"","spans":[{"kind":"pan","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:14) detail=OJOTY9034X","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=899683 status=ok value=JQRAJ6945K region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,11255,GVOFQ9656V,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700067682,\"level\":\"info\",\"field\":\"UJIHU9854R\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=DIPAT6703M\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.128 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"DQVLR4927A\"","spans":[{"kind":"pan","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:12) detail=WXOBK7256X","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=520457 status=ok value=FWRAX2781W region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,10269,KJMTC7074V,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700042880,\"level\":\"info\",\"field\":\"KRUJS9490H\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=NSNCP4543E\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.142 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ZILGF0581M\"","spans":[{"kind":"pan","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:58) detail=CRYBC7432J","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=25375 status=ok value=BWJCT8781M region=us","spans":[{"kind":"pan","start":29,"end":39}]}
+{"text":"id,72659,UNSBG9052F,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700016414,\"level\":\"info\",\"field\":\"WVWTA9696H\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=XEXCV4767Y\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.180 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"BKHCR8781C\"","spans":[{"kind":"pan","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:24) detail=MRAFE5296X","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=185189 status=ok value=RCRLP0385I region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,38937,CBMHW1894P,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700049004,\"level\":\"info\",\"field\":\"GFEFW1650L\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=RYFGH2501M\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.58 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"PKPGV6785U\"","spans":[{"kind":"pan","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:70) detail=KLOHU1456R","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=407451 status=ok value=VAHCF4923I region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,88559,KRCTW3832V,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700026154,\"level\":\"info\",\"field\":\"UFCFI9814X\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=RCDPJ0761W\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.48 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"FWLAZ4581O\"","spans":[{"kind":"pan","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:84) detail=ORWHS5452B","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=374529 status=ok value=JULGP2943A region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,79509,ARQTI9038X,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700003288,\"level\":\"info\",\"field\":\"YJMBG7416N\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=HYXLD6521I\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.110 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"XUHCX8747G\"","spans":[{"kind":"pan","start":75,"end":85}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:66) detail=WHKTQ1054D","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=939991 status=ok value=DIBLD8345G region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,60427,OJKHA9698T,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700013766,\"level\":\"info\",\"field\":\"UJQJS5874R\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=RWNLX0189E\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.4 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"NWRGN2309W\"","spans":[{"kind":"pan","start":73,"end":83}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:32) detail=KTSFO7212B","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=219229 status=ok value=JMHCT8549E region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,83921,UBKHY1894F,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700063764,\"level\":\"info\",\"field\":\"CPWBW7436H\",\"ok\":true}","spans":[{"kind":"pan","start":41,"end":51}]}
+{"text":"GET /v1/lookup?q=PWFLD8101S\u0026page=1 HTTP/1.1","spans":[{"kind":"pan","start":17,"end":27}]}
+{"text":"10.0.0.66 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"NOPCL8103K\"","spans":[{"kind":"pan","start":74,"end":84}]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:30) detail=UROBG9676B","spans":[{"kind":"pan","start":81,"end":91}]}
+{"text":"req_id=425619 status=ok value=BSLPD8901I region=us","spans":[{"kind":"pan","start":30,"end":40}]}
+{"text":"id,59047,QHQHM5058D,active","spans":[{"kind":"pan","start":9,"end":19}]}
+{"text":"{\"ts\":1700056925,\"level\":\"info\",\"field\":\"ORD-1763835910\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1737552522\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.21 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5490-3678-1691\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:69) detail=XQHXN4329M","spans":[]}
+{"text":"req_id=964758 status=ok value=1983854921 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user5%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700037213,\"level\":\"info\",\"field\":\"589 058 5892\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-AJQMA1070J\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.146 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1649171038\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:65) detail=1644428638","spans":[]}
+{"text":"req_id=108384 status=ok value=6341 4345 2323 region=us","spans":[]}
+{"text":"id|36|TQREX0389M|active","spans":[]}
+{"text":"{\"ts\":1700064963,\"level\":\"info\",\"field\":\"1652747212\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user13%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.159 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"278 143 6967\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:47) detail=SKU-FYLXX8367M","spans":[]}
+{"text":"req_id=481099 status=ok value=ORD-1187790533 region=us","spans":[]}
+{"text":"id|34750|1688383344|active","spans":[]}
+{"text":"{\"ts\":1700008123,\"level\":\"info\",\"field\":\"949876541614\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=IRGXU9472L\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.109 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2701634909\"","spans":[]}
+{"text":"GET /v1/lookup?email=user21%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=601947 status=ok value=361 810 9016 region=us","spans":[]}
+{"text":"id,48591,SKU-ILIOE7454J,active","spans":[]}
+{"text":"{\"ts\":1700002165,\"level\":\"info\",\"field\":\"ORD-1441865759\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1798542770\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.24 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5016-5818-9850\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:20) detail=GVCZW1474R","spans":[]}
+{"text":"req_id=65873 status=ok value=5232965270 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user29%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700087220,\"level\":\"info\",\"field\":\"454 361 0969\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-FMBOR8781S\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.153 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1220275014\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=1685868345","spans":[]}
+{"text":"req_id=542659 status=ok value=9234 1874 5894 region=us","spans":[]}
+{"text":"id,37111,UJUME3658R,active","spans":[]}
+{"text":"{\"ts\":1700036610,\"level\":\"info\",\"field\":\"5343658125\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user37%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.178 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"523 216 7878\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:22) detail=SKU-GVOME9492T","spans":[]}
+{"text":"req_id=161946 status=ok value=ORD-1404777609 region=us","spans":[]}
+{"text":"id,57625,1682742163,active","spans":[]}
+{"text":"{\"ts\":1700019962,\"level\":\"info\",\"field\":\"892587294309\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=FKTUB6569S\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.104 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"1272325670\"","spans":[]}
+{"text":"GET /v1/lookup?email=user45%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=260906 status=ok value=236 907 4163 region=us","spans":[]}
+{"text":"id|63918|SKU-TQRSX2185Y|active","spans":[]}
+{"text":"{\"ts\":1700057820,\"level\":\"info\",\"field\":\"ORD-1588093490\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1795140829\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.71 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4749-6985-4523\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:47) detail=HQJRJ6787W","spans":[]}
+{"text":"req_id=950200 status=ok value=4367276129 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user53%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700028695,\"level\":\"info\",\"field\":\"309 656 9616\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-IDYEK7676B\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.108 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1228813791\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:11) detail=1720286848","spans":[]}
+{"text":"req_id=175243 status=ok value=8589 2165 0346 region=us","spans":[]}
+{"text":"id,67775,CVMMC3476T,active","spans":[]}
+{"text":"{\"ts\":1700034410,\"level\":\"info\",\"field\":\"3727236989\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user61%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.50 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"503 692 7250\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=SKU-GBMVO1058T","spans":[]}
+{"text":"req_id=888066 status=ok value=ORD-1452717747 region=us","spans":[]}
+{"text":"id,84033,1699309467,active","spans":[]}
+{"text":"{\"ts\":1700051819,\"level\":\"info\",\"field\":\"854303092140\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=EPMEK1418P\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.173 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4781494727\"","spans":[]}
+{"text":"GET /v1/lookup?email=user69%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=236715 status=ok value=345 092 9292 region=us","spans":[]}
+{"text":"id,92383,SKU-KBQMK5616H,active","spans":[]}
+{"text":"{\"ts\":1700040613,\"level\":\"info\",\"field\":\"ORD-1180395280\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1690709762\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.152 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5876-5238-9430\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=CDIYQ3474J","spans":[]}
+{"text":"req_id=12705 status=ok value=1214303258 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user77%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700041412,\"level\":\"info\",\"field\":\"418 101 6121\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-VMTSX0783U\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.89 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1212698727\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:64) detail=1687058121","spans":[]}
+{"text":"req_id=689432 status=ok value=9014 1838 3631 region=us","spans":[]}
+{"text":"id|39516|LUBVN8503I|active","spans":[]}
+{"text":"{\"ts\":1700084219,\"level\":\"info\",\"field\":\"4650309278\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user85%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.191 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"258 327 2921\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:23) detail=SKU-VGRWD4345Y","spans":[]}
+{"text":"req_id=628771 status=ok value=ORD-1854286701 region=us","spans":[]}
+{"text":"id|31958|1714496936|active","spans":[]}
+{"text":"{\"ts\":1700005283,\"level\":\"info\",\"field\":\"921878729834\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=CDCSY3872T\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.53 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3769476141\"","spans":[]}
+{"text":"GET /v1/lookup?email=user93%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=394547 status=ok value=361 614 3494 region=us","spans":[]}
+{"text":"id,88839,SKU-ADWXG7416T,active","spans":[]}
+{"text":"{\"ts\":1700006797,\"level\":\"info\",\"field\":\"ORD-1006723709\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1798865194\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.24 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5070-3252-5698\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:12) detail=WXCIS9830D","spans":[]}
+{"text":"req_id=12841 status=ok value=1656785638 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user101%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700003420,\"level\":\"info\",\"field\":\"498 963 8325\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-TKPXL2107C\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.185 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1587361471\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:72) detail=1734436881","spans":[]}
+{"text":"req_id=847451 status=ok value=9418 1458 1072 region=us","spans":[]}
+{"text":"id,89295,GXYRY5450H,active","spans":[]}
+{"text":"{\"ts\":1700056202,\"level\":\"info\",\"field\":\"5563610383\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user109%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.42 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"589 838 1210\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:62) detail=SKU-QBOVO3896D","spans":[]}
+{"text":"req_id=154514 status=ok value=ORD-1229520678 region=us","spans":[]}
+{"text":"id,11793,1763542187,active","spans":[]}
+{"text":"{\"ts\":1700049474,\"level\":\"info\",\"field\":\"830767430383\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=RWXRP2565O\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.40 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2690303874\"","spans":[]}
+{"text":"GET /v1/lookup?email=user117%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=205346 status=ok value=216 325 6129 region=us","spans":[]}
+{"text":"id|87686|SKU-HCPRF4343C|active","spans":[]}
+{"text":"{\"ts\":1700044900,\"level\":\"info\",\"field\":\"ORD-1332293508\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1679693877\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.55 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4527-0921-0965\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:87) detail=FKFDV4169S","spans":[]}
+{"text":"req_id=93680 status=ok value=3707056129 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user125%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700037119,\"level\":\"info\",\"field\":\"301 414 3432\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-GRMOU9874R\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.92 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1372508844\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:67) detail=1612570296","spans":[]}
+{"text":"req_id=635178 status=ok value=8569 2383 0923 region=us","spans":[]}
+{"text":"id|99886|LETMD0345Y|active","spans":[]}
+{"text":"{\"ts\":1700013893,\"level\":\"info\",\"field\":\"2632963434\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user133%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.73 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"432 961 0949\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:81) detail=SKU-ZGRST4501A","spans":[]}
+{"text":"req_id=633149 status=ok value=ORD-1477017125 region=us","spans":[]}
+{"text":"id|15992|1623720890|active","spans":[]}
+{"text":"{\"ts\":1700063149,\"level\":\"info\",\"field\":\"341016925814\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=CJURG9034B\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.63 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3923050905\"","spans":[]}
+{"text":"GET /v1/lookup?email=user141%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=101645 status=ok value=549 252 1630 region=us","spans":[]}
+{"text":"id,23137,SKU-SZSIW7812X,active","spans":[]}
+{"text":"{\"ts\":1700057623,\"level\":\"info\",\"field\":\"ORD-1238360137\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1683513708\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.18 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"7614-3658-5292\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:78) detail=WVEVA3074X","spans":[]}
+{"text":"req_id=772627 status=ok value=1658123472 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user149%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700012910,\"level\":\"info\",\"field\":\"254 947 4307\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-BGXDV2763O\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.187 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1768262102\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:26) detail=1689277947","spans":[]}
+{"text":"req_id=581877 status=ok value=3012 3698 1830 region=us","spans":[]}
+{"text":"id,3881,WVCVY3638J,active","spans":[]}
+{"text":"{\"ts\":1700015852,\"level\":\"info\",\"field\":\"1305014969\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user157%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.12 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"365 052 7058\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:80) detail=SKU-CZCOQ1212X","spans":[]}
+{"text":"req_id=507284 status=ok value=ORD-1793420089 region=us","spans":[]}
+{"text":"id,71963,1751108869,active","spans":[]}
+{"text":"{\"ts\":1700074548,\"level\":\"info\",\"field\":\"274501274165\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=NKPML2965I\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.98 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5674529672\"","spans":[]}
+{"text":"GET /v1/lookup?email=user165%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=84708 status=ok value=414 929 6309 region=us","spans":[]}
+{"text":"id|53064|SKU-XGXKN8301A|active","spans":[]}
+{"text":"{\"ts\":1700073494,\"level\":\"info\",\"field\":\"ORD-1648710928\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1671584127\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.57 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"6329-6721-6721\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:65) detail=TGHXD2501S","spans":[]}
+{"text":"req_id=65218 status=ok value=1101014525 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user173%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700021577,\"level\":\"info\",\"field\":\"501 454 3076\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-IDSWY5834V\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.142 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1749045753\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:77) detail=1778970698","spans":[]}
+{"text":"req_id=202348 status=ok value=2767 8303 8503 region=us","spans":[]}
+{"text":"id|96208|FITXV2961E|active","spans":[]}
+{"text":"{\"ts\":1700027471,\"level\":\"info\",\"field\":\"5032387276\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user181%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.83 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"256 367 6165\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:75) detail=SKU-FAVZF4505O","spans":[]}
+{"text":"req_id=205383 status=ok value=ORD-1799336097 region=us","spans":[]}
+{"text":"id|58826|1623774588|active","spans":[]}
+{"text":"{\"ts\":1700071367,\"level\":\"info\",\"field\":\"547038729836\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=MZYRE9218H\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.81 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3147454961\"","spans":[]}
+{"text":"GET /v1/lookup?email=user189%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=866391 status=ok value=305 654 9210 region=us","spans":[]}
+{"text":"id,79435,SKU-UXGIY5494X,active","spans":[]}
+{"text":"{\"ts\":1700002257,\"level\":\"info\",\"field\":\"ORD-1029914268\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1607290334\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.132 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"9096-1034-3896\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:16) detail=YLQMM9856R","spans":[]}
+{"text":"req_id=439725 status=ok value=4432767094 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user197%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700082384,\"level\":\"info\",\"field\":\"496 545 0389\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-POJDH4967U\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.61 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1404400767\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:76) detail=1689450453","spans":[]}
+{"text":"req_id=3839 status=ok value=5296 3050 1010 region=us","spans":[]}
+{"text":"id,45971,WVMXC3816P,active","spans":[]}
+{"text":"{\"ts\":1700044926,\"level\":\"info\",\"field\":\"2327034301\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user205%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.150 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"507 472 9050\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=SKU-MZEMM9038H","spans":[]}
+{"text":"req_id=753158 status=ok value=ORD-1710553878 region=us","spans":[]}
+{"text":"id,28661,1642071503,active","spans":[]}
+{"text":"{\"ts\":1700061478,\"level\":\"info\",\"field\":\"418727832963\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=TYFOX6347U\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.124 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4036501474\"","spans":[]}
+{"text":"GET /v1/lookup?email=user213%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=6102 status=ok value=250 549 0349 region=us","spans":[]}
+{"text":"id|72506|SKU-XCVDX6727C|active","spans":[]}
+{"text":"{\"ts\":1700074456,\"level\":\"info\",\"field\":\"ORD-1142190500\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1784226233\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.67 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"8187-0187-6185\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:75) detail=JUPYH0521O","spans":[]}
+{"text":"req_id=98564 status=ok value=3549056507 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user221%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700055155,\"level\":\"info\",\"field\":\"367 818 1012\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-OVWXO9816H\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.112 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1389326672\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:55) detail=1636236172","spans":[]}
+{"text":"req_id=736670 status=ok value=4529 8367 0585 region=us","spans":[]}
+{"text":"id|23650|ROFWT8723G|active","spans":[]}
+{"text":"{\"ts\":1700046393,\"level\":\"info\",\"field\":\"5236563654\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user229%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.5 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"414 783 0167\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:85) detail=SKU-XYFKP2129W","spans":[]}
+{"text":"req_id=523841 status=ok value=ORD-1802333953 region=us","spans":[]}
+{"text":"id|11948|1739510638|active","spans":[]}
+{"text":"{\"ts\":1700023521,\"level\":\"info\",\"field\":\"783278141630\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SFAWC7816Z\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.163 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3703290785\"","spans":[]}
+{"text":"GET /v1/lookup?email=user237%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=506769 status=ok value=567 030 1870 region=us","spans":[]}
+{"text":"id,71301,SKU-CLGXS7290F,active","spans":[]}
+{"text":"{\"ts\":1700015899,\"level\":\"info\",\"field\":\"ORD-1074621009\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1680139008\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.78 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"3034-3632-7074\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:18) detail=MVMZO1214V","spans":[]}
+{"text":"req_id=501815 status=ok value=3052367254 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user245%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700039778,\"level\":\"info\",\"field\":\"210 783 0701\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-VQVWX0729O\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.63 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1111368350\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:30) detail=1675116063","spans":[]}
+{"text":"req_id=26553 status=ok value=7076 9292 5850 region=us","spans":[]}
+{"text":"id,52589,AJSKU9014B,active","spans":[]}
+{"text":"{\"ts\":1700048704,\"level\":\"info\",\"field\":\"4743618521\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user253%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.160 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"303 836 9412\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:20) detail=SKU-CBEVG7232L","spans":[]}
+{"text":"req_id=522728 status=ok value=ORD-1199832624 region=us","spans":[]}
+{"text":"id,21471,1763760521,active","spans":[]}
+{"text":"{\"ts\":1700055256,\"level\":\"info\",\"field\":\"652789810309\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=VOJMJ6307S\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.38 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2610741618\"","spans":[]}
+{"text":"GET /v1/lookup?email=user261%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=692280 status=ok value=450 543 8929 region=us","spans":[]}
+{"text":"id|13340|SKU-NIBON2785S|active","spans":[]}
+{"text":"{\"ts\":1700086026,\"level\":\"info\",\"field\":\"ORD-1815890121\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1774753123\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.61 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2149-8545-6107\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:85) detail=JKDQV8389E","spans":[]}
+{"text":"req_id=728758 status=ok value=5965650729 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user269%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700040285,\"level\":\"info\",\"field\":\"525 016 3270\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-AHUDQ1856N\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.194 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1325601876\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:49) detail=1718302462","spans":[]}
+{"text":"req_id=467328 status=ok value=6365 6529 2363 region=us","spans":[]}
+{"text":"id|29284|LMPMZ0963W|active","spans":[]}
+{"text":"{\"ts\":1700008579,\"level\":\"info\",\"field\":\"5050149814\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user277%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.103 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"296 101 6761\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:31) detail=SKU-FCJIF6129U","spans":[]}
+{"text":"req_id=472619 status=ok value=ORD-1020983980 region=us","spans":[]}
+{"text":"id|10590|1720984592|active","spans":[]}
+{"text":"{\"ts\":1700058283,\"level\":\"info\",\"field\":\"947416927616\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=UBYIG3838Z\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.181 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4341430943\"","spans":[]}
+{"text":"GET /v1/lookup?email=user285%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=659387 status=ok value=347 038 9638 region=us","spans":[]}
+{"text":"id,74159,SKU-MNEWY7452X,active","spans":[]}
+{"text":"{\"ts\":1700033797,\"level\":\"info\",\"field\":\"ORD-1830977836\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1799731026\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.112 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"5432-9832-1298\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:52) detail=GHQVQ3416B","spans":[]}
+{"text":"req_id=109681 status=ok value=3454529014 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user293%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700063700,\"level\":\"info\",\"field\":\"416 927 8901\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-XAVXZ8967U\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.161 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"ORD-1550164349\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:32) detail=1672439641","spans":[]}
+{"text":"req_id=99363 status=ok value=9076 7696 3298 region=us","spans":[]}
+{"text":"id,9495,UXIOA7294F,active","spans":[]}
+{"text":"{\"ts\":1700086866,\"level\":\"info\",\"field\":\"4587858187\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?email=user301%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.194 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"541 214 9630\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:54) detail=SKU-ILKOC3054X","spans":[]}
+{"text":"req_id=102778 status=ok value=ORD-1162973282 region=us","spans":[]}
+{"text":"id,99193,1664024755,active","spans":[]}
+{"text":"{\"ts\":1700056826,\"level\":\"info\",\"field\":\"878589054985\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=RARYP2705U\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.48 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"2870905892\"","spans":[]}
+{"text":"GET /v1/lookup?email=user309%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"req_id=443274 status=ok value=292 745 6187 region=us","spans":[]}
+{"text":"id|78990|SKU-LOVQT6707G|active","spans":[]}
+{"text":"{\"ts\":1700060364,\"level\":\"info\",\"field\":\"ORD-1706260810\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=1725898493\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"10.0.0.127 - - [23/Sep/2026:08:00:00 +0000] \"GET /x HTTP/1.1\" 200 512 \"-\" \"4709-6505-8589\"","spans":[]}
+{"text":"java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:79) detail=VGBYJ6547I","spans":[]}
+{"text":"req_id=314136 status=ok value=2743454769 region=us","spans":[]}
+{"text":"GET /v1/lookup?email=user317%40example.test\u0026page=1 HTTP/1.1","spans":[]}
+{"text":"{\"ts\":1700086487,\"level\":\"info\",\"field\":\"341 834 3072\",\"ok\":true}","spans":[]}
+{"text":"GET /v1/lookup?q=SKU-AHSQU7898F\u0026page=1 HTTP/1.1","spans":[]}
