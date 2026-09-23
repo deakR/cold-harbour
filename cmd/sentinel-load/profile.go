@@ -24,7 +24,7 @@ func writeProfiles(dir string, work func() error) error {
 	}
 
 	cpuPath := filepath.Join(dir, cpuProfileName)
-	cpuFile, err := os.Create(cpuPath)
+	cpuFile, err := os.Create(cpuPath) //#nosec G304 -- profile directory is chosen by the load tool
 	if err != nil {
 		return fmt.Errorf("create cpu profile: %w", err)
 	}
@@ -44,7 +44,7 @@ func writeProfiles(dir string, work func() error) error {
 
 	runtime.GC()
 	allocPath := filepath.Join(dir, allocProfileName)
-	allocFile, err := os.Create(allocPath)
+	allocFile, err := os.Create(allocPath) //#nosec G304 -- profile directory is chosen by the load tool
 	if err != nil {
 		return fmt.Errorf("create alloc profile: %w", err)
 	}
