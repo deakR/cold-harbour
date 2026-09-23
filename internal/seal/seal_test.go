@@ -1,6 +1,7 @@
 package seal
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"testing"
@@ -25,6 +26,28 @@ func TestSealOpenRoundTrip(t *testing.T) {
 	}
 	if string(got) != string(plain) {
 		t.Fatalf("Open = %q, want %q", got, plain)
+	}
+}
+
+func TestSealKnownAnswer(t *testing.T) {
+	var key [32]byte
+	for i := range key {
+		key[i] = 1
+	}
+	got, err := sealWithNonce(key, bytes.Repeat([]byte{2}, 12), []byte("hello"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = "AgICAgICAgICAgICb7OlJSUCYwtZ7fA+dwycA4aL9zrt"
+	if got != want {
+		t.Fatalf("Seal = %s, want %s", got, want)
+	}
+	plain, err := Open(key, got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(plain) != "hello" {
+		t.Fatalf("Open = %q, want hello", plain)
 	}
 }
 

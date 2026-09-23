@@ -31,11 +31,11 @@ func TestFailJobThreeAttemptsThenBury(t *testing.T) {
 		t.Fatal(err)
 	}
 	job := Job{ID: "job-5", Input: redact.M1Fixture}
-	if err := addFailJob(ctx, stream, job); err != nil {
-		t.Fatal(err)
-	}
 	store := journal.NewMemoryJournal()
 	keys := seal.NewMemoryKeyStore()
+	if err := addFailJob(ctx, stream, keys, job); err != nil {
+		t.Fatal(err)
+	}
 	priv, receipts := testSigning(t)
 	wantChecksum := job5Checksum(t)
 
@@ -109,12 +109,13 @@ func TestRunGroupBuriesWithoutEmit(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := addFailJob(ctx, stream, Job{ID: "job-5", Input: redact.M1Fixture}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := addFailJob(ctx, stream, keys, Job{ID: "job-5", Input: redact.M1Fixture}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
 	emitted := false
-	runGroupUntil(t, stream, store, func(journal.JobResult) {
+	runGroupUntil(t, stream, store, keys, func(journal.JobResult) {
 		emitted = true
 	}, func() bool {
 		n, err := stream.rdb.XLen(ctx, dlqStreamKey).Result()
@@ -151,12 +152,13 @@ func TestReplayAtThreeBuriesAgain(t *testing.T) {
 	if err := stream.rdb.Set(ctx, retryKey("job-5"), 3, 0).Err(); err != nil {
 		t.Fatal(err)
 	}
-	if err := addFailJob(ctx, stream, Job{ID: "job-5", Input: redact.M1Fixture}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := addFailJob(ctx, stream, keys, Job{ID: "job-5", Input: redact.M1Fixture}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
 	priv, receipts := testSigning(t)
-	if err := consumeOne(t, stream, store, seal.NewMemoryKeyStore(), receipts, priv, nil, failThese("job-5")); err != nil {
+	if err := consumeOne(t, stream, store, keys, receipts, priv, nil, failThese("job-5")); err != nil {
 		t.Fatal(err)
 	}
 	assertMainLen(t, stream, 0)
@@ -178,12 +180,13 @@ func TestCrashStillWinsOverFailure(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.Add(ctx, Job{ID: "crash-fail", Input: redact.M1Fixture}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "crash-fail", Input: redact.M1Fixture}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
 	priv, receipts := testSigning(t)
-	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), testDeps(store, seal.NewMemoryKeyStore(), receipts, priv, func(journal.JobResult) {
+	err := RunGroup(ctx, stream, testWorkerConfig("crash-fail"), testDeps(store, keys, receipts, priv, func(journal.JobResult) {
 		t.Error("emit after crash")
 	}, Hooks{
 		CrashAfterStep1: func(id string) bool { return id == "crash-fail" },
@@ -215,11 +218,11 @@ func TestPoisonJobIsBuriedAndWorkerContinues(t *testing.T) {
 	}).Err(); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.Add(ctx, Job{ID: "ok-1", Input: redact.M1Fixture}); err != nil {
-		t.Fatal(err)
-	}
 	store := journal.NewMemoryJournal()
 	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "ok-1", Input: redact.M1Fixture}); err != nil {
+		t.Fatal(err)
+	}
 	priv, receipts := testSigning(t)
 	runCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -272,12 +275,13 @@ func TestCompletedJobLeavesNoStreamEntry(t *testing.T) {
 	if err := stream.ensureGroup(ctx); err != nil {
 		t.Fatal(err)
 	}
-	if err := stream.Add(ctx, Job{ID: "job-ok", Input: redact.M1Fixture}); err != nil {
+	keys := seal.NewMemoryKeyStore()
+	if err := stream.Add(ctx, keys, Job{ID: "job-ok", Input: redact.M1Fixture}); err != nil {
 		t.Fatal(err)
 	}
 	store := journal.NewMemoryJournal()
 	priv, receipts := testSigning(t)
-	if err := consumeOne(t, stream, store, seal.NewMemoryKeyStore(), receipts, priv, nil, Hooks{}); err != nil {
+	if err := consumeOne(t, stream, store, keys, receipts, priv, nil, Hooks{}); err != nil {
 		t.Fatal(err)
 	}
 	assertMainLen(t, stream, 0)
@@ -303,14 +307,8 @@ func failThese(ids ...string) Hooks {
 	}}
 }
 
-func addFailJob(ctx context.Context, stream *jobStream, job Job) error {
-	return stream.rdb.XAdd(ctx, &redis.XAddArgs{
-		Stream: jobsStreamKey,
-		Values: map[string]any{
-			"id":    job.ID,
-			"input": job.Input,
-		},
-	}).Err()
+func addFailJob(ctx context.Context, stream *jobStream, keys seal.KeyStore, job Job) error {
+	return stream.Add(ctx, keys, job)
 }
 
 func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, keys seal.KeyStore, receipts seal.ReceiptStore, priv ed25519.PrivateKey, emit func(journal.JobResult), hooks Hooks) error {
@@ -337,14 +335,14 @@ func consumeOne(t *testing.T, stream *jobStream, store journal.Journal, keys sea
 	return dispatch(ctx, stream, hash, purge, testRegistry(), streams[0].Messages[0], store, emit, hooks)
 }
 
-func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, emit func(journal.JobResult), pred func() bool, hooks Hooks) {
+func runGroupUntil(t *testing.T, stream *jobStream, store journal.Journal, keys seal.KeyStore, emit func(journal.JobResult), pred func() bool, hooks Hooks) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	done := make(chan error, 1)
 	priv, receipts := testSigning(t)
 	go func() {
-		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), testDeps(store, seal.NewMemoryKeyStore(), receipts, priv, emit, hooks))
+		done <- RunGroup(ctx, stream, testWorkerConfig("dlq"), testDeps(store, keys, receipts, priv, emit, hooks))
 	}()
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {

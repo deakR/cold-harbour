@@ -2,6 +2,7 @@ package com.coldharbour.controlplane;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -17,8 +18,11 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.redis.connection.stream.MapRecord;
+import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
@@ -87,7 +91,24 @@ class JobsControllerTest {
 		@SuppressWarnings("unchecked")
 		Map<String, String> body = (Map<String, String>) res.getBody();
 		assertFalse(body.containsKey("jobId"));
+		verify(jdbc).update(eq("DELETE FROM job_keys WHERE job_id = ?"), any(Object.class));
 		verify(jdbc).update(eq("DELETE FROM job_accepts WHERE redis_job_id = ?"), any(Object.class));
+	}
+
+	@Test
+	void postQueuesCiphertext() {
+		@SuppressWarnings("unchecked")
+		StreamOperations<String, Object, Object> ops = mock(StreamOperations.class);
+		when(redis.opsForStream()).thenReturn(ops);
+		when(ops.add(any())).thenReturn(RecordId.of("1-0"));
+		ResponseEntity<?> res = jobs.post(Map.of("input", "hello"), tenantRequest(UUID.randomUUID()));
+		assertEquals(200, res.getStatusCode().value());
+		@SuppressWarnings("unchecked")
+		ArgumentCaptor<MapRecord<String, Object, Object>> cap = ArgumentCaptor.forClass(MapRecord.class);
+		verify(ops).add(cap.capture());
+		Object stored = cap.getValue().getValue().get("input");
+		assertNotEquals("hello", stored);
+		assertFalse(String.valueOf(stored).contains("hello"));
 	}
 
 	@Test

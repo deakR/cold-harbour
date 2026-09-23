@@ -22,9 +22,17 @@ func TestWorkerConfigValid(t *testing.T) {
 
 func TestLoadWorkerConfigFrom(t *testing.T) {
 	emptyEnv := func(string) string { return "" }
-	_, err := loadWorkerConfigFrom(nil, emptyEnv)
+	noHost := func() (string, error) { return "", nil }
+	_, err := loadWorkerConfigFrom(nil, emptyEnv, noHost)
 	if !errors.Is(err, errEmptyConsumer) {
 		t.Fatalf("empty name err = %v, want errEmptyConsumer", err)
+	}
+	fromHost, err := loadWorkerConfigFrom(nil, emptyEnv, func() (string, error) { return "worker-a", nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fromHost.Consumer != "worker-a" {
+		t.Fatalf("hostname consumer = %q, want worker-a", fromHost.Consumer)
 	}
 
 	fromEnv, err := loadWorkerConfigFrom(nil, func(key string) string {
@@ -32,7 +40,7 @@ func TestLoadWorkerConfigFrom(t *testing.T) {
 			return "from-env"
 		}
 		return ""
-	})
+	}, noHost)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +53,7 @@ func TestLoadWorkerConfigFrom(t *testing.T) {
 
 	fromFlag, err := loadWorkerConfigFrom([]string{"-consumer", "from-flag"}, func(string) string {
 		return "from-env"
-	})
+	}, noHost)
 	if err != nil {
 		t.Fatal(err)
 	}

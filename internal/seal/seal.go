@@ -12,20 +12,28 @@ import (
 
 const nonceSize = 12
 
-var errBadSealed = errors.New("seal: invalid sealed payload")
+// ErrBadSealed means the payload is not nonce || AES-GCM ciphertext in standard base64.
+var ErrBadSealed = errors.New("seal: invalid sealed payload")
 
 // Seal returns standard base64 of a 12-byte nonce concatenated with AES-GCM ciphertext.
 func Seal(key [32]byte, plain []byte) (string, error) {
+	nonce := make([]byte, nonceSize)
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+	return sealWithNonce(key, nonce, plain)
+}
+
+func sealWithNonce(key [32]byte, nonce, plain []byte) (string, error) {
+	if len(nonce) != nonceSize {
+		return "", ErrBadSealed
+	}
 	block, err := aes.NewCipher(key[:])
 	if err != nil {
 		return "", err
 	}
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", err
-	}
-	nonce := make([]byte, nonceSize)
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return "", err
 	}
 	out := gcm.Seal(nonce, nonce, plain, nil)
@@ -36,10 +44,10 @@ func Seal(key [32]byte, plain []byte) (string, error) {
 func Open(key [32]byte, sealed string) ([]byte, error) {
 	raw, err := base64.StdEncoding.DecodeString(sealed)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", errBadSealed, err)
+		return nil, fmt.Errorf("%w: %v", ErrBadSealed, err)
 	}
 	if len(raw) <= nonceSize {
-		return nil, errBadSealed
+		return nil, ErrBadSealed
 	}
 	nonce, ciphertext := raw[:nonceSize], raw[nonceSize:]
 	block, err := aes.NewCipher(key[:])
@@ -52,7 +60,7 @@ func Open(key [32]byte, sealed string) ([]byte, error) {
 	}
 	plain, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", errBadSealed, err)
+		return nil, fmt.Errorf("%w: %v", ErrBadSealed, err)
 	}
 	return plain, nil
 }
