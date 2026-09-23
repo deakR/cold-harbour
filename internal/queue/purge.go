@@ -21,7 +21,7 @@ type purger struct {
 	priv     ed25519.PrivateKey
 }
 
-func (p *purger) run(ctx context.Context, redisJobID string) error {
+func (p *purger) run(ctx context.Context, redisJobID string, crash CrashPoint) error {
 	durable := journal.DurableIDFor(redisJobID)
 	if existing, ok, err := p.receipts.Get(ctx, durable); err != nil {
 		return err
@@ -29,7 +29,7 @@ func (p *purger) run(ctx context.Context, redisJobID string) error {
 		if err := p.keys.Destroy(ctx, durable, existing.PurgedAt); err != nil {
 			return err
 		}
-		return p.rdb.Del(ctx, memKey(redisJobID)).Err()
+		return p.dropCheckpoint(ctx, redisJobID, crash)
 	}
 
 	purgedAt := time.Now().UTC().Truncate(time.Microsecond)
@@ -61,6 +61,13 @@ func (p *purger) run(ctx context.Context, redisJobID string) error {
 	}
 	if err := p.keys.Destroy(ctx, durable, purgedAt); err != nil {
 		return err
+	}
+	return p.dropCheckpoint(ctx, redisJobID, crash)
+}
+
+func (p *purger) dropCheckpoint(ctx context.Context, redisJobID string, crash CrashPoint) error {
+	if crash == CrashAfterKeyDestroy {
+		return ErrSimulatedCrash
 	}
 	return p.rdb.Del(ctx, memKey(redisJobID)).Err()
 }

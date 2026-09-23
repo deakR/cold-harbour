@@ -59,22 +59,41 @@ var ErrSimulatedCrash = errors.New("simulated crash after step 1 checkpoint")
 type CrashPoint int
 
 const (
-	CrashNever      CrashPoint = 0
-	CrashAfterStep1 CrashPoint = 1
+	CrashNever           CrashPoint = 0
+	CrashAfterStep1      CrashPoint = 1
+	CrashAfterRecord     CrashPoint = 2
+	CrashAfterKeyDestroy CrashPoint = 3
 )
 
 type Hooks struct {
-	CrashAfterStep1 func(jobID string) bool
-	Fail            func(jobID string) bool
+	CrashAfterStep1      func(jobID string) bool
+	CrashAfterRecord     func(jobID string) bool
+	CrashAfterKeyDestroy func(jobID string) bool
+	Fail                 func(jobID string) bool
 }
 
 func applyHooks(c *claimed, hooks Hooks) {
-	if hooks.CrashAfterStep1 != nil && hooks.CrashAfterStep1(c.job.ID) {
+	switch {
+	case hooks.CrashAfterStep1 != nil && hooks.CrashAfterStep1(c.job.ID):
 		c.crash = CrashAfterStep1
+	case hooks.CrashAfterRecord != nil && hooks.CrashAfterRecord(c.job.ID):
+		c.crash = CrashAfterRecord
+	case hooks.CrashAfterKeyDestroy != nil && hooks.CrashAfterKeyDestroy(c.job.ID):
+		c.crash = CrashAfterKeyDestroy
 	}
 	if hooks.Fail != nil && hooks.Fail(c.job.ID) {
 		c.fail = true
 	}
+}
+
+func commitJob(ctx context.Context, c claimed, result journal.JobResult, store journal.Journal, purge *purger) error {
+	if err := store.Record(ctx, result); err != nil {
+		return err
+	}
+	if c.crash == CrashAfterRecord {
+		return ErrSimulatedCrash
+	}
+	return purge.run(ctx, c.job.ID, c.crash)
 }
 
 func (s *jobStream) ensureGroup(ctx context.Context) error {
@@ -342,10 +361,7 @@ func handle(ctx context.Context, stream *jobStream, hash *memHash, purge *purger
 	if err := purge.signOutput(&result); err != nil {
 		return err
 	}
-	if err := store.Record(ctx, result); err != nil {
-		return err
-	}
-	if err := purge.run(ctx, c.job.ID); err != nil {
+	if err := commitJob(ctx, c, result, store, purge); err != nil {
 		return err
 	}
 	if err := events.Publish(ctx, stream.rdb, events.JobEvent{
