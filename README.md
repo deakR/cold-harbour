@@ -200,3 +200,7 @@ A tenant that requests a job it did not create receives `404`, the same as for a
 | `dev/seed.sql` | Optional development tenant rows. It does not create API keys. |
 | `scripts/gen-certs.sh` | Generates the local CA and server certificates. |
 | `.github/workflows/ci.yml` | Test, contract, build, security scan, and performance checks. |
+
+## Project information
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local development and [SECURITY.md](SECURITY.md) for private vulnerability reports.
