@@ -14,7 +14,7 @@ const (
 
 // GenerateRealistic builds a Scan-aligned realistic.jsonl body.
 func GenerateRealistic(seed uint64) []byte {
-	rng := rand.New(rand.NewPCG(seed, seed))
+	rng := rand.New(rand.NewPCG(seed, seed)) //#nosec G404 -- fixed seed for fixtures, not a secret
 	kinds := []Kind{KindEmail, KindPhoneUS, KindPhoneIN, KindSSN, KindAadhaar, KindPAN}
 	var lines []corpusLine
 	for _, kind := range kinds {

@@ -19,7 +19,7 @@ type corpusLine struct {
 }
 
 func GenerateCorpus(seed uint64) []byte {
-	rng := rand.New(rand.NewPCG(seed, seed))
+	rng := rand.New(rand.NewPCG(seed, seed)) //#nosec G404 -- fixed seed for fixtures, not a secret
 	var lines []corpusLine
 	for i := 0; i < 200; i++ {
 		lines = append(lines, wrap(formatAadhaar(aadhaarDigits(rng, true), i%3), KindAadhaar))
