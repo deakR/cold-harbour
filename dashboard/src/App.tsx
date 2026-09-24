@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 
 type JobRow = { jobId: string; status: string; acceptedAt: string }
 type JobDetail = {
@@ -66,7 +66,7 @@ export default function App() {
     })()
   }, [])
 
-  async function loadJobs() {
+  const loadJobs = useCallback(async () => {
     if (!csrfToken) return
     const res = await api('/v1/jobs', csrfToken)
     if (!res.ok) {
@@ -74,7 +74,7 @@ export default function App() {
       return
     }
     setJobs(await res.json())
-  }
+  }, [csrfToken])
 
   async function loadNodes() {
     if (!csrfToken) return
@@ -96,7 +96,7 @@ export default function App() {
       void loadJobs()
     }
     return () => ws.close()
-  }, [csrfToken])
+  }, [csrfToken, loadJobs])
 
   async function login(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()

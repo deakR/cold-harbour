@@ -1,32 +1,24 @@
-# React + TypeScript + Vite
+# Cold Harbour dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The dashboard is the React and TypeScript UI for the Cold Harbour control plane.
+It submits redaction and mask jobs, watches live job events, displays signed
+results, creates delivery links, downloads compliance reports, and shows
+Sentinel node status.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Start the control plane at `http://127.0.0.1:8081`, then run:
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+The Vite development server proxies `/v1` and `/d` to the control-plane target
+configured in `vite.config.ts`. The browser logs in with an API key through
+`/v1/session/login`; the response sets a session cookie used by subsequent
+requests. Mutating cookie-authenticated requests include the returned CSRF
+token, so the API key is not kept in the browser URL.
+
+Use the Jobs view for redaction workflows and the Sentinel view for node
+status and detection counters.

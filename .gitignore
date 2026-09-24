@@ -1,6 +1,6 @@
 /bin/
 *.exe
-.arena/
 references/
-controlplane/target/
 docker/certs/
+bench/*.pprof
+.audit/
