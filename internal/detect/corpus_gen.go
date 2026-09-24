@@ -3,6 +3,8 @@ package detect
 import (
 	"bytes"
 	"encoding/json"
+	"math/rand/v2"
+	"strconv"
 )
 
 type corpusSpan struct {
@@ -17,7 +19,7 @@ type corpusLine struct {
 }
 
 func GenerateCorpus(seed uint64) []byte {
-	rng := &lcg{s: seed}
+	rng := rand.New(rand.NewPCG(seed, seed))
 	var lines []corpusLine
 	for i := 0; i < 200; i++ {
 		lines = append(lines, wrap(formatAadhaar(aadhaarDigits(rng, true), i%3), KindAadhaar))
@@ -51,16 +53,16 @@ func wrap(value string, kind Kind) corpusLine {
 	return line
 }
 
-func aadhaarDigits(rng *lcg, valid bool) string {
+func aadhaarDigits(rng *rand.Rand, valid bool) string {
 	buf := make([]byte, 11)
-	buf[0] = rng.from("23456789", 8)
+	buf[0] = pick(rng, "23456789")
 	for i := 1; i < 11; i++ {
-		buf[i] = rng.digit()
+		buf[i] = pick(rng, "0123456789")
 	}
 	check := verhoeffCheck(string(buf))
 	if !valid {
 		for {
-			alt := rng.digit()
+			alt := pick(rng, "0123456789")
 			if alt != check {
 				check = alt
 				break
@@ -81,35 +83,32 @@ func formatAadhaar(digits string, form int) string {
 	}
 }
 
-func panDigits(rng *lcg, valid bool) string {
+func panDigits(rng *rand.Rand, valid bool) string {
 	letters := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	holders := "ABCFGHLJPT"
-	bad := "DEIKMOQRSUVWXYZ"
-	pick := func(set string, n uint64) byte { return rng.from(set, n) }
 	var buf [10]byte
-	buf[0], buf[1], buf[2] = pick(letters, 26), pick(letters, 26), pick(letters, 26)
+	buf[0], buf[1], buf[2] = pick(rng, letters), pick(rng, letters), pick(rng, letters)
 	if valid {
-		buf[3] = pick(holders, 10)
+		buf[3] = pick(rng, "ABCFGHLJPT")
 	} else {
-		buf[3] = pick(bad, 15)
+		buf[3] = pick(rng, "DEIKMOQRSUVWXYZ")
 	}
-	buf[4] = pick(letters, 26)
+	buf[4] = pick(rng, letters)
 	for i := 5; i < 9; i++ {
-		buf[i] = rng.digit()
+		buf[i] = pick(rng, "0123456789")
 	}
-	buf[9] = pick(letters, 26)
+	buf[9] = pick(rng, letters)
 	return string(buf[:])
 }
 
-func phoneIN(rng *lcg, valid bool, form int) string {
+func phoneIN(rng *rand.Rand, valid bool, form int) string {
 	var buf [10]byte
 	if valid {
-		buf[0] = rng.from("6789", 4)
+		buf[0] = pick(rng, "6789")
 	} else {
-		buf[0] = rng.from("12345", 5)
+		buf[0] = pick(rng, "12345")
 	}
 	for i := 1; i < 10; i++ {
-		buf[i] = rng.digit()
+		buf[i] = pick(rng, "0123456789")
 	}
 	d := string(buf[:])
 	if !valid {
@@ -127,11 +126,11 @@ func phoneIN(rng *lcg, valid bool, form int) string {
 	}
 }
 
-func ssnNum(rng *lcg) string {
+func ssnNum(rng *rand.Rand) string {
 	digit := func(n int) string {
 		b := make([]byte, n)
 		for i := range b {
-			b[i] = rng.digit()
+			b[i] = pick(rng, "0123456789")
 		}
 		return string(b)
 	}
@@ -139,12 +138,12 @@ func ssnNum(rng *lcg) string {
 }
 
 func emailAt(n int) string {
-	return "user" + itoa(n) + "@example.com"
+	return "user" + strconv.Itoa(n) + "@example.com"
 }
 
-func phoneUS(rng *lcg, form int) string {
-	d := func() byte { return rng.digit() }
-	area := []byte{rng.from("2345", 4), d(), d()}
+func phoneUS(rng *rand.Rand, form int) string {
+	d := func() byte { return pick(rng, "0123456789") }
+	area := []byte{pick(rng, "2345"), d(), d()}
 	mid := []byte{d(), d(), d()}
 	last := []byte{d(), d(), d(), d()}
 	switch form {
@@ -159,31 +158,6 @@ func phoneUS(rng *lcg, form int) string {
 	}
 }
 
-type lcg struct{ s uint64 }
-
-func (r *lcg) step() uint64 {
-	r.s = r.s*6364136223846793005 + 1
-	return r.s
-}
-
-func (r *lcg) from(set string, n uint64) byte {
-	return set[r.step()%n]
-}
-
-func (r *lcg) digit() byte {
-	return r.from("0123456789", 10)
-}
-
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var b [8]byte
-	i := len(b)
-	for n > 0 {
-		i--
-		b[i] = "0123456789"[n%10]
-		n /= 10
-	}
-	return string(b[i:])
+func pick(rng *rand.Rand, set string) byte {
+	return set[rng.IntN(len(set))]
 }

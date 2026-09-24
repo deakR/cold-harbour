@@ -45,13 +45,13 @@ func (r Runner) Run(ctx context.Context, input map[string]any, cp *runner.Checkp
 			return nil, err
 		}
 	} else {
-		partial = ApplyClassWindow(RedactResult{RedactedText: text}, 0)
+		partial = applyClassWindow(RedactResult{RedactedText: text}, 0)
 		if err := cp.Save(1, MapResult(partial)); err != nil {
 			return nil, err
 		}
 	}
 
-	done := ApplyClassWindow(partial, 1)
+	done := applyClassWindow(partial, 1)
 	return MapResult(done), nil
 }
 

@@ -21,20 +21,24 @@ func job5ID() uuid.UUID {
 	return uuid.MustParse("fcf585ea-56d9-53a7-bd00-6e2560611dc2")
 }
 
+func hist(steps ...Transition) History {
+	return History{steps: steps}
+}
+
 func completedResult(t *testing.T, id string, result redact.RedactResult, created, done time.Time) JobResult {
 	t.Helper()
-	m := newJobMachine()
-	m.pickup(created)
-	m.complete(done)
-	return JobResult{ID: id, JobType: "redact", Result: redact.MapResult(result), History: m.history()}
+	return JobResult{ID: id, JobType: "redact", Result: redact.MapResult(result), History: hist(
+		Transition{From: CREATED, To: RUNNING, At: created},
+		Transition{From: RUNNING, To: COMPLETED, At: done},
+	)}
 }
 
 func failedResult(t *testing.T, id string, result redact.RedactResult, created, done time.Time) JobResult {
 	t.Helper()
-	m := newJobMachine()
-	m.pickup(created)
-	m.fail(done)
-	return JobResult{ID: id, JobType: "redact", Result: redact.MapResult(result), History: m.history()}
+	return JobResult{ID: id, JobType: "redact", Result: redact.MapResult(result), History: hist(
+		Transition{From: CREATED, To: RUNNING, At: created},
+		Transition{From: RUNNING, To: FAILED, At: done},
+	)}
 }
 
 func m1Result(t *testing.T) redact.RedactResult {
@@ -81,32 +85,34 @@ func TestFormatJobLineSharesChecksumBytes(t *testing.T) {
 }
 
 func TestHistoryString(t *testing.T) {
-	done := newJobMachine()
-	done.pickup(time.Date(2026, 9, 23, 14, 5, 6, 0, time.UTC))
-	done.complete(time.Date(2026, 9, 23, 14, 5, 7, 0, time.UTC))
-	if got, want := done.history().String(), "CREATED→RUNNING (14:05:06) → RUNNING→COMPLETED (14:05:07)"; got != want {
+	done := hist(
+		Transition{From: CREATED, To: RUNNING, At: time.Date(2026, 9, 23, 14, 5, 6, 0, time.UTC)},
+		Transition{From: RUNNING, To: COMPLETED, At: time.Date(2026, 9, 23, 14, 5, 7, 0, time.UTC)},
+	)
+	if got, want := done.String(), "CREATED→RUNNING (14:05:06) → RUNNING→COMPLETED (14:05:07)"; got != want {
 		t.Fatalf("String() = %q, want %q", got, want)
 	}
 
-	failed := newJobMachine()
-	failed.pickup(time.Date(2026, 9, 23, 14, 5, 6, 0, time.UTC))
-	failed.fail(time.Date(2026, 9, 23, 14, 5, 8, 0, time.UTC))
-	if got, want := failed.history().String(), "CREATED→RUNNING (14:05:06) → RUNNING→FAILED (14:05:08)"; got != want {
+	failed := hist(
+		Transition{From: CREATED, To: RUNNING, At: time.Date(2026, 9, 23, 14, 5, 6, 0, time.UTC)},
+		Transition{From: RUNNING, To: FAILED, At: time.Date(2026, 9, 23, 14, 5, 8, 0, time.UTC)},
+	)
+	if got, want := failed.String(), "CREATED→RUNNING (14:05:06) → RUNNING→FAILED (14:05:08)"; got != want {
 		t.Fatalf("String() = %q, want %q", got, want)
 	}
 }
 
 func TestParseTerminalRejectsNonTerminal(t *testing.T) {
-	m := newJobMachine()
-	m.pickup(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC))
-	_, err := parseTerminal(JobResult{ID: "job-5", History: m.history()})
+	_, err := parseTerminal(JobResult{ID: "job-5", History: hist(
+		Transition{From: CREATED, To: RUNNING, At: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)},
+	)})
 	if !errors.Is(err, errNotTerminal) {
 		t.Fatalf("err = %v, want errNotTerminal", err)
 	}
 
-	doneOnly := newJobMachine()
-	doneOnly.complete(time.Date(2026, 1, 1, 0, 0, 1, 0, time.UTC))
-	_, err = parseTerminal(JobResult{ID: "job-5", History: doneOnly.history()})
+	_, err = parseTerminal(JobResult{ID: "job-5", History: hist(
+		Transition{From: RUNNING, To: COMPLETED, At: time.Date(2026, 1, 1, 0, 0, 1, 0, time.UTC)},
+	)})
 	if !errors.Is(err, errMissingPickup) {
 		t.Fatalf("err = %v, want errMissingPickup", err)
 	}

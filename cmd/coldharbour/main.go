@@ -122,13 +122,13 @@ func runEnsureSentinelKey(args []string) error {
 	ctx := context.Background()
 	var last error
 	for attempt := 0; attempt < 60; attempt++ {
-		action, err := sentinelKeyFileAction(ctx, *outPath)
+		reuse, err := sentinelKeyFileAction(ctx, *outPath)
 		if err != nil {
 			last = err
 			time.Sleep(time.Second)
 			continue
 		}
-		if action == sentinelKeyReuse {
+		if reuse {
 			fmt.Fprintf(os.Stderr, "sentinel key already present at %s\n", *outPath)
 			return nil
 		}
@@ -143,35 +143,25 @@ func runEnsureSentinelKey(args []string) error {
 	return fmt.Errorf("ensure-sentinel-key: %w", last)
 }
 
-type sentinelKeyAction int
-
-const (
-	sentinelKeyRewrite sentinelKeyAction = iota
-	sentinelKeyReuse
-)
-
-func classifySentinelKey(raw, role string, ok bool) sentinelKeyAction {
-	if strings.TrimSpace(raw) == "" || !ok || role != "sentinel" {
-		return sentinelKeyRewrite
-	}
-	return sentinelKeyReuse
+func classifySentinelKey(raw, role string, ok bool) bool {
+	return strings.TrimSpace(raw) != "" && ok && role == "sentinel"
 }
 
-func sentinelKeyFileAction(ctx context.Context, path string) (sentinelKeyAction, error) {
+func sentinelKeyFileAction(ctx context.Context, path string) (bool, error) {
 	raw, err := os.ReadFile(path) //#nosec G304 G703 -- operator key file path
 	if err != nil && !os.IsNotExist(err) {
-		return sentinelKeyRewrite, err
+		return false, err
 	}
 	text := ""
 	if err == nil {
 		text = string(raw)
 	}
 	if strings.TrimSpace(text) == "" {
-		return sentinelKeyRewrite, nil
+		return false, nil
 	}
 	conn, err := pgx.Connect(ctx, dsn())
 	if err != nil {
-		return sentinelKeyRewrite, err
+		return false, err
 	}
 	defer conn.Close(ctx)
 	p, ok := keys.Authenticate(ctx, conn, strings.TrimSpace(text))

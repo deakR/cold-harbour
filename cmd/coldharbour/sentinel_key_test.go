@@ -22,13 +22,13 @@ func TestClassifySentinelKey(t *testing.T) {
 		raw  string
 		role string
 		ok   bool
-		want sentinelKeyAction
+		want bool
 	}{
-		{name: "empty", raw: "", want: sentinelKeyRewrite},
-		{name: "blank", raw: "  \n", want: sentinelKeyRewrite},
-		{name: "rejected", raw: "ch_deadbeef_secret", ok: false, want: sentinelKeyRewrite},
-		{name: "wrong role", raw: "ch_deadbeef_secret", role: "admin", ok: true, want: sentinelKeyRewrite},
-		{name: "live", raw: "ch_deadbeef_secret\n", role: "sentinel", ok: true, want: sentinelKeyReuse},
+		{name: "empty", raw: "", want: false},
+		{name: "blank", raw: "  \n", want: false},
+		{name: "rejected", raw: "ch_deadbeef_secret", ok: false, want: false},
+		{name: "wrong role", raw: "ch_deadbeef_secret", role: "admin", ok: true, want: false},
+		{name: "live", raw: "ch_deadbeef_secret\n", role: "sentinel", ok: true, want: true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -3,6 +3,7 @@ package detect
 import (
 	"bytes"
 	"encoding/json"
+	"math/rand/v2"
 	"strconv"
 )
 
@@ -13,7 +14,7 @@ const (
 
 // GenerateRealistic builds a Scan-aligned realistic.jsonl body.
 func GenerateRealistic(seed uint64) []byte {
-	rng := &lcg{s: seed}
+	rng := rand.New(rand.NewPCG(seed, seed))
 	kinds := []Kind{KindEmail, KindPhoneUS, KindPhoneIN, KindSSN, KindAadhaar, KindPAN}
 	var lines []corpusLine
 	for _, kind := range kinds {
@@ -84,7 +85,7 @@ func hasKind(spans []Span, kind Kind) bool {
 	return false
 }
 
-func realisticValue(rng *lcg, kind Kind, n int) string {
+func realisticValue(rng *rand.Rand, kind Kind, n int) string {
 	switch kind {
 	case KindEmail:
 		if n%5 == 4 {
@@ -106,32 +107,32 @@ func realisticValue(rng *lcg, kind Kind, n int) string {
 	}
 }
 
-func realisticShape(rng *lcg, value string, n int) string {
+func realisticShape(rng *rand.Rand, value string, n int) string {
 	switch n % 6 {
 	case 0:
-		return `{"ts":` + strconv.Itoa(int(1700000000+rng.step()%90000)) + `,"level":"info","field":"` + value + `","ok":true}`
+		return `{"ts":` + strconv.Itoa(1700000000+rng.IntN(90000)) + `,"level":"info","field":"` + value + `","ok":true}`
 	case 1:
 		return `GET /v1/lookup?q=` + value + `&page=1 HTTP/1.1`
 	case 2:
-		return `10.0.0.` + strconv.Itoa(int(1+rng.step()%200)) + ` - - [23/Sep/2026:08:00:00 +0000] "GET /x HTTP/1.1" 200 512 "-" "` + value + `"`
+		return `10.0.0.` + strconv.Itoa(1+rng.IntN(200)) + ` - - [23/Sep/2026:08:00:00 +0000] "GET /x HTTP/1.1" 200 512 "-" "` + value + `"`
 	case 3:
-		return `java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:` + strconv.Itoa(int(10+rng.step()%80)) + `) detail=` + value
+		return `java.lang.IllegalStateException: bad input at com.ex.App.run(App.java:` + strconv.Itoa(10+rng.IntN(80)) + `) detail=` + value
 	case 4:
-		return `req_id=` + strconv.Itoa(int(rng.step()%1000000)) + ` status=ok value=` + value + ` region=us`
+		return `req_id=` + strconv.Itoa(rng.IntN(1000000)) + ` status=ok value=` + value + ` region=us`
 	default:
-		if rng.step()%2 == 0 {
-			return `id,` + strconv.Itoa(int(rng.step()%100000)) + `,` + value + `,active`
+		if rng.IntN(2) == 0 {
+			return `id,` + strconv.Itoa(rng.IntN(100000)) + `,` + value + `,active`
 		}
-		return `id|` + strconv.Itoa(int(rng.step()%100000)) + `|` + value + `|active`
+		return `id|` + strconv.Itoa(rng.IntN(100000)) + `|` + value + `|active`
 	}
 }
 
-func realisticNearMissLine(rng *lcg, n int) string {
+func realisticNearMissLine(rng *rand.Rand, n int) string {
 	switch n % 8 {
 	case 0:
-		return realisticShape(rng, "ORD-"+strconv.Itoa(int(1000000000+rng.step()%899999999)), n)
+		return realisticShape(rng, "ORD-"+strconv.Itoa(1000000000+rng.IntN(899999999)), n)
 	case 1:
-		return realisticShape(rng, strconv.Itoa(int(1600000000+rng.step()%200000000)), n)
+		return realisticShape(rng, strconv.Itoa(1600000000+rng.IntN(200000000)), n)
 	case 2:
 		return realisticShape(rng, formatAadhaar(aadhaarDigits(rng, false), n%3), n)
 	case 3:
@@ -139,9 +140,9 @@ func realisticNearMissLine(rng *lcg, n int) string {
 	case 4:
 		return realisticShape(rng, phoneIN(rng, false, 0), n)
 	case 5:
-		return realisticShape(rng, "build-"+strconv.Itoa(int(10000+rng.step()%90000)), n)
+		return realisticShape(rng, "build-"+strconv.Itoa(10000+rng.IntN(90000)), n)
 	case 6:
-		return realisticShape(rng, "v"+strconv.Itoa(int(1+rng.step()%9))+"."+strconv.Itoa(int(rng.step()%20))+"."+strconv.Itoa(int(rng.step()%100)), n)
+		return realisticShape(rng, "v"+strconv.Itoa(1+rng.IntN(9))+"."+strconv.Itoa(rng.IntN(20))+"."+strconv.Itoa(rng.IntN(100)), n)
 	default:
 		return realisticShape(rng, "SKU-"+panDigits(rng, false), n)
 	}

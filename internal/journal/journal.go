@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"os"
 	"sync"
 	"time"
 
@@ -63,10 +62,6 @@ func NewMemoryJournal() *MemoryJournal {
 		rows:    make(map[uuid.UUID]StoredJob),
 		outputs: make(map[string]storedOutput),
 	}
-}
-
-func PostgresDSN() string {
-	return os.Getenv("POSTGRES_DSN")
 }
 
 func OpenJournal(dsn string) (*pgJournal, error) {

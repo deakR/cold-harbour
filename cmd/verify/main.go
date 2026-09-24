@@ -88,20 +88,7 @@ func runReceipt(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	sig, err := base64.StdEncoding.DecodeString(*sigB64)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "invalid --sig")
-		return 1
-	}
-	pub, err := seal.ParsePublicKey(*pubB64)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "invalid --pub")
-		return 1
-	}
-	if !seal.Verify(pub, msg, sig) {
-		return 1
-	}
-	return 0
+	return verifySig(*pubB64, *sigB64, msg)
 }
 
 func runOutput(args []string) int {
@@ -129,12 +116,16 @@ func runOutput(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	sig, err := base64.StdEncoding.DecodeString(*sigB64)
+	return verifySig(*pubB64, *sigB64, msg)
+}
+
+func verifySig(pubB64, sigB64 string, msg []byte) int {
+	sig, err := base64.StdEncoding.DecodeString(sigB64)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "invalid --sig")
 		return 1
 	}
-	pub, err := seal.ParsePublicKey(*pubB64)
+	pub, err := seal.ParsePublicKey(pubB64)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "invalid --pub")
 		return 1

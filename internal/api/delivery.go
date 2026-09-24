@@ -71,15 +71,9 @@ func (s *Server) createLink(w http.ResponseWriter, r *http.Request, p keys.Princ
 }
 
 func (s *Server) parseExpiry(raw string) (time.Time, bool) {
-	if raw == "" {
+	at, ok := parseInstant(raw)
+	if !ok {
 		return time.Time{}, false
-	}
-	at, err := time.Parse(time.RFC3339Nano, raw)
-	if err != nil {
-		at, err = time.Parse(time.RFC3339, raw)
-		if err != nil {
-			return time.Time{}, false
-		}
 	}
 	now := s.now()
 	if !at.After(now) || at.After(now.Add(30*24*time.Hour)) {

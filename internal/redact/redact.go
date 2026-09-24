@@ -82,10 +82,6 @@ func applyClassWindow(in RedactResult, windowIndex int) RedactResult {
 	return RedactResult{RedactedText: applySpans(text, &counts, spans), Counts: counts}
 }
 
-func ApplyClassWindow(in RedactResult, windowIndex int) RedactResult {
-	return applyClassWindow(in, windowIndex)
-}
-
 func RedactPII(input string) (RedactResult, error) {
 	text := input
 	var counts RedactCounts

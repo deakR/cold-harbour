@@ -48,42 +48,24 @@ func (h History) String() string {
 	return strings.Join(parts, " → ")
 }
 
-type jobMachine struct {
-	steps []Transition
-}
-
-func newJobMachine() *jobMachine {
-	return &jobMachine{}
-}
-
-func (m *jobMachine) pickup(at time.Time) {
-	m.steps = append(m.steps, Transition{From: CREATED, To: RUNNING, At: at})
-}
-
-func (m *jobMachine) complete(at time.Time) {
-	m.steps = append(slices.Clone(m.steps), Transition{From: RUNNING, To: COMPLETED, At: at})
-}
-
-func (m *jobMachine) fail(at time.Time) {
-	m.steps = append(slices.Clone(m.steps), Transition{From: RUNNING, To: FAILED, At: at})
-}
-
-func (m *jobMachine) history() History {
-	return History{steps: slices.Clone(m.steps)}
+func terminal(id string, result map[string]any, to JobState) JobResult {
+	now := time.Now()
+	return JobResult{
+		ID:     id,
+		Result: result,
+		History: History{steps: []Transition{
+			{From: CREATED, To: RUNNING, At: now},
+			{From: RUNNING, To: to, At: now},
+		}},
+	}
 }
 
 func Succeed(id string, result map[string]any) JobResult {
-	machine := newJobMachine()
-	machine.pickup(time.Now())
-	machine.complete(time.Now())
-	return JobResult{ID: id, Result: result, History: machine.history()}
+	return terminal(id, result, COMPLETED)
 }
 
 func Fail(id string, result map[string]any) JobResult {
-	machine := newJobMachine()
-	machine.pickup(time.Now())
-	machine.fail(time.Now())
-	return JobResult{ID: id, Result: result, History: machine.history()}
+	return terminal(id, result, FAILED)
 }
 
 func FormatJobLine(result JobResult) string {

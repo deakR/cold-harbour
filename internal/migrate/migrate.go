@@ -9,7 +9,7 @@ import (
 )
 
 func Up(db *sql.DB) error {
-	goose.SetBaseFS(migrations.Files())
+	goose.SetBaseFS(migrations.FS)
 	if err := goose.SetDialect("postgres"); err != nil {
 		return err
 	}

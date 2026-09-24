@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"coldharbour/internal/journal"
 	"coldharbour/internal/mask"
@@ -26,7 +27,7 @@ func main() {
 	if err := seal.RequireVault(); err != nil {
 		log.Fatalf("worker: %v", err)
 	}
-	dsn := journal.PostgresDSN()
+	dsn := os.Getenv("POSTGRES_DSN")
 	store, err := journal.OpenJournal(dsn)
 	if err != nil {
 		log.Fatalf("worker: open journal: %v", err)
