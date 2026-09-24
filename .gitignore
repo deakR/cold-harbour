@@ -3,4 +3,5 @@
 references/
 docker/certs/
 bench/*.pprof
+docker-compose.override.yml
 .audit/

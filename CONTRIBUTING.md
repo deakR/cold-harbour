@@ -7,17 +7,46 @@
 - Docker with Compose
 - Bash for `scripts/gen-certs.sh` on Windows
 
-## Local setup
+## Run from source
 
-Set `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and a valid `SIGNING_KEY`. Generate the local certificates, then follow the local setup steps in `README.md`:
+The [Quickstart](README.md#quickstart) runs everything in Docker. To work on the Go services, run only the backing services in Docker and run the control plane and worker from source.
 
-```sh
-bash scripts/gen-certs.sh
-docker compose up -d postgres redis vault
-docker compose up vault-init
-```
+1. Generate certificates and set `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and `SIGNING_KEY` as in the Quickstart.
 
-The control plane and worker are run from Go during local development. The dashboard uses `npm install` and `npm run dev` from `dashboard/`.
+2. Start Postgres, Redis, and Vault.
+
+   ```powershell
+   bash scripts/gen-certs.sh
+   docker compose up -d postgres redis vault
+   docker compose up vault-init
+   ```
+
+3. Set these variables in each terminal that runs a Go service.
+
+   ```powershell
+   $env:POSTGRES_DSN = "postgres://coldharbour:$env:POSTGRES_PASSWORD@127.0.0.1:5433/coldharbour?sslmode=verify-full&sslrootcert=docker/certs/ca.crt"
+   $env:REDIS_ADDR = "127.0.0.1:6380"
+   $env:REDIS_TLS = "1"
+   $env:REDIS_CA = "docker/certs/ca.crt"
+   $env:VAULT_ADDR = "http://127.0.0.1:8200"
+   $env:VAULT_TOKEN = "coldharbour-dev"
+   $env:ALLOW_INSECURE_SESSION_COOKIE = "1"
+   $env:PORT = "8081"
+   ```
+
+4. Start the control plane in one terminal and a worker in another.
+
+   ```powershell
+   go run ./cmd/controlplane
+   ```
+
+   ```powershell
+   go run ./cmd/worker -consumer worker-1
+   ```
+
+5. Create a tenant with `go run ./cmd/coldharbour admin create-tenant --name dev`. For the dashboard, run `npm install` and `npm run dev` in `dashboard/`.
+
+Do not run `docker compose up` for the `controlplane` or `worker` services at the same time, because the control plane container also uses port `8081`.
 
 ## Tests and checks
 
