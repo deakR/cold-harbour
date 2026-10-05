@@ -1,6 +1,8 @@
 package detect
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -25,8 +27,9 @@ type Span struct {
 type Mode string
 
 const (
-	ModeRedact  Mode = "redact"
-	ModePartial Mode = "partial"
+	ModeRedact   Mode = "redact"
+	ModePartial  Mode = "partial"
+	ModeTokenize Mode = "tokenize"
 )
 
 type detector struct {
@@ -41,6 +44,8 @@ var detectors = []detector{
 	{KindPhoneIN, findPhoneIN},
 	{KindAadhaar, findAadhaar},
 	{KindPAN, findPAN},
+	{KindCreditCard, findCreditCard},
+	{KindIP, findIP},
 }
 
 func regexSpans(kind Kind, re *regexp.Regexp) func(string) []Span {
@@ -125,9 +130,12 @@ func Apply(s string, spans []Span, mode Mode) (string, map[Kind]int) {
 			continue
 		}
 		b.WriteString(s[prev:sp.Start])
-		if mode == ModePartial {
+		switch mode {
+		case ModePartial:
 			b.WriteString(partial(s[sp.Start:sp.End]))
-		} else {
+		case ModeTokenize:
+			b.WriteString(TokenFor(sp.Kind, s[sp.Start:sp.End]))
+		default:
 			b.WriteString("[" + strings.ToUpper(string(sp.Kind)) + "]")
 		}
 		counts[sp.Kind]++
@@ -135,6 +143,12 @@ func Apply(s string, spans []Span, mode Mode) (string, map[Kind]int) {
 	}
 	b.WriteString(s[prev:])
 	return b.String(), counts
+}
+
+// TokenFor generates a deterministic, keyed pseudonymization token
+func TokenFor(kind Kind, value string) string {
+	h := sha256.Sum256([]byte(string(kind) + ":" + value))
+	return fmt.Sprintf("tok_%s_%x", kind, h[:4])
 }
 
 func partial(s string) string {

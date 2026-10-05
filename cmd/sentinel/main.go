@@ -15,8 +15,15 @@ import (
 
 func main() {
 	log.SetFlags(0)
-	if len(os.Args) < 2 || os.Args[1] != "run" {
-		log.Fatal("usage: sentinel run --in - --out -")
+	if len(os.Args) < 2 {
+		log.Fatal("usage: sentinel <run|scan> [flags]")
+	}
+	if os.Args[1] == "scan" {
+		runScan(os.Args[2:])
+		return
+	}
+	if os.Args[1] != "run" {
+		log.Fatal("usage: sentinel <run|scan> [flags]")
 	}
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	inPath := fs.String("in", "-", "input path, or - for stdin")

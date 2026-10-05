@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -73,6 +74,81 @@ func (s *Server) postJob(w http.ResponseWriter, r *http.Request, p keys.Principa
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"jobId": jobID, "status": "QUEUED"})
+}
+
+func (s *Server) postJobBatch(w http.ResponseWriter, r *http.Request, p keys.Principal) {
+	tenant := p.TenantID
+	var req struct {
+		Items   []string `json:"items"`
+		JobType string   `json:"jobType"`
+		Source  string   `json:"source"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.Items) == 0 {
+		fieldError(w, "items")
+		return
+	}
+	if len(req.Items) > 1000 {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "batch size exceeds maximum of 1000"})
+		return
+	}
+	jobType := req.JobType
+	if jobType == "" {
+		jobType = "redact"
+	}
+	if _, ok := s.types[jobType]; !ok {
+		fieldError(w, "jobType")
+		return
+	}
+	source := req.Source
+	if source == "" {
+		source = "cold-harbour"
+	}
+	if source != "cold-harbour" && source != "sentinel" {
+		fieldError(w, "source")
+		return
+	}
+	allowed, err := s.allowPost(r, tenant)
+	if err != nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "queue unavailable"})
+		return
+	}
+	if !allowed {
+		w.WriteHeader(http.StatusTooManyRequests)
+		return
+	}
+
+	jobIDs := make([]string, 0, len(req.Items))
+	for _, item := range req.Items {
+		jobID := uuid.NewString()
+		_, err = s.db.Exec(r.Context(), `
+			INSERT INTO job_accepts (redis_job_id, tenant_id, accepted_at, source)
+			VALUES ($1, $2, now(), $3)
+		`, jobID, tenant, source)
+		if err != nil {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "queue unavailable"})
+			return
+		}
+		err = s.jobs.Add(r.Context(), s.keys, queue.Job{
+			ID:       jobID,
+			Input:    item,
+			TenantID: tenant.String(),
+			JobType:  jobType,
+		})
+		if err != nil {
+			_, _ = s.db.Exec(r.Context(), `DELETE FROM job_keys WHERE job_id = $1`, journal.DurableIDFor(jobID))
+			_, _ = s.db.Exec(r.Context(), `DELETE FROM job_accepts WHERE redis_job_id = $1`, jobID)
+			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "queue unavailable"})
+			return
+		}
+		jobIDs = append(jobIDs, jobID)
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"batchId": uuid.NewString(),
+		"count":   len(jobIDs),
+		"status":  "QUEUED",
+		"jobIds":  jobIDs,
+	})
 }
 
 func (s *Server) allowPost(r *http.Request, tenant uuid.UUID) (bool, error) {

@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"coldharbour/internal/ledger"
@@ -17,7 +19,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: verify receipt --job-id ... --purged-at ... --sig ... --pub ...")
+		fmt.Fprintln(os.Stderr, "usage: verify <receipt|output|ledger|proof> [flags]")
 		os.Exit(2)
 	}
 	switch os.Args[1] {
@@ -27,6 +29,8 @@ func main() {
 		os.Exit(runOutput(os.Args[2:]))
 	case "ledger":
 		os.Exit(runLedger(os.Args[2:]))
+	case "proof":
+		os.Exit(runProof(os.Args[2:]))
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n", os.Args[1])
 		os.Exit(2)
@@ -133,5 +137,62 @@ func verifySig(pubB64, sigB64 string, msg []byte) int {
 	if !seal.Verify(pub, msg, sig) {
 		return 1
 	}
+	return 0
+}
+
+func runProof(args []string) int {
+	fs := flag.NewFlagSet("proof", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	leafHex := fs.String("leaf", "", "hex-encoded leaf hash")
+	rootHex := fs.String("root", "", "hex-encoded Merkle root hash")
+	siblingsHex := fs.String("siblings", "", "comma-separated hex-encoded sibling hashes")
+	directions := fs.String("left", "", "comma-separated booleans (true/false) indicating if sibling is on left")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if *leafHex == "" || *rootHex == "" {
+		fmt.Fprintln(os.Stderr, "proof requires --leaf and --root")
+		return 2
+	}
+	leaf, err := hex.DecodeString(*leafHex)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "invalid --leaf hex")
+		return 1
+	}
+	root, err := hex.DecodeString(*rootHex)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "invalid --root hex")
+		return 1
+	}
+	var siblings [][]byte
+	if *siblingsHex != "" {
+		for _, s := range strings.Split(*siblingsHex, ",") {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				continue
+			}
+			b, err := hex.DecodeString(s)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "invalid sibling hex")
+				return 1
+			}
+			siblings = append(siblings, b)
+		}
+	}
+	var isLeft []bool
+	if *directions != "" {
+		for _, d := range strings.Split(*directions, ",") {
+			d = strings.TrimSpace(d)
+			if d == "" {
+				continue
+			}
+			isLeft = append(isLeft, d == "true")
+		}
+	}
+	if !ledger.VerifyInclusionProof(leaf, siblings, isLeft, root) {
+		fmt.Fprintln(os.Stderr, "inclusion proof verification failed")
+		return 1
+	}
+	fmt.Println("inclusion proof verified: valid")
 	return 0
 }

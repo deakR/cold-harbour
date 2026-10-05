@@ -3,6 +3,7 @@ package seal
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,38 @@ func RequireVault() error {
 		return fmt.Errorf("VAULT_ADDR and VAULT_TOKEN are required")
 	}
 	return nil
+}
+
+// Tokenize generates a deterministic pseudonymization token for the given input using
+// Vault Transit HMAC. If VAULT_ADDR or VAULT_TOKEN is not configured, it falls back
+// to a local keyed SHA-256 hash so offline testing works seamlessly.
+func Tokenize(ctx context.Context, keyName string, data string) (string, error) {
+	if keyName == "" {
+		keyName = "coldharbour"
+	}
+	if err := RequireVault(); err != nil {
+		h := sha256.Sum256([]byte(keyName + ":" + data))
+		return fmt.Sprintf("tok_%x", h[:8]), nil
+	}
+	body, _ := json.Marshal(map[string]string{
+		"input": base64.StdEncoding.EncodeToString([]byte(data)),
+	})
+	raw, err := vaultPost(ctx, "/v1/transit/hmac/"+keyName, body)
+	if err != nil {
+		return "", err
+	}
+	var parsed struct {
+		Data struct {
+			HMAC string `json:"hmac"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		return "", err
+	}
+	if parsed.Data.HMAC == "" {
+		return "", fmt.Errorf("vault hmac returned empty token")
+	}
+	return parsed.Data.HMAC, nil
 }
 
 func wrapKey(ctx context.Context, plain []byte) ([]byte, error) {

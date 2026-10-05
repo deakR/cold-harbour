@@ -13,8 +13,8 @@ A companion process, Sentinel, applies the same detectors to application logs be
 
 ## Features
 
-- **Redaction jobs.** `redact` replaces detected values with tokens such as `[EMAIL_REDACTED]`. `mask` replaces named fields in a JSON document with `[MASKED]`.
-- **Six detectors.** `email`, `phone_us`, `ssn`, `phone_in`, `aadhaar` (Verhoeff checksum), and `pan`. Each tenant chooses its detectors through a policy.
+- **Redaction jobs.** `redact` replaces detected values with tokens such as `[EMAIL_REDACTED]` or deterministic tokens. `mask` replaces named fields in a JSON document with `[MASKED]`.
+- **Eight detectors.** `email`, `phone_us`, `ssn`, `phone_in`, `aadhaar` (Verhoeff checksum), `pan`, `credit_card` (Luhn checksum), and `ip` (IPv4/IPv6). Each tenant chooses its detectors through a policy.
 - **Encryption at rest.** Queued input is encrypted with a per-job AES-256-GCM key. The key is wrapped by HashiCorp Vault Transit and destroyed after the job completes.
 - **Signed outputs and purge receipts.** Results and deletion receipts are signed with Ed25519.
 - **Tamper-evident audit ledger.** Purge receipts, policy changes, key creation and revocation, and session logins and logouts are appended to a per-tenant hash chain.
@@ -208,7 +208,8 @@ Authenticate with an `X-API-Key` header or a session cookie. Requests that chang
 
 | Method and path | Description |
 | --- | --- |
-| `POST /v1/jobs` | Queues a job. Body `{"input": string, "jobType": "redact" \| "mask", "source": "cold-harbour" \| "sentinel"}`. `jobType` defaults to `redact`. Returns `{"jobId", "status": "QUEUED"}`. Limited to 30 requests per minute per tenant. |
+| `POST /v1/jobs` | Queues a job. Body `{"input": string, "jobType": "redact" \| "mask", "source": "cold-harbour" \| "sentinel"}`. `jobType` defaults to `redact`. Returns `{"jobId", "status": "QUEUED"}`. |
+| `POST /v1/jobs/batch` | Queues a bulk batch of jobs (up to 1,000 items) into Redis Streams. Body `{"items": [string], "jobType": "redact" \| "mask"}`. Returns `{"batchId", "count", "jobIds": [...]}`. |
 | `GET /v1/jobs` | Lists the tenant's jobs, newest first. |
 | `GET /v1/jobs/{id}` | Returns the job status. A completed job also has `result`, `signature`, and `signingKeyId`. |
 | `POST /v1/jobs/{id}/delivery-links` | Creates a shareable link to the result that expires and allows a limited number of views. Body `{"expiresAt": RFC 3339, "maxViews": "1" to "100"}`. The expiry can be up to 30 days away. The token is returned only once. |
@@ -251,12 +252,14 @@ For a `mask` job, `input` is a JSON string such as `{"document": {"name": "Jane"
 | --- | --- |
 | `go run ./cmd/controlplane` | HTTP API, migrations, sessions, and the WebSocket relay. |
 | `go run ./cmd/worker -consumer <name>` | Job worker. Run several with different consumer names to scale out. |
-| `go run ./cmd/sentinel run ...` | Log masker. See [Sentinel](#sentinel). |
+| `go run ./cmd/sentinel run ...` | Log stream masker. See [Sentinel](#sentinel). |
+| `go run ./cmd/sentinel scan <path>` | Offline DPDP compliance vulnerability auditor. Generates report of unmasked PII. Add `--json` for CI gates. |
 | `go run ./cmd/coldharbour migrate` | Applies the database migrations. |
 | `go run ./cmd/coldharbour admin create-tenant --name <name>` | Creates a tenant and prints its admin key. |
 | `go run ./cmd/coldharbour admin ensure-sentinel-key ...` | Creates or reuses a Sentinel key file. Used by the demo profile. |
 | `go run ./cmd/verify ledger --tenant <id>` | Checks a tenant's audit chain. |
 | `go run ./cmd/verify output ...` / `receipt ...` | Checks a signed output or purge receipt offline. Run it with `-h` to see the flags. |
+| `go run ./cmd/verify proof --leaf <hex> --root <hex> ...` | Verifies Merkle tree inclusion proofs offline ($O(\log n)$ operations). |
 | `go run ./cmd/sentinel-load` | Detector benchmark and CI performance gate. |
 
 ## Configuration
