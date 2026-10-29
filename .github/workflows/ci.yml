@@ -45,7 +45,7 @@ jobs:
           cache-dependency-path: dashboard/package-lock.json
       - run: npm ci && npm run build
         working-directory: dashboard
-      - uses: securego/gosec@v2.29.0
+      - uses: securego/gosec@v2.30.0
         with:
           args: ./...
       - uses: aquasecurity/trivy-action@v0.36.0
